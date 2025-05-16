@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import CafeCard from '../components/CafeCard';
-import CafeDetail from '../components/CafeDetail';
 import CafeForm from '../components/CafeForm';
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { fetchCafes, type Cafe } from '../services/cafeService';
 import { toast } from "@/hooks/use-toast";
+import { addCafeToCache } from '../lib/queryUtils';
 
 const Index = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
   const [isAddingCafe, setIsAddingCafe] = useState(false);
   
   // Use React Query to fetch cafe data
@@ -66,6 +68,16 @@ const Index = () => {
     ]
   });
   
+  // Pre-cache cafe data for detail views
+  useEffect(() => {
+    if (cafes && cafes.length > 0) {
+      // Pre-cache each cafe's data for faster detail page loading
+      cafes.forEach(cafe => {
+        addCafeToCache(queryClient, cafe);
+      });
+    }
+  }, [cafes, queryClient]);
+  
   // Show error message when request fails
   React.useEffect(() => {
     if (error) {
@@ -81,6 +93,12 @@ const Index = () => {
   const filteredCafes = cafes 
     ? cafes.filter(cafe => cafe.name.toLowerCase().includes(searchTerm.toLowerCase()))
     : [];
+
+  const handleCafeCardClick = (cafe: Cafe) => {
+    // Add cafe to cache before navigation for immediate data availability
+    addCafeToCache(queryClient, cafe);
+    navigate(`/cafe/${cafe.placeId}`, { state: { cafeData: cafe } });
+  };
 
   const handleAddCafe = (newCafe: Cafe) => {
     // This should send a POST request to backend to save the new cafe
@@ -122,7 +140,7 @@ const Index = () => {
       {!isLoading && (
         <div className="space-y-2">
           {filteredCafes.map(cafe => (
-            <div key={cafe.placeId} onClick={() => setSelectedCafe(cafe)}>
+            <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
               <CafeCard {...cafe} />
             </div>
           ))}
@@ -144,21 +162,6 @@ const Index = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
       </button>
-      
-      {/* Cafe Detail Modal */}
-      <Dialog open={!!selectedCafe} onOpenChange={(open) => !open && setSelectedCafe(null)}>
-        <DialogContent className="sm:max-w-md p-0 border-0 bg-transparent shadow-lg overflow-hidden max-h-[90vh]">
-          {selectedCafe && (
-            <>
-              <DialogTitle className="sr-only">{selectedCafe.name}</DialogTitle>
-              <CafeDetail 
-                cafe={selectedCafe} 
-                onClose={() => setSelectedCafe(null)} 
-              />
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
       
       {/* Add Cafe Modal */}
       <Dialog open={isAddingCafe} onOpenChange={setIsAddingCafe}>

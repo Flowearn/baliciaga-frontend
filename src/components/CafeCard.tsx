@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check } from "lucide-react";
+import { Check, Clock } from "lucide-react";
 import { type Cafe } from '../services/cafeService';
 
 type CafeCardProps = Cafe;
@@ -24,10 +24,24 @@ const CafeCard: React.FC<CafeCardProps> = ({
   
   const gradientClass = gradientClasses[Math.floor(Math.random() * gradientClasses.length)];
   
-  // Get price level display
-  const getPriceLevel = (level: number) => {
-    if (level === -1) return 'N/A';
-    return '₨'.repeat(level);
+  // Get price level display using $ symbols with improved visual distinction
+  const getPriceLevelDisplay = (level: number) => {
+    if (level <= 0 || level === -1) return null;
+    
+    const maxLevel = 4;
+    const filledCount = Math.min(level, maxLevel);
+    const emptyCount = maxLevel - filledCount;
+    
+    return (
+      <span className="flex items-center">
+        {[...Array(filledCount)].map((_, index) => (
+          <span key={`filled-${index}`} className="text-yellow-500 opacity-100">$</span>
+        ))}
+        {[...Array(emptyCount)].map((_, index) => (
+          <span key={`empty-${index}`} className="text-gray-300 opacity-40">$</span>
+        ))}
+      </span>
+    );
   };
 
   // Get opening hours display
@@ -51,6 +65,9 @@ const CafeCard: React.FC<CafeCardProps> = ({
     ? photos[0] 
     : 'https://via.placeholder.com/400x300?text=No+Image';
 
+  // Price level display JSX
+  const priceDisplay = getPriceLevelDisplay(priceLevel);
+
   return (
     <div className="w-full mb-6">
       <div className={`${gradientClass} w-full h-64 rounded-xl relative overflow-hidden flex flex-col justify-end p-5`}>
@@ -63,40 +80,42 @@ const CafeCard: React.FC<CafeCardProps> = ({
         
         {/* Title in the card image (bottom-left corner) */}
         <div className="absolute bottom-5 left-5 z-10">
-          <h1 className="text-2xl font-bold text-white">{name}</h1>
+          <h1 className="text-2xl font-bold text-white drop-shadow-md">{name}</h1>
         </div>
         
+        {/* Smaller Open Now badge */}
         {isOpenNow && (
           <div className="absolute top-5 right-5 z-10">
-            <div className="bg-green-500 bg-opacity-90 text-white text-sm px-3 py-1 rounded-full flex items-center">
-              <Check size={16} className="mr-1" />
+            <div className="bg-green-500 bg-opacity-90 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
+              <Check size={12} className="mr-1" />
               <span>Open Now</span>
             </div>
           </div>
         )}
       </div>
       
-      <div className="flex flex-col mt-3">
-        <h2 className="text-lg font-bold">{name}</h2>
-        
-        <div className="flex items-center text-gray-500 mt-2">
-          <span className="inline-flex items-center">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+      {/* Info section with reduced top margin */}
+      <div className="flex flex-col mt-2">
+        {/* First row: Opening hours + Price level */}
+        <div className="flex justify-between items-center">
+          <span className="inline-flex items-center text-gray-500 text-sm">
+            <Clock className="w-4 h-4 mr-1" />
             {getOpeningTime()}
           </span>
+          
+          {priceDisplay && (
+            <div className="text-sm font-medium">
+              {priceDisplay}
+            </div>
+          )}
         </div>
         
-        <div className="flex justify-between mt-2">
-          <div className="text-sm">
-            <span className="mr-1">⭐</span>
+        {/* Second row: Rating */}
+        <div className="flex items-center mt-1">
+          <div className="text-sm flex items-center text-gray-500">
+            <span className="text-yellow-500 mr-1">⭐</span>
             <span className="font-medium">{rating.toFixed(1)}/5</span>
-            <span className="text-gray-500 ml-1">({userRatingsTotal})</span>
-          </div>
-          
-          <div className="text-sm font-medium text-green-600">
-            {getPriceLevel(priceLevel)}
+            <span className="ml-1">({userRatingsTotal})</span>
           </div>
         </div>
       </div>

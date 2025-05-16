@@ -1,0 +1,102 @@
+import React, { useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchCafeDetails, type Cafe } from '../services/cafeService';
+import CafeDetail from '../components/CafeDetail';
+import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+
+const CafeDetailPage: React.FC = () => {
+  const { placeId } = useParams<{ placeId: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  
+  // Extract the cafe data from location state if available
+  const initialCafeData = location.state?.cafeData as Cafe | undefined;
+
+  // Try to get existing data from cache if available
+  const existingData = queryClient.getQueryData<Cafe>(['cafeDetails', placeId]);
+
+  // Fetch cafe details using React Query with initialData
+  const { data: cafe, isLoading, error } = useQuery({
+    queryKey: ['cafeDetails', placeId],
+    queryFn: () => placeId ? fetchCafeDetails(placeId) : Promise.reject('No placeId provided'),
+    enabled: !!placeId,
+    // Use either the data passed via navigation state or existing cache data
+    initialData: initialCafeData || existingData,
+    // Use a longer staleTime to reduce unnecessary refetching
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    // If we have initialData, disable the loading indicator
+    ...(initialCafeData && { placeholderData: initialCafeData })
+  });
+
+  // Prefetch related cafes when initial data is loaded
+  useEffect(() => {
+    if (cafe && cafe.types && cafe.types.length > 0) {
+      // We could potentially prefetch other related cafes here
+      // For example, we could fetch cafes with similar types or nearby location
+      // This is just a placeholder for potential future optimizations
+    }
+  }, [cafe, queryClient]);
+
+  // Show error message when request fails
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Failed to load cafe details",
+        description: "Unable to fetch cafe details. Please try again later.",
+        variant: "destructive"
+      });
+      console.error("Error loading cafe details:", error);
+    }
+  }, [error]);
+
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
+  // Only show loading if we don't have any data yet
+  if (isLoading && !cafe) {
+    return (
+      <div className="min-h-screen bg-neutral-700 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white"></div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !cafe) {
+    return (
+      <div className="min-h-screen bg-neutral-700 flex flex-col justify-center items-center p-6 text-white">
+        <h2 className="text-2xl font-bold mb-4">Cafe not found</h2>
+        <p className="mb-6 text-center">The cafe you're looking for could not be found or there was an error loading it.</p>
+        <Button onClick={handleGoBack} variant="outline" className="flex items-center">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Go Back
+        </Button>
+      </div>
+    );
+  }
+
+  // Display cafe detail with back button
+  return (
+    <div className="relative bg-neutral-700 min-h-screen">
+      <Button 
+        onClick={handleGoBack}
+        className="absolute top-4 left-4 z-10 bg-black/40 hover:bg-black/60"
+        size="icon"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </Button>
+      
+      <CafeDetail 
+        cafe={cafe} 
+        onClose={handleGoBack}
+      />
+    </div>
+  );
+};
+
+export default CafeDetailPage; 
