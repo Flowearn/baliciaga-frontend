@@ -1,122 +1,112 @@
-import React from 'react';
-import { Check, Clock } from "lucide-react";
-import { type Cafe } from '../services/cafeService';
+import React, { useMemo } from 'react';
+import { Check, X, Clock } from "lucide-react";
+import { type Cafe } from '../types';
+import useEmblaCarousel from 'embla-carousel-react';
 
-type CafeCardProps = Cafe;
+type CafeCardProps = {
+  cafe?: Cafe;
+};
 
-const CafeCard: React.FC<CafeCardProps> = ({ 
-  name, 
-  address,
-  photos,
-  openingHours,
-  isOpenNow,
-  rating,
-  userRatingsTotal,
-  priceLevel
-}) => {
-  // Generate random gradient class name to replace the original gradientClass
-  const gradientClasses = [
-    'bg-gradient-to-r from-blue-500 to-purple-500',
-    'bg-gradient-to-r from-green-500 to-teal-500',
-    'bg-gradient-to-r from-yellow-500 to-orange-500',
-    'bg-gradient-to-r from-pink-500 to-red-500'
-  ];
-  
-  const gradientClass = gradientClasses[Math.floor(Math.random() * gradientClasses.length)];
-  
-  // Get price level display using $ symbols with improved visual distinction
-  const getPriceLevelDisplay = (level: number) => {
-    if (level <= 0 || level === -1) return null;
-    
-    const maxLevel = 4;
-    const filledCount = Math.min(level, maxLevel);
-    const emptyCount = maxLevel - filledCount;
-    
-    return (
-      <span className="flex items-center">
-        {[...Array(filledCount)].map((_, index) => (
-          <span key={`filled-${index}`} className="text-yellow-500 opacity-100">$</span>
-        ))}
-        {[...Array(emptyCount)].map((_, index) => (
-          <span key={`empty-${index}`} className="text-gray-300 opacity-40">$</span>
-        ))}
-      </span>
-    );
-  };
+const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
 
-  // Get opening hours display
-  const getOpeningTime = () => {
-    // If we have opening hours data, extract today's hours
-    if (openingHours && openingHours.length > 0) {
-      const today = new Date().getDay();
-      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const todayStr = days[today];
-      
-      const todayHours = openingHours.find(hour => hour.startsWith(todayStr));
-      if (todayHours) {
-        return todayHours.split(': ')[1];
-      }
+  // 获取当天营业时间
+  const todayOpeningHours = useMemo(() => {
+    if (!cafe || !cafe.openingHours || !Array.isArray(cafe.openingHours) || cafe.openingHours.length === 0) {
+      return "Hours unavailable";
     }
-    return 'Hours unavailable';
-  };
+    
+    // 获取当前是星期几
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const currentDay = days[new Date().getDay()];
+    
+    // 从openingHours数组中查找今天的记录
+    const dayEntry = cafe.openingHours.find(hours => 
+      hours && typeof hours === 'string' && hours.toLowerCase().startsWith(currentDay.toLowerCase())
+    );
+    
+    if (!dayEntry) {
+      return "Hours unavailable";
+    }
+    
+    // 提取营业时间部分
+    const hoursMatch = dayEntry.match(/:\s*(.+)/);
+    if (hoursMatch && hoursMatch[1]) {
+      return hoursMatch[1].trim();
+    }
+    
+    return "Hours unavailable";
+  }, [cafe?.openingHours]);
 
-  // Get image URL
-  const imageUrl = photos && photos.length > 0 
-    ? photos[0] 
-    : 'https://via.placeholder.com/400x300?text=No+Image';
+  if (!cafe || !cafe.placeId || !cafe.name) {
+    console.warn("CafeCard received undefined or invalid cafe data");
+    return null;
+  }
 
-  // Price level display JSX
-  const priceDisplay = getPriceLevelDisplay(priceLevel);
+  const hasPhotos = cafe.photos && Array.isArray(cafe.photos) && cafe.photos.length > 0;
 
   return (
-    <div className="w-full mb-6">
-      <div className={`${gradientClass} w-full h-64 rounded-xl relative overflow-hidden flex flex-col justify-end p-5`}>
-        {/* Image as background */}
-        <div className="absolute inset-0">
-          <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
-          {/* Add a semi-transparent layer to make text more visible */}
-          <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-        </div>
-        
-        {/* Title in the card image (bottom-left corner) */}
-        <div className="absolute bottom-5 left-5 z-10">
-          <h1 className="text-2xl font-bold text-white drop-shadow-md">{name}</h1>
-        </div>
-        
-        {/* Smaller Open Now badge */}
-        {isOpenNow && (
-          <div className="absolute top-5 right-5 z-10">
-            <div className="bg-green-500 bg-opacity-90 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
-              <Check size={12} className="mr-1" />
-              <span>Open Now</span>
-            </div>
+    <div className="w-full mb-5">
+      <div className="embla w-full h-56 rounded-xl relative overflow-hidden shadow-sm bg-gray-300">
+        <div className="embla__viewport h-full" ref={emblaRef}>
+          <div className="embla__container flex h-full">
+            {hasPhotos ? (
+              cafe.photos.map((photoUrl, index) => (
+                <div className="embla__slide flex-[0_0_100%] min-w-0 relative" key={index}>
+                  <img
+                    src={photoUrl}
+                    alt={`${cafe.name} - Photo ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="embla__slide flex-[0_0_100%] min-w-0 relative flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-500">
+                <span className="text-white text-lg">{cafe.name} (No Image)</span>
+              </div>
+            )}
           </div>
+        </div>
+        
+        {hasPhotos && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-[1] pointer-events-none"></div>
         )}
+
+        <div className="absolute bottom-0 left-0 right-0 pt-4 px-4 pb-3 z-[2] bg-gradient-to-t from-black/70 via-black/40 to-transparent pointer-events-none">
+          <h1 className="text-2xl font-bold text-white drop-shadow-md">{cafe.name}</h1>
+        </div>
+        
+        <div className="absolute top-5 right-5 z-[2]">
+          {typeof cafe.isOpenNow === 'boolean' ? (
+            cafe.isOpenNow ? (
+              <div className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
+                <Check size={12} className="mr-1 text-white" />
+                <span>Open</span>
+              </div>
+            ) : (
+              <div className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
+                <X size={12} className="mr-1 text-white" />
+                <span>Closed</span>
+            </div>
+            )
+          ) : null}
+          </div>
       </div>
       
-      {/* Info section with reduced top margin */}
-      <div className="flex flex-col mt-2">
-        {/* First row: Opening hours + Price level */}
+      <div className="mt-2">
         <div className="flex justify-between items-center">
-          <span className="inline-flex items-center text-gray-500 text-sm">
-            <Clock className="w-4 h-4 mr-1" />
-            {getOpeningTime()}
+          <span className="inline-flex items-center text-gray-500 text-sm truncate max-w-[calc(100%-theme(spacing.28))]">
+            <Clock size={14} className="mr-1 text-gray-400 flex-shrink-0" />
+            <span className="truncate">{todayOpeningHours}</span>
           </span>
           
-          {priceDisplay && (
-            <div className="text-sm font-medium">
-              {priceDisplay}
-            </div>
-          )}
-        </div>
-        
-        {/* Second row: Rating */}
-        <div className="flex items-center mt-1">
-          <div className="text-sm flex items-center text-gray-500">
-            <span className="text-yellow-500 mr-1">⭐</span>
-            <span className="font-medium">{rating.toFixed(1)}/5</span>
-            <span className="ml-1">({userRatingsTotal})</span>
+          {cafe.rating !== undefined && (
+            <div className="text-sm flex items-center text-gray-500 flex-shrink-0">
+              <span className="text-yellow-500 mr-1">⭐</span>
+              <span className="font-medium">{cafe.rating.toFixed(1)}/5</span>
+              <span className="ml-1">({cafe.userRatingsTotal || 0})</span>
           </div>
+          )}
         </div>
       </div>
     </div>

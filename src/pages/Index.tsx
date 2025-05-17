@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import CafeCard from '../components/CafeCard';
-import CafeForm from '../components/CafeForm';
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { fetchCafes, type Cafe } from '../services/cafeService';
+import { fetchCafes } from '../services/cafeService';
+import { type Cafe } from '../types';
 import { toast } from "@/hooks/use-toast";
 import { addCafeToCache } from '../lib/queryUtils';
 
@@ -12,13 +11,10 @@ const Index = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddingCafe, setIsAddingCafe] = useState(false);
   
-  // Use React Query to fetch cafe data
   const { data: cafes, isLoading, error } = useQuery({
     queryKey: ['cafes'],
     queryFn: fetchCafes,
-    // Use initial data as fallback until backend request completes
     placeholderData: [
       {
         placeId: '1',
@@ -40,8 +36,11 @@ const Index = () => {
         rating: 4.5,
         userRatingsTotal: 512,
         website: 'https://twofacecoffee.com',
+        phoneNumber: '+62 123 456789',
         priceLevel: 2,
-        types: ['cafe', 'restaurant', 'food', 'point_of_interest', 'establishment']
+        types: ['cafe', 'restaurant', 'food', 'point_of_interest', 'establishment'],
+        region: 'canggu',
+        businessStatus: 'OPERATIONAL',
       },
       {
         placeId: '2',
@@ -62,23 +61,26 @@ const Index = () => {
         isOpenNow: true,
         rating: 4.7,
         userRatingsTotal: 328,
+        website: 'https://satujalan.coffee',
+        phoneNumber: '+62 987 654321',
         priceLevel: 2,
-        types: ['cafe', 'restaurant', 'food', 'point_of_interest', 'establishment']
+        types: ['cafe', 'restaurant', 'food', 'point_of_interest', 'establishment'],
+        region: 'canggu',
+        businessStatus: 'OPERATIONAL',
       }
     ]
   });
   
-  // Pre-cache cafe data for detail views
   useEffect(() => {
-    if (cafes && cafes.length > 0) {
-      // Pre-cache each cafe's data for faster detail page loading
+    if (Array.isArray(cafes) && cafes.length > 0) {
       cafes.forEach(cafe => {
-        addCafeToCache(queryClient, cafe);
+        if (cafe && cafe.placeId) {
+          addCafeToCache(queryClient, cafe);
+        }
       });
     }
   }, [cafes, queryClient]);
   
-  // Show error message when request fails
   React.useEffect(() => {
     if (error) {
       toast({
@@ -90,58 +92,52 @@ const Index = () => {
     }
   }, [error]);
   
-  const filteredCafes = cafes 
-    ? cafes.filter(cafe => cafe.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredCafes = (Array.isArray(cafes) && cafes.length > 0)
+    ? cafes
+        .filter(cafe => 
+          cafe && cafe.name && typeof cafe.name === 'string' && 
+          cafe.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) => {
+          if (a.isOpenNow && !b.isOpenNow) return -1;
+          if (!a.isOpenNow && b.isOpenNow) return 1;
+          return 0;
+        })
     : [];
 
   const handleCafeCardClick = (cafe: Cafe) => {
-    // Add cafe to cache before navigation for immediate data availability
     addCafeToCache(queryClient, cafe);
     navigate(`/cafe/${cafe.placeId}`, { state: { cafeData: cafe } });
   };
 
-  const handleAddCafe = (newCafe: Cafe) => {
-    // This should send a POST request to backend to save the new cafe
-    // For demonstration, we just add it to local state
-    toast({
-      title: "Added successfully",
-      description: `Successfully added cafe: ${newCafe.name}`
-    });
-    setIsAddingCafe(false);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 px-6 pb-20">
-      {/* Header */}
+    <div className="min-h-screen bg-gray-50 px-4 pb-20">
       <div className="py-6">
-        <h1 className="text-2xl text-center font-bold text-black">Baliciaga</h1>
-        <p className="text-center text-gray-500 mt-2">Discover the best cafes in Bali</p>
+        <h1 className="text-3xl text-center font-bold text-black">Baliciaga</h1>
+        <p className="text-center text-gray-500 mt-1">Discover the best cafes in Bali</p>
       </div>
       
-      {/* Search bar */}
       <div className="mb-6">
         <input
           type="text"
           placeholder="Search cafes..."
-          className="w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-[0.45rem] rounded-lg border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
       
-      {/* Loading state */}
       {isLoading && (
         <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
       )}
       
-      {/* Cafes list */}
       {!isLoading && (
         <div className="space-y-2">
           {filteredCafes.map(cafe => (
             <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
-              <CafeCard {...cafe} />
+              <CafeCard cafe={cafe} />
             </div>
           ))}
           
@@ -152,27 +148,6 @@ const Index = () => {
           )}
         </div>
       )}
-      
-      {/* Add Cafe Button (Floating) */}
-      <button 
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 rounded-full flex items-center justify-center shadow-lg hover:bg-blue-600 transition-colors"
-        onClick={() => setIsAddingCafe(true)}
-      >
-        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-      </button>
-      
-      {/* Add Cafe Modal */}
-      <Dialog open={isAddingCafe} onOpenChange={setIsAddingCafe}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle className="sr-only">Add New Cafe</DialogTitle>
-          <CafeForm
-            onClose={() => setIsAddingCafe(false)}
-            onSubmit={handleAddCafe}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
