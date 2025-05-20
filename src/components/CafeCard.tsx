@@ -47,7 +47,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
 
   return (
     <div className="w-full mb-5">
-      <div className="embla w-full h-56 rounded-xl relative overflow-hidden shadow-sm bg-gray-300">
+      <div className="embla w-full rounded-xl relative overflow-hidden shadow-sm bg-gray-300 aspect-video max-h-72">
         <div className="embla__viewport h-full" ref={emblaRef}>
           <div className="embla__container flex h-full">
             {hasPhotos ? (

@@ -6,6 +6,14 @@ import { fetchCafes } from '../services/cafeService';
 import { type Cafe } from '../types';
 import { toast } from "@/hooks/use-toast";
 import { addCafeToCache } from '../lib/queryUtils';
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu as MenuIcon } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -111,30 +119,60 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 pb-20">
-      <div className="py-6">
-        <h1 className="text-3xl text-center font-bold text-black">Baliciaga</h1>
-        <p className="text-center text-gray-500 mt-1">Discover the best cafes in Bali</p>
-      </div>
-      
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search cafes..."
-          className="w-full px-3 py-[0.45rem] rounded-lg border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Sticky Wrapper Div */}
+      <div className="sticky top-0 z-50 bg-gray-50 pb-4 px-4">
+        {/* HeaderContentDiv */}
+        <div className="pt-6 pb-2">
+          <div className="relative flex items-center justify-center">
+            {/* Spacer for balance, adjust width/visibility as needed if button width is dynamic */}
+            <div className="absolute left-0 h-full flex items-center">
+              {/* This spacer can be made invisible or hold other icons if needed */}
+            </div>
+
+            <h1 className="text-3xl font-bold text-black">Baliciaga</h1>
+
+            <div className="absolute right-0 h-full flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-black hover:bg-gray-200">
+                    <MenuIcon className="h-6 w-6" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem 
+                    className="flex justify-center" 
+                    onSelect={() => { window.location.href = 'mailto:yo@baliciaga.com'; }}
+                  >
+                    Contact
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <p className="text-center text-gray-500 mt-1">Discover the best cafes in Bali</p>
+        </div>
+        
+        {/* SearchBarDiv */}
+        <div className="">
+          <input
+            type="text"
+            placeholder="Search cafes..."
+            className="w-full px-3 py-[0.45rem] rounded-lg border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
       
       {isLoading && (
-        <div className="flex justify-center items-center py-20">
+        <div className="flex justify-center items-center py-20 px-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
       )}
       
       {!isLoading && (
-        <div className="space-y-2">
+        <div className="space-y-2 px-4">
           {filteredCafes.map(cafe => (
             <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
               <CafeCard cafe={cafe} />

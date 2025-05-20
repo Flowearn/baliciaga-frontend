@@ -9,6 +9,7 @@ export interface Cafe {
   isOpenNow: boolean;
   website?: string; // Optional
   phoneNumber?: string; // Optional
+  instagram?: string; // Optional
   priceLevel: number; // 0-4
   types: string[]; // Array of type strings
   rating: number;

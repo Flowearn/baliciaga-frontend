@@ -14,7 +14,8 @@ import {
   ChevronUp,
   CheckCircle2,
   XCircle,
-  ExternalLink
+  ExternalLink,
+  Instagram
 } from "lucide-react";
 import { type Cafe } from '../types';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -114,16 +115,13 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
   const hasPhotos = cafe.photos && Array.isArray(cafe.photos) && cafe.photos.length > 0;
 
   return (
-    <div className="bg-transparent max-h-[calc(100vh-2rem)] overflow-y-auto overflow-x-hidden py-6 pb-16 w-full rounded-lg relative z-0">
-      {/* Semi-transparent overlay for the entire content area */}
-      <div className="absolute inset-0 bg-black bg-opacity-40 z-1 pointer-events-none"></div>
-      
+    <div className="bg-transparent w-full rounded-lg relative z-5 px-4 mb-8">
       {/* Carousel Image Container */}
-      <div className="floating-image-container mx-4 rounded-2xl overflow-hidden h-52 bg-gray-700 relative z-30">
+      <div className="floating-image-container rounded-2xl overflow-hidden bg-gray-700 relative z-30 aspect-[4/3] max-h-72 w-full">
         {hasPhotos ? (
           <>
-            <div className="embla overflow-hidden" ref={emblaRef}>
-              <div className="embla__container flex h-52">
+            <div className="embla overflow-hidden h-full w-full" ref={emblaRef}>
+              <div className="embla__container flex h-full">
                 {cafe.photos.map((photoUrl, index) => (
                   <div className="embla__slide flex-[0_0_100%] min-w-0 relative" key={index}>
                     <img 
@@ -163,9 +161,9 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
       </div>
       
       {/* Name and rating in a single row - name on left, rating on right */}
-      <div className="name-rating-line mx-4 mt-4 z-30 relative flex justify-between items-start">
+      <div className="name-rating-line mt-4 z-30 relative flex justify-between items-start">
         <h1 className="text-2xl font-bold text-white drop-shadow-sm pr-2">{cafe.name}</h1>
-        <div className="flex items-center flex-shrink-0">
+        <div className="flex items-center flex-shrink-0 mt-1">
           <StarOutline size={18} className="text-yellow-500 mr-1" fill="currentColor" />
           <span className="text-white text-sm drop-shadow-sm">{cafe.rating?.toFixed(1) || "N/A"}/5</span>
           <span className="text-white/80 text-sm ml-1 drop-shadow-sm">({cafe.userRatingsTotal || 0})</span>
@@ -173,22 +171,15 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
       </div>
       
       {/* Floating Button Row */}
-      <div className="floating-button-row mx-4 mt-4 flex space-x-3 z-30 relative">
+      <div className="floating-button-row my-5 flex items-center space-x-3 z-30 relative">
         {/* Active button - white background with dark text */}
-        <button className="bg-white text-gray-800 px-4 py-2 rounded-full text-sm font-normal flex items-center">
+        <button className="bg-white text-gray-800 px-3 py-1.5 rounded-full text-sm font-normal flex items-center justify-center grow basis-0">
           <FileText size={16} className="mr-2" />
           Info
         </button>
-        {/* Inactive buttons - semi-transparent light background with white text */}
+        {/* "Menu" button is confirmed removed */}
         <button 
-          className="bg-white bg-opacity-20 text-white px-4 py-2 rounded-full text-sm font-normal flex items-center"
-          onClick={handleMenuClick}
-        >
-          <BookOpen size={16} className="mr-2" />
-          Menu
-        </button>
-        <button 
-          className="bg-white bg-opacity-20 text-white px-4 py-2 rounded-full text-sm font-normal flex items-center"
+          className="bg-white bg-opacity-20 text-white px-3 py-1.5 rounded-full text-sm font-normal flex items-center justify-center grow basis-0"
           onClick={handleShareClick}
         >
           <Share2 size={16} className="mr-2" />
@@ -197,7 +188,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
       </div>
       
       {/* Unified Content Container with semi-transparent overlay */}
-      <div className="content-area-container mx-4 mt-4 bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md z-30 relative text-white/90">
+      <div className="content-area-container mt-4 bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md z-30 relative text-white/90">
         {/* Date/Hours/Weather Container */}
         <div className="datetime-weather-container relative z-30 mb-4">
           <div className="flex justify-between items-center">
@@ -262,7 +253,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
         {/* Separator Line */}
         <hr className="border-gray-600 my-4" />
         
-        {/* Map Container */}
+        {/* Map Container (This is the one to KEEP, inside content-area-container) */}
         <div className="mt-6 rounded-lg overflow-hidden">
           <a 
             href={getGoogleMapsUrl()} 
@@ -276,32 +267,43 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
             />
           </a>
         </div>
-      </div>
+      </div> {/* End of content-area-container */}
 
-      {/* NEW Contact Info Container */}
-      {(cafe.phoneNumber || cafe.website) && (
-        <div className="contact-info-container mx-4 mt-4 bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md z-30 relative text-white/90">
+      {/* Contact Buttons Row - Applying new flex-grow layout */}
+      {(cafe.phoneNumber || cafe.website || cafe.instagram) && (
+        <div className="flex items-center space-x-3 mt-4 mb-8">
           {cafe.phoneNumber && (
-            <div className="flex items-center">
-              <Phone size={18} className="mr-3 flex-shrink-0 text-white/70" />
-              <a href={`tel:${cafe.phoneNumber}`} className="text-sm text-white/90 hover:underline">
-                {cafe.phoneNumber}
-              </a>
-            </div>
+            <Button
+              // variant="outline" // Variant removed
+              // size="sm" // Size prop removed
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
+              onClick={() => window.location.href = `tel:${cafe.phoneNumber}`}
+            >
+              <Phone className="mr-1.5 h-4 w-4" />
+              Tel
+            </Button>
           )}
-
-          {cafe.phoneNumber && cafe.website && (
-            <hr className="border-gray-700 my-3" />
-          )}
-
           {cafe.website && (
-            <div className="flex items-center">
-              <Globe size={18} className="mr-3 flex-shrink-0 text-white/70" />
-              <a href={cafe.website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300 truncate">
-                {cafe.website.replace(/^(https?:\/\/)/, '')}
-                <ExternalLink size={12} className="inline ml-1 opacity-70"/>
-              </a>
-            </div>
+            <Button
+              // variant="outline" // Variant removed
+              // size="sm" // Size prop removed
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
+              onClick={() => window.open(cafe.website, '_blank')}
+            >
+              <Globe className="mr-1.5 h-4 w-4" />
+              Web
+            </Button>
+          )}
+          {cafe.instagram && (
+            <Button
+              // variant="outline" // Variant removed
+              // size="sm" // Size prop removed
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
+              onClick={() => window.open(cafe.instagram, '_blank')}
+            >
+              <Instagram className="mr-1.5 h-4 w-4" />
+              Instagram
+            </Button>
           )}
         </div>
       )}
