@@ -102,7 +102,23 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
 
   // Get Google Maps URL for cafe using place_id parameter for more accurate location display
   const getGoogleMapsUrl = () => {
-    return cafe.placeId ? `https://www.google.com/maps/place/?q=place_id:${cafe.placeId}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${cafe.name} ${cafe.address || ''}`)}`;
+    // Prioritize using the googleMapsUri from the cafe data if it exists and looks like a URL
+    if (cafe.googleMapsUri && (cafe.googleMapsUri.startsWith('http://') || cafe.googleMapsUri.startsWith('https://'))) {
+      return cafe.googleMapsUri;
+    }
+    
+    // Fallback using placeId (more robust than custom googleusercontent links)
+    if (cafe.placeId) {
+      return `https://www.google.com/maps/search/?api=1&query_place_id=${cafe.placeId}`;
+    }
+    
+    // Fallback using name if placeId is also missing
+    if (cafe.name) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cafe.name)}`;
+    }
+
+    // Ultimate fallback if nothing is available
+    return 'https://www.google.com/maps';
   };
 
   // Handle Menu button click
@@ -205,12 +221,10 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
               {typeof cafe.isOpenNow === 'boolean' ? (
                 cafe.isOpenNow ? (
                   <div className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
-                    <CheckCircle2 size={12} className="mr-1" />
                     Open
                   </div>
                 ) : (
                   <div className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
-                    <XCircle size={12} className="mr-1" />
                     Closed
                   </div>
                 )

@@ -100,20 +100,13 @@ const CafeDetailPage: React.FC = () => {
     );
   }
 
-  // Display cafe detail with back button
+  // Display cafe detail (back button removed)
   return (
     <div 
       className="relative w-full py-8 overflow-y-auto"
       style={{ backgroundColor: bgColor }}
     >
       <div className="absolute inset-0 bg-black bg-opacity-40 z-1 pointer-events-none"></div>
-      
-      <Button 
-        onClick={handleGoBack}
-        className="absolute top-4 left-4 z-10 bg-black/40 hover:bg-black/60"
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </Button>
       
       <CafeDetail 
         cafe={cafe} 
