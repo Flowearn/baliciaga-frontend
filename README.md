@@ -84,7 +84,7 @@ npm run dev
 * `tailwind.config.ts`: Tailwind CSS的配置文件，包含主题和插件设置。
 * `components.json`: Shadcn UI组件配置。
 * `package.json`: 项目依赖和脚本。
-* `.env`: 存储环境变量（本地开发，不提交到Git）。
+* `.env`: 存储环境变量（本地开发，不提交到Git）
 
 ## 主要功能
 
