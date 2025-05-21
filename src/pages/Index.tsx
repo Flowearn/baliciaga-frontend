@@ -150,18 +150,18 @@ const Index = () => {
               </DropdownMenu>
             </div>
           </div>
-          <p className="text-center text-gray-500 mt-1">Discover the best cafes in Bali</p>
-        </div>
-        
+        <p className="text-center text-gray-500 mt-1">Discover the best cafes in Bali</p>
+      </div>
+      
         {/* SearchBarDiv */}
         <div className="">
-          <input
-            type="text"
-            placeholder="Search cafes..."
-            className="w-full px-3 py-[0.45rem] rounded-lg border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <input
+          type="text"
+          placeholder="Search cafes..."
+          className="w-full px-3 py-[0.45rem] rounded-lg border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
         </div>
       </div>
       
