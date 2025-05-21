@@ -1,7 +1,9 @@
 import { type Cafe } from '../types'; // Import the centralized Cafe type
 
 // Get the API base URL from environment variables with a fallback for local development
+console.log('VITE_API_BASE_URL from import.meta.env (in Vercel runtime):', import.meta.env.VITE_API_BASE_URL);
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3006/dev';
+console.log('Effective API_BASE_URL used in cafeService (in Vercel runtime):', API_BASE_URL);
 
 // Use this function to fetch cafe list from backend API
 export const fetchCafes = async (): Promise<Cafe[]> => {
