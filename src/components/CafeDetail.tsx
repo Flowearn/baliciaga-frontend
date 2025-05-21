@@ -26,6 +26,8 @@ interface CafeDetailProps {
 }
 
 const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
+  console.log('Cafe object received in CafeDetail component:', JSON.parse(JSON.stringify(cafe)));
+  
   // State for expandable opening hours
   const [isOpeningHoursExpanded, setIsOpeningHoursExpanded] = useState(false);
   
