@@ -16,4 +16,6 @@ export interface Cafe {
   userRatingsTotal: number;
   region: string;
   businessStatus: string; // e.g., "OPERATIONAL"
+  googleMapsUri?: string; // Optional
+  staticMapS3Url?: string; // Optional, pre-generated static map image URL from S3
 } 

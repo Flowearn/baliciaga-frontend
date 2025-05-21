@@ -82,7 +82,9 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
     return hoursMatch && hoursMatch[1] ? hoursMatch[1].trim() : "Hours unavailable";
   }, [cafe.openingHours, currentDay]);
 
-  // Build Google Maps Static API URL
+  // NOTE: getMapImageUrl function has been removed as we now use pre-generated staticMapS3Url from the cafe object
+  /* 
+  // Build Google Maps Static API URL - Commented out as we now use staticMapS3Url
   const getMapImageUrl = () => {
     // Get API key from environment variables
     const MAPS_API_KEY = import.meta.env.VITE_MAPS_API_KEY;
@@ -94,6 +96,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
     
     return `https://maps.googleapis.com/maps/api/staticmap?center=${cafe.latitude},${cafe.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${cafe.latitude},${cafe.longitude}&key=${MAPS_API_KEY}`;
   };
+  */
 
   // Get Google Maps URL for cafe using place_id parameter for more accurate location display
   const getGoogleMapsUrl = () => {
@@ -260,11 +263,17 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
             target="_blank" 
             rel="noopener noreferrer"
           >
-            <img 
-              src={getMapImageUrl()}
-              alt={`Map of ${cafe.name}`}
-              className="w-full h-auto object-cover"
-            />
+            {cafe.staticMapS3Url ? (
+              <img 
+                src={cafe.staticMapS3Url}
+                alt={`Map of ${cafe.name}`}
+                className="w-full h-auto object-cover"
+              />
+            ) : (
+              <div className="w-full h-[300px] bg-gray-200 flex items-center justify-center text-gray-600">
+                No map image available
+              </div>
+            )}
           </a>
         </div>
       </div> {/* End of content-area-container */}
