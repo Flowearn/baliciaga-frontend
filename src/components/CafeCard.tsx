@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Check, X, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { type Cafe } from '../types';
 import useEmblaCarousel from 'embla-carousel-react';
 
@@ -80,12 +80,10 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
           {typeof cafe.isOpenNow === 'boolean' ? (
             cafe.isOpenNow ? (
               <div className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
-                <Check size={12} className="mr-1 text-white" />
                 <span>Open</span>
               </div>
             ) : (
               <div className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
-                <X size={12} className="mr-1 text-white" />
                 <span>Closed</span>
             </div>
             )
