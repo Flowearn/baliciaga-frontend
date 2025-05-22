@@ -145,30 +145,35 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
       await navigator.clipboard.writeText(urlToCopy);
       alert('Link copied to clipboard!');
     } catch (err) {
-      console.error('Failed to copy link: ', err);
-      // Fallback to prompt if clipboard copy also fails
-      window.prompt('Failed to copy automatically. Please copy this link:', urlToCopy);
+      console.error('Failed to copy link using navigator.clipboard: ', err);
+      // Final fallback if navigator.clipboard.writeText also fails
+      alert('Failed to copy link automatically. Please copy manually from address bar.');
     }
   }
 
   // Handle Share button click
   const handleShareClick = async () => {
     const shareUrl = window.location.href; // URL of the current cafe detail page
-    const cafeName = cafe.name || 'this amazing cafe'; // Use actual cafe name if available
-    const shareTitle = `Check out ${cafeName} on Baliciaga!`;
-    const shareText = `I found this cool spot, ${cafeName}, on Baliciaga - your guide to Bali! Check it out:`;
+    const cafeName = cafe.name || 'Cafe'; // Use actual cafe name if available
+    const shareTitle = `Baliciaga: ${cafeName}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: shareTitle,
-          text: shareText, // Text is often used by some apps like email, WhatsApp
           url: shareUrl,
         });
         console.log('Content shared successfully via Web Share API');
       } catch (error) {
         console.error('Error using Web Share API:', error);
-        // If user cancels share, or other error, fall back to clipboard copy
+        
+        // Check if user cancelled the share action
+        if (error.name === 'AbortError') {
+          console.log('Share cancelled by user.');
+          return; // Don't show fallback if user explicitly cancelled
+        }
+        
+        // Only fall back to clipboard copy for actual errors
         await copyLinkToClipboard(shareUrl);
       }
     } else {
