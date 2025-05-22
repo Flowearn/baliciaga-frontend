@@ -18,7 +18,6 @@ import { Menu as MenuIcon } from "lucide-react";
 const Index = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
   
   const { data: cafes, isLoading, error } = useQuery({
     queryKey: ['cafes'],
@@ -100,12 +99,8 @@ const Index = () => {
     }
   }, [error]);
   
-  const filteredCafes = (Array.isArray(cafes) && cafes.length > 0)
-    ? cafes
-        .filter(cafe => 
-          cafe && cafe.name && typeof cafe.name === 'string' && 
-          cafe.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+  const displayedCafes = (Array.isArray(cafes) && cafes.length > 0)
+    ? [...cafes]
         .sort((a, b) => {
           if (a.isOpenNow && !b.isOpenNow) return -1;
           if (!a.isOpenNow && b.isOpenNow) return 1;
@@ -123,7 +118,7 @@ const Index = () => {
       {/* Sticky Wrapper Div */}
       <div className="sticky top-0 z-50 bg-gray-50 pb-4 px-4">
         {/* HeaderContentDiv */}
-        <div className="pt-6 pb-2">
+        <div className="pt-5 pb-0">
           <div className="relative flex items-center justify-center">
             {/* Spacer for balance, adjust width/visibility as needed if button width is dynamic */}
             <div className="absolute left-0 h-full flex items-center">
@@ -150,19 +145,8 @@ const Index = () => {
               </DropdownMenu>
             </div>
           </div>
-        <p className="text-center text-gray-500 mt-1">Discover the best cafes in Bali</p>
+        <p className="text-center text-gray-500 mt-1">Flow with the best vibes</p>
       </div>
-      
-        {/* SearchBarDiv */}
-        <div className="">
-        <input
-          type="text"
-          placeholder="Search cafes..."
-          className="w-full px-3 py-[0.45rem] rounded-lg border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        </div>
       </div>
       
       {isLoading && (
@@ -173,13 +157,13 @@ const Index = () => {
       
       {!isLoading && (
         <div className="space-y-2 px-4">
-          {filteredCafes.map(cafe => (
+          {displayedCafes.map(cafe => (
             <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
               <CafeCard cafe={cafe} />
             </div>
           ))}
           
-          {filteredCafes.length === 0 && !isLoading && (
+          {displayedCafes.length === 0 && !isLoading && (
             <div className="text-center py-10">
               <p className="text-gray-500">No cafes found</p>
             </div>

@@ -19,11 +19,16 @@ import {
 } from "lucide-react";
 import { type Cafe } from '../types';
 import useEmblaCarousel from 'embla-carousel-react';
+import type { EmblaOptionsType, EmblaPluginType } from 'embla-carousel';
+import Autoplay from 'embla-carousel-autoplay';
 
 interface CafeDetailProps {
   cafe: Cafe;
   onClose: () => void;
 }
+
+// 为 Embla 插件定义类型
+type EmblaPlugin = ReturnType<typeof Autoplay>;
 
 const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
   console.log('Cafe object received in CafeDetail component:', JSON.parse(JSON.stringify(cafe)));
@@ -31,8 +36,15 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
   // State for expandable opening hours
   const [isOpeningHoursExpanded, setIsOpeningHoursExpanded] = useState(false);
   
-  // Embla carousel setup without autoplay
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  // 配置自动播放选项
+  const autoplayOptions = { delay: 3000, stopOnInteraction: false };
+  
+  // Embla carousel setup with autoplay
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { loop: true }, 
+    // @ts-expect-error - embla-carousel-autoplay 和 embla-carousel-react 版本不兼容导致的类型错误
+    [Autoplay(autoplayOptions)]
+  );
   const [currentSlide, setCurrentSlide] = useState(0);
   
   // Handle slide changes
@@ -127,10 +139,43 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
     alert("Menu feature coming soon!");
   };
 
+  // Helper function to copy link to clipboard
+  async function copyLinkToClipboard(urlToCopy: string) {
+    try {
+      await navigator.clipboard.writeText(urlToCopy);
+      alert('Link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy link: ', err);
+      // Fallback to prompt if clipboard copy also fails
+      window.prompt('Failed to copy automatically. Please copy this link:', urlToCopy);
+    }
+  }
+
   // Handle Share button click
-  const handleShareClick = () => {
-    const shareUrl = getGoogleMapsUrl();
-    window.prompt("Copy this link to share:", shareUrl);
+  const handleShareClick = async () => {
+    const shareUrl = window.location.href; // URL of the current cafe detail page
+    const cafeName = cafe.name || 'this amazing cafe'; // Use actual cafe name if available
+    const shareTitle = `Check out ${cafeName} on Baliciaga!`;
+    const shareText = `I found this cool spot, ${cafeName}, on Baliciaga - your guide to Bali! Check it out:`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText, // Text is often used by some apps like email, WhatsApp
+          url: shareUrl,
+        });
+        console.log('Content shared successfully via Web Share API');
+      } catch (error) {
+        console.error('Error using Web Share API:', error);
+        // If user cancels share, or other error, fall back to clipboard copy
+        await copyLinkToClipboard(shareUrl);
+      }
+    } else {
+      // Fallback if Web Share API is not supported
+      console.log('Web Share API not supported, falling back to clipboard copy.');
+      await copyLinkToClipboard(shareUrl);
+    }
   };
 
   const hasPhotos = cafe.photos && Array.isArray(cafe.photos) && cafe.photos.length > 0;
@@ -174,7 +219,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
             )}
             
             {/* Add a semi-transparent gradient overlay with pointer-events-none to ensure it doesn't block touch events */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
           </>
         ) : (
           <div className={`${getGradientClass()} w-full h-full flex items-center justify-center text-white`}>{cafe.name} (No Image)</div>

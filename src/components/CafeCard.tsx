@@ -69,7 +69,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
         </div>
         
         {hasPhotos && (
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-[1] pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent z-[1] pointer-events-none"></div>
         )}
 
         <div className="absolute bottom-0 left-0 right-0 pt-4 px-4 pb-3 z-[2] bg-gradient-to-t from-black/70 via-black/40 to-transparent pointer-events-none">
