@@ -1,10 +1,15 @@
 import React, { useMemo } from 'react';
-import { Clock } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
 import { type Cafe } from '../types';
 import useEmblaCarousel from 'embla-carousel-react';
 
+// Extend Cafe type to include optional distance
+interface CafeWithDistance extends Cafe {
+  distanceInKm?: number;
+}
+
 type CafeCardProps = {
-  cafe?: Cafe;
+  cafe?: CafeWithDistance;
 };
 
 const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
@@ -103,9 +108,19 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
               <span className="text-yellow-500 mr-1">⭐</span>
               <span className="font-medium">{cafe.rating.toFixed(1)}/5</span>
               <span className="ml-1">({cafe.userRatingsTotal || 0})</span>
-          </div>
+            </div>
           )}
         </div>
+
+        {/* Display distance if available */}
+        {cafe.distanceInKm !== undefined && (
+          <div className="mt-1">
+            <span className="inline-flex items-center text-gray-500 text-sm">
+              <MapPin size={14} className="mr-1 text-gray-400" />
+              <span>{cafe.distanceInKm.toFixed(1)} km</span>
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

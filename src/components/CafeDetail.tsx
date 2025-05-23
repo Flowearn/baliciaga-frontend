@@ -188,7 +188,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
   return (
     <div className="bg-transparent w-full rounded-lg relative z-5 px-4 mb-8">
       {/* Carousel Image Container */}
-      <div className="floating-image-container rounded-2xl overflow-hidden bg-gray-700 relative z-30 aspect-[4/3] max-h-72 w-full">
+      <div className="floating-image-container rounded-2xl overflow-hidden bg-gray-700 relative z-30 w-full aspect-square">
         {hasPhotos ? (
           <>
             <div className="embla overflow-hidden h-full w-full" ref={emblaRef}>
@@ -371,13 +371,13 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
           )}
           {cafe.instagram && (
             <Button
-              // variant="outline" // Variant removed
-              // size="sm" // Size prop removed
+              asChild
               className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
-              onClick={() => window.open(cafe.instagram, '_blank')}
             >
-              <Instagram className="mr-1.5 h-4 w-4" />
-              Instagram
+              <a href={cafe.instagram} target="_blank" rel="noopener noreferrer">
+                <Instagram className="mr-1.5 h-4 w-4" />
+                Instagram
+              </a>
             </Button>
           )}
         </div>
