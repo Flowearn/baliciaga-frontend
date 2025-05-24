@@ -1,5 +1,12 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   Phone, 
   Globe, 
@@ -15,7 +22,9 @@ import {
   CheckCircle2,
   XCircle,
   ExternalLink,
-  Instagram
+  Instagram,
+  Home as HomeIcon,
+  Menu as MenuIcon
 } from "lucide-react";
 import { type Cafe } from '../types';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -25,16 +34,51 @@ import Autoplay from 'embla-carousel-autoplay';
 interface CafeDetailProps {
   cafe: Cafe;
   onClose: () => void;
+  pageBgColor?: string;
+  userLocation?: { latitude: number; longitude: number; } | null;
+  locationError?: string | null;
+}
+
+// Helper functions for distance calculation
+function deg2rad(deg: number): number {
+  return deg * (Math.PI / 180);
+}
+
+function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return Infinity; // Handle missing coords
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c; // Distance in km
+  return distance;
 }
 
 // 为 Embla 插件定义类型
 type EmblaPlugin = ReturnType<typeof Autoplay>;
 
-const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
+const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, userLocation, locationError }) => {
   console.log('Cafe object received in CafeDetail component:', JSON.parse(JSON.stringify(cafe)));
   
   // State for expandable opening hours
   const [isOpeningHoursExpanded, setIsOpeningHoursExpanded] = useState(false);
+  
+  // Calculate distance from user location to cafe
+  const distanceInKm = useMemo(() => {
+    if (userLocation && typeof cafe.latitude === 'number' && typeof cafe.longitude === 'number') {
+      return getDistanceFromLatLonInKm(
+        userLocation.latitude,
+        userLocation.longitude,
+        cafe.latitude,
+        cafe.longitude
+      );
+    }
+    return null;
+  }, [userLocation, cafe.latitude, cafe.longitude]);
   
   // 配置自动播放选项
   const autoplayOptions = { delay: 3000, stopOnInteraction: false };
@@ -186,202 +230,245 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose }) => {
   const hasPhotos = cafe.photos && Array.isArray(cafe.photos) && cafe.photos.length > 0;
 
   return (
-    <div className="bg-transparent w-full rounded-lg relative z-5 px-4 mb-8">
-      {/* Carousel Image Container */}
-      <div className="floating-image-container rounded-2xl overflow-hidden bg-gray-700 relative z-30 w-full aspect-square">
-        {hasPhotos ? (
-          <>
-            <div className="embla overflow-hidden h-full w-full" ref={emblaRef}>
-              <div className="embla__container flex h-full">
-                {cafe.photos.map((photoUrl, index) => (
-                  <div className="embla__slide flex-[0_0_100%] min-w-0 relative" key={index}>
-                    <img 
-                      src={photoUrl} 
-                      alt={`${cafe.name} - Photo ${index + 1}`} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
+    <div className="bg-transparent w-full rounded-lg relative z-5">
+      {/* Header Section */}
+      <div className="px-4 py-4 relative">
+        <div className="flex items-center justify-between w-full relative z-10">
+          {/* Home Icon (Left) */}
+          <Button variant="ghost" size="icon" className="text-white hover:bg-slate-700" asChild>
+            <Link to="/">
+              <HomeIcon className="h-6 w-6" />
+            </Link>
+          </Button>
+
+          {/* Title (Center) */}
+          <h1 className="text-3xl font-bold text-white">Baliciaga</h1>
+
+          {/* Menu Icon (Right) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-slate-700">
+                <MenuIcon className="h-6 w-6" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                className="flex justify-center" 
+                onSelect={() => { window.location.href = 'mailto:yo@baliciaga.com'; }}
+              >
+                Contact
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Content Container */}
+      <div className="px-4 mb-8">
+        {/* Carousel Image Container */}
+        <div className="floating-image-container rounded-2xl overflow-hidden bg-gray-700 relative z-30 w-full aspect-square">
+          {hasPhotos ? (
+            <>
+              <div className="embla overflow-hidden h-full w-full" ref={emblaRef}>
+                <div className="embla__container flex h-full">
+                  {cafe.photos.map((photoUrl, index) => (
+                    <div className="embla__slide flex-[0_0_100%] min-w-0 relative" key={index}>
+                      <img 
+                        src={photoUrl} 
+                        alt={`${cafe.name} - Photo ${index + 1}`} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
+              
+              {/* Pagination indicators - capsule style */}
+              {cafe.photos.length > 1 && (
+                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 z-40">
+                  {cafe.photos.map((_, index) => (
+                    <button 
+                      key={index}
+                      onClick={() => emblaApi && emblaApi.scrollTo(index)}
+                      className={`h-1 border-none p-0 rounded-full transition-all ${
+                        currentSlide === index 
+                          ? 'w-4 bg-white' 
+                          : 'w-2 bg-white/40 hover:bg-white/60'
+                      }`}
+                      aria-label={`Go to slide ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {/* Add a semi-transparent gradient overlay with pointer-events-none to ensure it doesn't block touch events */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
+            </>
+          ) : (
+            <div className={`${getGradientClass()} w-full h-full flex items-center justify-center text-white`}>{cafe.name} (No Image)</div>
+          )}
+        </div>
+        
+        {/* Name and rating in a single row - name on left, rating on right */}
+        <div className="name-rating-line mt-4 z-30 relative flex justify-between items-start">
+          <h1 className="text-2xl font-bold text-white drop-shadow-sm pr-2">{cafe.name}</h1>
+          <div className="flex flex-col items-end pt-1">
+            <div className="flex items-center flex-shrink-0">
+              <StarOutline size={18} className="text-yellow-500 mr-1" fill="currentColor" />
+              <span className="text-white text-sm drop-shadow-sm">{cafe.rating?.toFixed(1) || "N/A"}/5</span>
+              <span className="text-white/80 text-sm ml-1 drop-shadow-sm">({cafe.userRatingsTotal || 0})</span>
             </div>
-            
-            {/* Pagination indicators - capsule style */}
-            {cafe.photos.length > 1 && (
-              <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 z-40">
-                {cafe.photos.map((_, index) => (
-                  <button 
-                    key={index}
-                    onClick={() => emblaApi && emblaApi.scrollTo(index)}
-                    className={`h-1 border-none p-0 rounded-full transition-all ${
-                      currentSlide === index 
-                        ? 'w-4 bg-white' 
-                        : 'w-2 bg-white/40 hover:bg-white/60'
-                    }`}
-                    aria-label={`Go to slide ${index + 1}`}
-                  />
-                ))}
+            {distanceInKm !== null && typeof distanceInKm === 'number' && (
+              <div className="flex items-center text-white/80 text-sm mt-3 drop-shadow-sm">
+                <MapPin size={14} className="mr-1 text-gray-300" />
+                <span>{distanceInKm.toFixed(1)} km</span>
               </div>
             )}
-            
-            {/* Add a semi-transparent gradient overlay with pointer-events-none to ensure it doesn't block touch events */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
-          </>
-        ) : (
-          <div className={`${getGradientClass()} w-full h-full flex items-center justify-center text-white`}>{cafe.name} (No Image)</div>
+          </div>
+        </div>
+        
+        {/* Floating Button Row */}
+        <div className="floating-button-row my-5 flex items-center space-x-3 z-30 relative">
+          {/* Active button - white background with dark text */}
+          <button className="bg-white text-gray-800 px-3 py-1.5 rounded-full text-sm font-normal flex items-center justify-center grow basis-0">
+            <FileText size={16} className="mr-2" />
+            Info
+          </button>
+          {/* "Menu" button is confirmed removed */}
+          <button 
+            className="bg-white bg-opacity-20 text-white px-3 py-1.5 rounded-full text-sm font-normal flex items-center justify-center grow basis-0"
+            onClick={handleShareClick}
+          >
+            <Share2 size={16} className="mr-2" />
+            Share
+          </button>
+        </div>
+        
+        {/* Unified Content Container with semi-transparent overlay */}
+        <div className="content-area-container mt-4 bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md z-30 relative text-white/90">
+          {/* Date/Hours/Weather Container */}
+          <div className="datetime-weather-container relative z-30 mb-4">
+            <div className="flex justify-between items-center">
+              {/* Left side: Date and Status */}
+              <div className="flex items-center space-x-3">
+                <h3 className="font-medium">{currentDay}</h3>
+                
+                {/* Open/Closed Status */}
+                {typeof cafe.isOpenNow === 'boolean' ? (
+                  cafe.isOpenNow ? (
+                    <div className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
+                      Open
+                    </div>
+                  ) : (
+                    <div className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
+                      Closed
+                    </div>
+                  )
+                ) : null}
+              </div>
+          
+              {/* Right side: Weather Info (placeholder) */}
+              <div className="weather-info flex items-center">
+                <Sun size={18} className="mr-2 text-yellow-400" />
+                <span className="text-sm">28°C</span>
+              </div>
+            </div>
+          
+            {/* Opening Hours with expand/collapse functionality */}
+            <div className="mt-3">
+              <div 
+                className="flex items-center cursor-pointer" 
+                onClick={() => setIsOpeningHoursExpanded(!isOpeningHoursExpanded)}
+              >
+                <p className="text-gray-200/90 text-sm">
+                  {todayOpeningHours}
+                </p>
+                <div className="ml-2">
+                  {isOpeningHoursExpanded ? (
+                    <ChevronUp size={16} className="text-gray-300" />
+                ) : (
+                    <ChevronDown size={16} className="text-gray-300" />
+                )}
+                </div>
+              </div>
+              
+              {/* Expanded opening hours */}
+              {isOpeningHoursExpanded && cafe.openingHours && Array.isArray(cafe.openingHours) && cafe.openingHours.length > 0 && (
+                <div className="mt-2 pl-1">
+                  {cafe.openingHours.map((hours, index) => (
+                    <p key={index} className="text-gray-200/90 text-sm mb-1">
+                      {hours || ""}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Separator Line */}
+          <hr className="border-gray-600 my-4" />
+          
+          {/* Map Container (This is the one to KEEP, inside content-area-container) */}
+          <div className="mt-6 rounded-lg overflow-hidden">
+            <a 
+              href={getGoogleMapsUrl()} 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              {cafe.staticMapS3Url ? (
+                <img 
+                  src={cafe.staticMapS3Url}
+                  alt={`Map of ${cafe.name}`}
+                  className="w-full h-auto object-cover"
+                />
+              ) : (
+                <div className="w-full h-[300px] bg-gray-200 flex items-center justify-center text-gray-600">
+                  No map image available
+                </div>
+              )}
+            </a>
+          </div>
+        </div> {/* End of content-area-container */}
+
+        {/* Contact Buttons Row - Applying new flex-grow layout */}
+        {(cafe.phoneNumber || cafe.website || cafe.instagram) && (
+          <div className="flex items-center space-x-3 mt-4 mb-8">
+            {cafe.phoneNumber && (
+              <Button
+                // variant="outline" // Variant removed
+                // size="sm" // Size prop removed
+                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
+                onClick={() => window.location.href = `tel:${cafe.phoneNumber}`}
+              >
+                <Phone className="mr-1.5 h-4 w-4" />
+                Tel
+              </Button>
+            )}
+            {cafe.website && (
+              <Button
+                // variant="outline" // Variant removed
+                // size="sm" // Size prop removed
+                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
+                onClick={() => window.open(cafe.website, '_blank')}
+              >
+                <Globe className="mr-1.5 h-4 w-4" />
+                Web
+              </Button>
+            )}
+            {cafe.instagram && (
+              <Button
+                asChild
+                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
+              >
+                <a href={cafe.instagram} target="_blank" rel="noopener noreferrer">
+                  <Instagram className="mr-1.5 h-4 w-4" />
+                  Instagram
+                </a>
+              </Button>
+            )}
+          </div>
         )}
       </div>
-      
-      {/* Name and rating in a single row - name on left, rating on right */}
-      <div className="name-rating-line mt-4 z-30 relative flex justify-between items-start">
-        <h1 className="text-2xl font-bold text-white drop-shadow-sm pr-2">{cafe.name}</h1>
-        <div className="flex items-center flex-shrink-0 mt-1">
-          <StarOutline size={18} className="text-yellow-500 mr-1" fill="currentColor" />
-          <span className="text-white text-sm drop-shadow-sm">{cafe.rating?.toFixed(1) || "N/A"}/5</span>
-          <span className="text-white/80 text-sm ml-1 drop-shadow-sm">({cafe.userRatingsTotal || 0})</span>
-        </div>
-      </div>
-      
-      {/* Floating Button Row */}
-      <div className="floating-button-row my-5 flex items-center space-x-3 z-30 relative">
-        {/* Active button - white background with dark text */}
-        <button className="bg-white text-gray-800 px-3 py-1.5 rounded-full text-sm font-normal flex items-center justify-center grow basis-0">
-          <FileText size={16} className="mr-2" />
-          Info
-        </button>
-        {/* "Menu" button is confirmed removed */}
-        <button 
-          className="bg-white bg-opacity-20 text-white px-3 py-1.5 rounded-full text-sm font-normal flex items-center justify-center grow basis-0"
-          onClick={handleShareClick}
-        >
-          <Share2 size={16} className="mr-2" />
-          Share
-        </button>
-      </div>
-      
-      {/* Unified Content Container with semi-transparent overlay */}
-      <div className="content-area-container mt-4 bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md z-30 relative text-white/90">
-        {/* Date/Hours/Weather Container */}
-        <div className="datetime-weather-container relative z-30 mb-4">
-          <div className="flex justify-between items-center">
-            {/* Left side: Date and Status */}
-            <div className="flex items-center space-x-3">
-              <h3 className="font-medium">{currentDay}</h3>
-              
-              {/* Open/Closed Status */}
-              {typeof cafe.isOpenNow === 'boolean' ? (
-                cafe.isOpenNow ? (
-                  <div className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
-                    Open
-                  </div>
-                ) : (
-                  <div className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
-                    Closed
-                  </div>
-                )
-              ) : null}
-            </div>
-        
-            {/* Right side: Weather Info (placeholder) */}
-            <div className="weather-info flex items-center">
-              <Sun size={18} className="mr-2 text-yellow-400" />
-              <span className="text-sm">28°C</span>
-            </div>
-          </div>
-        
-          {/* Opening Hours with expand/collapse functionality */}
-          <div className="mt-3">
-            <div 
-              className="flex items-center cursor-pointer" 
-              onClick={() => setIsOpeningHoursExpanded(!isOpeningHoursExpanded)}
-            >
-              <p className="text-gray-200/90 text-sm">
-                {todayOpeningHours}
-              </p>
-              <div className="ml-2">
-                {isOpeningHoursExpanded ? (
-                  <ChevronUp size={16} className="text-gray-300" />
-              ) : (
-                  <ChevronDown size={16} className="text-gray-300" />
-              )}
-              </div>
-            </div>
-            
-            {/* Expanded opening hours */}
-            {isOpeningHoursExpanded && cafe.openingHours && Array.isArray(cafe.openingHours) && cafe.openingHours.length > 0 && (
-              <div className="mt-2 pl-1">
-                {cafe.openingHours.map((hours, index) => (
-                  <p key={index} className="text-gray-200/90 text-sm mb-1">
-                    {hours || ""}
-                  </p>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Separator Line */}
-        <hr className="border-gray-600 my-4" />
-        
-        {/* Map Container (This is the one to KEEP, inside content-area-container) */}
-        <div className="mt-6 rounded-lg overflow-hidden">
-          <a 
-            href={getGoogleMapsUrl()} 
-            target="_blank" 
-            rel="noopener noreferrer"
-          >
-            {cafe.staticMapS3Url ? (
-              <img 
-                src={cafe.staticMapS3Url}
-                alt={`Map of ${cafe.name}`}
-                className="w-full h-auto object-cover"
-              />
-            ) : (
-              <div className="w-full h-[300px] bg-gray-200 flex items-center justify-center text-gray-600">
-                No map image available
-              </div>
-            )}
-          </a>
-        </div>
-      </div> {/* End of content-area-container */}
-
-      {/* Contact Buttons Row - Applying new flex-grow layout */}
-      {(cafe.phoneNumber || cafe.website || cafe.instagram) && (
-        <div className="flex items-center space-x-3 mt-4 mb-8">
-          {cafe.phoneNumber && (
-            <Button
-              // variant="outline" // Variant removed
-              // size="sm" // Size prop removed
-              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
-              onClick={() => window.location.href = `tel:${cafe.phoneNumber}`}
-            >
-              <Phone className="mr-1.5 h-4 w-4" />
-              Tel
-            </Button>
-          )}
-          {cafe.website && (
-            <Button
-              // variant="outline" // Variant removed
-              // size="sm" // Size prop removed
-              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
-              onClick={() => window.open(cafe.website, '_blank')}
-            >
-              <Globe className="mr-1.5 h-4 w-4" />
-              Web
-            </Button>
-          )}
-          {cafe.instagram && (
-            <Button
-              asChild
-              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
-            >
-              <a href={cafe.instagram} target="_blank" rel="noopener noreferrer">
-                <Instagram className="mr-1.5 h-4 w-4" />
-                Instagram
-              </a>
-            </Button>
-          )}
-        </div>
-      )}
     </div>
   );
 };

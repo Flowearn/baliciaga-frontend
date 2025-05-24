@@ -17,6 +17,10 @@ const CafeDetailPage: React.FC = () => {
   // State for random background color
   const [bgColor, setBgColor] = useState<string>('');
   
+  // State for user location and location error
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number; } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  
   // Pantone background colors
   useEffect(() => {
     const pantoneBackgroundColors = [
@@ -32,6 +36,34 @@ const CafeDetailPage: React.FC = () => {
     const randomIndex = Math.floor(Math.random() * pantoneBackgroundColors.length);
     setBgColor(pantoneBackgroundColors[randomIndex]);
   }, []); // Empty dependency array ensures this runs only once on mount
+  
+  // Fetch user's geolocation on component mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          setLocationError(null); // Clear any previous error
+          console.log("User location fetched/retrieved for CafeDetailPage:", position.coords);
+        },
+        (error) => {
+          setLocationError("Unable to retrieve your location to calculate distance.");
+          setUserLocation(null); // Clear any previous location
+          console.error("Geolocation error in CafeDetailPage:", error.message);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000, // 10 seconds
+          maximumAge: 300000 // 5 minutes (5 * 60 * 1000 ms)
+        }
+      );
+    } else {
+      setLocationError("Geolocation is not supported by this browser.");
+    }
+  }, []); // Empty dependency array ensures this runs once on mount
   
   // Extract the cafe data from location state if available
   const initialCafeData = location.state?.cafeData as Cafe | undefined;
@@ -103,7 +135,7 @@ const CafeDetailPage: React.FC = () => {
   // Display cafe detail (back button removed)
   return (
     <div 
-      className="relative w-full py-8 overflow-y-auto"
+      className="relative w-full pb-8 overflow-y-auto"
       style={{ backgroundColor: bgColor }}
     >
       <div className="absolute inset-0 bg-black bg-opacity-40 z-1 pointer-events-none"></div>
@@ -111,6 +143,8 @@ const CafeDetailPage: React.FC = () => {
       <CafeDetail 
         cafe={cafe} 
         onClose={handleGoBack}
+        pageBgColor={bgColor}
+        userLocation={userLocation}
       />
     </div>
   );

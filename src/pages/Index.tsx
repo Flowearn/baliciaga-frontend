@@ -252,7 +252,20 @@ const Index = () => {
         {/* HeaderContentDiv */}
         <div className="pt-5 pb-0">
           <div className="flex items-center justify-between w-full">
-            {/* Menu Icon (Left) */}
+            {/* Search Icon (Left) */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-black hover:bg-gray-200"
+              onClick={() => setIsSearchModalOpen(true)}
+            >
+              <SearchIcon className="h-6 w-6" />
+            </Button>
+
+            {/* Title (Center) */}
+            <h1 className="text-3xl font-bold text-black">Baliciaga</h1>
+
+            {/* Menu Icon (Right) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-black hover:bg-gray-200">
@@ -268,19 +281,6 @@ const Index = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Title (Center) */}
-            <h1 className="text-3xl font-bold text-black">Baliciaga</h1>
-
-            {/* Search Icon (Right) */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-black hover:bg-gray-200"
-              onClick={() => setIsSearchModalOpen(true)}
-            >
-              <SearchIcon className="h-6 w-6" />
-            </Button>
           </div>
         <p className="text-center text-gray-500 mt-1">Flow with the best vibes</p>
       </div>
@@ -338,11 +338,6 @@ const Index = () => {
       
       {!isLoading && (
         <div className="space-y-2 px-4">
-          {locationError && (
-            <div className="text-center py-2 text-sm text-gray-500">
-              {locationError}
-            </div>
-          )}
           {sortedCafes.map(cafe => (
             <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
               <CafeCard cafe={cafe} />
