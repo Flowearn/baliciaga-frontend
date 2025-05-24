@@ -97,12 +97,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
       </div>
       
       <div className="mt-2">
-        <div className="flex justify-between items-center">
-          <span className="inline-flex items-center text-gray-500 text-sm truncate max-w-[calc(100%-theme(spacing.28))]">
-            <Clock size={14} className="mr-1 text-gray-400 flex-shrink-0" />
-            <span className="truncate">{todayOpeningHours}</span>
-          </span>
-          
+        <div className="flex justify-between items-start">
           {cafe.rating !== undefined && (
             <div className="text-sm flex items-center text-gray-500 flex-shrink-0">
               <span className="text-yellow-500 mr-1">⭐</span>
@@ -110,17 +105,22 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
               <span className="ml-1">({cafe.userRatingsTotal || 0})</span>
             </div>
           )}
-        </div>
-
-        {/* Display distance if available */}
-        {cafe.distanceInKm !== undefined && (
-          <div className="mt-1">
-            <span className="inline-flex items-center text-gray-500 text-sm">
-              <MapPin size={14} className="mr-1 text-gray-400" />
-              <span>{cafe.distanceInKm.toFixed(1)} km</span>
+          
+          <div className="flex flex-col items-end">
+            <span className="flex items-center text-gray-500 text-sm w-full truncate">
+              <Clock size={14} className="mr-1 text-gray-400 flex-shrink-0" />
+              <span className="truncate">{todayOpeningHours}</span>
             </span>
+            
+            {/* Display distance if available */}
+            {cafe.distanceInKm !== undefined && (
+              <span className="inline-flex items-center text-gray-500 text-sm mt-1">
+                <MapPin size={14} className="mr-1 text-gray-400" />
+                <span>{cafe.distanceInKm.toFixed(1)} km</span>
+              </span>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
