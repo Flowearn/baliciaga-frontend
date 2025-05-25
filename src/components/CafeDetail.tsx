@@ -232,7 +232,11 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
   return (
     <div className="bg-transparent w-full rounded-lg relative z-5">
       {/* Header Section */}
-      <div className="px-4 py-4 relative">
+      <div className="sticky top-0 z-40 px-4 py-3 relative" style={{ backgroundColor: pageBgColor || '#1E293B' }}>
+        {/* Internal Overlay */}
+        <div className="absolute inset-0 bg-black/40"></div>
+        
+        {/* Title Row */}
         <div className="flex items-center justify-between w-full relative z-10">
           {/* Home Icon (Left) */}
           <Button variant="ghost" size="icon" className="text-white hover:bg-slate-700" asChild>
@@ -242,7 +246,12 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           </Button>
 
           {/* Title (Center) */}
-          <h1 className="text-3xl font-bold text-white">Baliciaga</h1>
+          <h1 
+            className="text-3xl font-bold text-white cursor-pointer"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
+            Baliciaga
+          </h1>
 
           {/* Menu Icon (Right) */}
           <DropdownMenu>
@@ -302,7 +311,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
               )}
               
               {/* Add a semi-transparent gradient overlay with pointer-events-none to ensure it doesn't block touch events */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
             </>
           ) : (
             <div className={`${getGradientClass()} w-full h-full flex items-center justify-center text-white`}>{cafe.name} (No Image)</div>

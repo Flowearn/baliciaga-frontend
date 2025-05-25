@@ -52,7 +52,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
 
   return (
     <div className="w-full mb-5">
-      <div className="embla w-full rounded-xl relative overflow-hidden shadow-sm bg-gray-300 aspect-video max-h-72">
+      <div className="embla w-full rounded-xl relative overflow-hidden shadow-sm bg-gray-300 aspect-[4/3]">
         <div className="embla__viewport h-full" ref={emblaRef}>
           <div className="embla__container flex h-full">
             {hasPhotos ? (
@@ -74,7 +74,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
         </div>
         
         {hasPhotos && (
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent z-[1] pointer-events-none"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent z-[1] pointer-events-none"></div>
         )}
 
         <div className="absolute bottom-0 left-0 right-0 pt-4 px-4 pb-3 z-[2] bg-gradient-to-t from-black/70 via-black/40 to-transparent pointer-events-none">

@@ -248,9 +248,10 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Sticky Wrapper Div */}
-      <div className="sticky top-0 z-50 bg-gray-50 pb-4 px-4">
+      <div className="sticky top-0 z-50 bg-gray-50 py-3 px-4">
         {/* HeaderContentDiv */}
-        <div className="pt-5 pb-0">
+        <div className="pt-0 pb-0">
+          {/* Title Row */}
           <div className="flex items-center justify-between w-full">
             {/* Search Icon (Left) */}
             <Button 
@@ -263,7 +264,12 @@ const Index = () => {
             </Button>
 
             {/* Title (Center) */}
-            <h1 className="text-3xl font-bold text-black">Baliciaga</h1>
+            <h1 
+              className="text-3xl font-bold text-black cursor-pointer"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              Baliciaga
+            </h1>
 
             {/* Menu Icon (Right) */}
             <DropdownMenu>
@@ -282,8 +288,7 @@ const Index = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        <p className="text-center text-gray-500 mt-1">Flow with the best vibes</p>
-      </div>
+        </div>
       </div>
       
       {/* Search Modal */}

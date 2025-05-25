@@ -135,7 +135,7 @@ const CafeDetailPage: React.FC = () => {
   // Display cafe detail (back button removed)
   return (
     <div 
-      className="relative w-full pb-8 overflow-y-auto"
+      className="relative w-full pb-8"
       style={{ backgroundColor: bgColor }}
     >
       <div className="absolute inset-0 bg-black bg-opacity-40 z-1 pointer-events-none"></div>
