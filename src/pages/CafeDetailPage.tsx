@@ -21,6 +21,11 @@ const CafeDetailPage: React.FC = () => {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number; } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+  
   // Pantone background colors
   useEffect(() => {
     const pantoneBackgroundColors = [
