@@ -383,7 +383,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           
           {/* Share button */}
           <Button 
-            className="bg-white text-gray-800 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1"
+            className="bg-white text-gray-800 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 focus:ring-0 focus:ring-offset-0 active:bg-white active:text-gray-800 focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-white hover:text-gray-800"
             onClick={handleShareClick}
           >
             <Share2 size={16} className="mr-2" />

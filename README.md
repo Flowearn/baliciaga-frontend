@@ -16,6 +16,32 @@
 * Zod - 表单验证
 * Sonner - 通知组件
 
+## Key Features & Recent Updates
+
+* **Core Stack:** Built with React, TypeScript, and Vite for a fast development experience and optimized production builds.
+
+* **UI & Styling:** Utilizes shadcn/ui component library and Tailwind CSS for a modern, responsive user interface. Icons by Lucide React.
+
+* **Routing:** Implements client-side SPA routing using React Router DOM, with `vercel.json` configured for correct deep linking on Vercel.
+
+* **Data Handling:** Uses TanStack React Query for efficient server state management, data fetching (from backend API via `cafeService.ts`), and caching.
+
+* **Cafe Discovery & Display:**
+  * Displays a list of cafes on the homepage (`Index.tsx`) with individual cards (`CafeCard.tsx`).
+  * Provides a detailed view for each cafe (`CafeDetailPage.tsx` + `CafeDetail.tsx`).
+  * Image carousels for cafe photos with autoplay functionality.
+  * Optimized WebP images (restaurant photos and static maps) served from S3 (via backend API).
+
+* **Interactive UX Features:**
+  * **Geolocation & Distance Sorting:** Automatically sorts cafes by distance from the user's current location (with permission), refreshes stale location data on tab focus, and gracefully falls back to default sort if location is unavailable. Distances are displayed.
+  * **Search Functionality:** Modal-based search on the homepage, triggered by an icon, with real-time filtering and navigation to detail pages from results.
+  * **Native Share Functionality:** Implemented on detail pages using the Web Share API, with a clipboard fallback.
+  * **Scroll-to-Top:** Clicking the "Baliciaga" logo in headers scrolls the page to the top.
+  * **Consistent Headers:** Sticky header on detail page, refined layouts and padding on both homepage and detail page headers.
+  * **Dynamic Content Display:** Shows real-time open/closed status, formatted opening hours, and cafe attributes (dog-friendly, outdoor seating, vegetarian options).
+
+* **Deployment:** Deployed on Vercel, utilizing environment variables for API configuration.
+
 ## 项目设置与运行
 
 ### 先决条件
