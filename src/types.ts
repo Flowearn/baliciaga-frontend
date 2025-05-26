@@ -18,4 +18,8 @@ export interface Cafe {
   businessStatus: string; // e.g., "OPERATIONAL"
   googleMapsUri?: string; // Optional
   staticMapS3Url?: string; // Optional, pre-generated static map image URL from S3
+  gofoodUrl?: string; // Optional, GoFood delivery URL
+  allowsDogs?: boolean; // Optional, whether the cafe allows dogs
+  outdoorSeating?: boolean; // Optional, whether the cafe has outdoor seating
+  servesVegetarianFood?: boolean; // Optional, whether the cafe serves vegetarian food
 } 

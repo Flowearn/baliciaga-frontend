@@ -24,7 +24,11 @@ import {
   ExternalLink,
   Instagram,
   Home as HomeIcon,
-  Menu as MenuIcon
+  Menu as MenuIcon,
+  Bike,
+  Dog,
+  Wind,
+  Leaf
 } from "lucide-react";
 import { type Cafe } from '../types';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -139,6 +143,32 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
     const hoursMatch = dayEntry.match(/:\s*(.+)/);
     return hoursMatch && hoursMatch[1] ? hoursMatch[1].trim() : "Hours unavailable";
   }, [cafe.openingHours, currentDay]);
+
+  // Format opening hours from "Monday: 6:30 AM – 5:00 PM" to "6:30 AM – 5:00 PM @ Mon"
+  const formatOpeningHours = (hoursString: string) => {
+    if (!hoursString) return "";
+    
+    // Day name mapping to abbreviated forms
+    const dayAbbreviations: { [key: string]: string } = {
+      'monday': 'Mon',
+      'tuesday': 'Tue', 
+      'wednesday': 'Wed',
+      'thursday': 'Thu',
+      'friday': 'Fri',
+      'saturday': 'Sat',
+      'sunday': 'Sun'
+    };
+
+    // Match pattern like "Monday: 6:30 AM – 5:00 PM"
+    const match = hoursString.match(/^(\w+):\s*(.+)$/);
+    if (!match) return hoursString; // Return original if no match
+    
+    const [, dayName, timeRange] = match;
+    const dayKey = dayName.toLowerCase();
+    const abbreviatedDay = dayAbbreviations[dayKey] || dayName;
+    
+    return `${timeRange} @ ${abbreviatedDay}`;
+  };
 
   // NOTE: getMapImageUrl function has been removed as we now use pre-generated staticMapS3Url from the cafe object
   /* 
@@ -324,8 +354,8 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           <div className="flex flex-col items-end pt-1">
             <div className="flex items-center flex-shrink-0">
               <StarOutline size={18} className="text-yellow-500 mr-1" fill="currentColor" />
-              <span className="text-white text-sm drop-shadow-sm">{cafe.rating?.toFixed(1) || "N/A"}/5</span>
-              <span className="text-white/80 text-sm ml-1 drop-shadow-sm">({cafe.userRatingsTotal || 0})</span>
+              <span className="text-white/80 text-sm drop-shadow-sm">{cafe.rating?.toFixed(1) || "N/A"}/5</span>
+              <span className="text-white/60 text-sm ml-1 drop-shadow-sm">({cafe.userRatingsTotal || 0})</span>
             </div>
             {distanceInKm !== null && typeof distanceInKm === 'number' && (
               <div className="flex items-center text-white/80 text-sm mt-3 drop-shadow-sm">
@@ -338,53 +368,36 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
         
         {/* Floating Button Row */}
         <div className="floating-button-row my-5 flex items-center space-x-3 z-30 relative">
-          {/* Active button - white background with dark text */}
-          <button className="bg-white text-gray-800 px-3 py-1.5 rounded-full text-sm font-normal flex items-center justify-center grow basis-0">
-            <FileText size={16} className="mr-2" />
-            Info
-          </button>
-          {/* "Menu" button is confirmed removed */}
-          <button 
-            className="bg-white bg-opacity-20 text-white px-3 py-1.5 rounded-full text-sm font-normal flex items-center justify-center grow basis-0"
+          {/* Delivery button - conditional rendering based on gofoodUrl */}
+          {cafe.gofoodUrl && (
+            <Button
+              asChild
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1"
+            >
+              <a href={cafe.gofoodUrl} target="_blank" rel="noopener noreferrer">
+                <Bike size={16} className="mr-2" />
+                Delivery
+              </a>
+            </Button>
+          )}
+          
+          {/* Share button */}
+          <Button 
+            className="bg-white text-gray-800 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1"
             onClick={handleShareClick}
           >
             <Share2 size={16} className="mr-2" />
             Share
-          </button>
+          </Button>
         </div>
         
         {/* Unified Content Container with semi-transparent overlay */}
         <div className="content-area-container mt-4 bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md z-30 relative text-white/90">
           {/* Date/Hours/Weather Container */}
           <div className="datetime-weather-container relative z-30 mb-4">
-            <div className="flex justify-between items-center">
-              {/* Left side: Date and Status */}
-              <div className="flex items-center space-x-3">
-                <h3 className="font-medium">{currentDay}</h3>
-                
-                {/* Open/Closed Status */}
-                {typeof cafe.isOpenNow === 'boolean' ? (
-                  cafe.isOpenNow ? (
-                    <div className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
-                      Open
-                    </div>
-                  ) : (
-                    <div className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
-                      Closed
-                    </div>
-                  )
-                ) : null}
-              </div>
-          
-              {/* Right side: Weather Info (placeholder) */}
-              <div className="weather-info flex items-center">
-                <Sun size={18} className="mr-2 text-yellow-400" />
-                <span className="text-sm">28°C</span>
-              </div>
-            </div>
-          
-            {/* Opening Hours with expand/collapse functionality */}
-            <div className="mt-3">
+            {/* Opening Hours with expand/collapse functionality and Open/Closed status */}
+            <div className="flex items-center mt-3">
+              {/* Left Part: Specific Hours + Chevron */}
               <div 
                 className="flex items-center cursor-pointer" 
                 onClick={() => setIsOpeningHoursExpanded(!isOpeningHoursExpanded)}
@@ -395,27 +408,61 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
                 <div className="ml-2">
                   {isOpeningHoursExpanded ? (
                     <ChevronUp size={16} className="text-gray-300" />
-                ) : (
+                  ) : (
                     <ChevronDown size={16} className="text-gray-300" />
-                )}
+                  )}
                 </div>
               </div>
-              
-              {/* Expanded opening hours */}
-              {isOpeningHoursExpanded && cafe.openingHours && Array.isArray(cafe.openingHours) && cafe.openingHours.length > 0 && (
-                <div className="mt-2 pl-1">
-                  {cafe.openingHours.map((hours, index) => (
-                    <p key={index} className="text-gray-200/90 text-sm mb-1">
-                      {hours || ""}
-                    </p>
-                  ))}
+
+              {/* Status Badge - positioned to the right of hours */}
+              {typeof cafe.isOpenNow === 'boolean' ? (
+                cafe.isOpenNow ? (
+                  <div className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full ml-3">
+                    Open
+                  </div>
+                ) : (
+                  <div className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full ml-3">
+                    Closed
+                  </div>
+                )
+              ) : null}
+            </div>
+            
+            {/* Expanded opening hours */}
+            {isOpeningHoursExpanded && cafe.openingHours && Array.isArray(cafe.openingHours) && cafe.openingHours.length > 0 && (
+              <div className="mt-2 pl-1">
+                {cafe.openingHours.map((hours, index) => (
+                  <p key={index} className="text-gray-200/90 text-sm mb-1">
+                    {formatOpeningHours(hours || "")}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Cafe Attributes Row */}
+          {(cafe.allowsDogs || cafe.outdoorSeating || cafe.servesVegetarianFood) && (
+            <div className="flex justify-around items-start my-6">
+              {cafe.servesVegetarianFood && (
+                <div className="flex flex-col items-center text-center">
+                  <Leaf size={20} className="text-gray-300 mb-1" />
+                  <p className="text-xs text-gray-300">Serves Vegetarian</p>
+                </div>
+              )}
+              {cafe.allowsDogs && (
+                <div className="flex flex-col items-center text-center">
+                  <Dog size={20} className="text-gray-300 mb-1" />
+                  <p className="text-xs text-gray-300">Allows Dogs</p>
+                </div>
+              )}
+              {cafe.outdoorSeating && (
+                <div className="flex flex-col items-center text-center">
+                  <Wind size={20} className="text-gray-300 mb-1" />
+                  <p className="text-xs text-gray-300">Outdoor Seating</p>
                 </div>
               )}
             </div>
-          </div>
-          
-          {/* Separator Line */}
-          <hr className="border-gray-600 my-4" />
+          )}
           
           {/* Map Container (This is the one to KEEP, inside content-area-container) */}
           <div className="mt-6 rounded-lg overflow-hidden">
