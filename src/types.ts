@@ -22,4 +22,5 @@ export interface Cafe {
   allowsDogs?: boolean; // Optional, whether the cafe allows dogs
   outdoorSeating?: boolean; // Optional, whether the cafe has outdoor seating
   servesVegetarianFood?: boolean; // Optional, whether the cafe serves vegetarian food
+  table?: string; // Optional, table booking URL
 } 

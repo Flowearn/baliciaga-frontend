@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import CafeCard from '../components/CafeCard';
 import { fetchCafes } from '../services/cafeService';
 import { type Cafe } from '../types';
@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu as MenuIcon, Search as SearchIcon, X as XIcon } from "lucide-react";
+import { Menu as MenuIcon, Search as SearchIcon, X as XIcon, Coffee, Wine } from "lucide-react";
 
 // Haversine formula to calculate distance between two points on Earth
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -41,8 +41,23 @@ interface CafeWithDistance extends Cafe {
 const Index = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // State for category selection - initialize from URL parameter
+  const initialCategoryFromURL = searchParams.get('type') as 'cafe' | 'bar' | null;
+  const initialSelectedCategoryValue = initialCategoryFromURL === 'bar' ? 'bar' : 'cafe';
+  console.log('[Index.tsx] useState init: initialCategoryFromURL:', initialCategoryFromURL);
+  console.log('[Index.tsx] useState init: initialSelectedCategoryValue set to:', initialSelectedCategoryValue);
+  const [selectedCategory, setSelectedCategory] = useState<'cafe' | 'bar'>(
+    initialSelectedCategoryValue
+  );
+  
+  // State for preloading control
+  const [isHomepageActive, setIsHomepageActive] = useState<boolean>(true);
+  const preloadedUrls = useRef(new Set<string>());
   
   // State for geolocation
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number; } | null>(null);
@@ -53,8 +68,8 @@ const Index = () => {
   const STALE_LOCATION_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
   
   const { data: cafes, isLoading, error } = useQuery({
-    queryKey: ['cafes'],
-    queryFn: fetchCafes,
+    queryKey: ['cafes', selectedCategory],
+    queryFn: () => fetchCafes(selectedCategory),
     placeholderData: [
       {
         placeId: '1',
@@ -111,6 +126,36 @@ const Index = () => {
     ]
   });
   
+  // Handle category change - update both state and URL
+  const handleCategoryChange = (newCategory: 'cafe' | 'bar') => {
+    console.log('[Index.tsx] handleCategoryChange: Clicked category:', newCategory);
+    console.log('[Index.tsx] handleCategoryChange: current selectedCategory BEFORE update:', selectedCategory);
+    setSelectedCategory(newCategory); // 1. 更新 React state
+    setSearchParams({ type: newCategory }, { replace: true }); // 2. 更新 URL search param (使用 replace 避免不必要的历史记录)
+    console.log('[Index.tsx] handleCategoryChange: selectedCategory AFTER update (expected):', newCategory);
+    console.log('[Index.tsx] handleCategoryChange: searchParams AFTER update (expected):', `type=${newCategory}`);
+  };
+  
+  // Effect to update selectedCategory when URL parameter changes (for external URL changes like browser back/forward)
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('type') as 'cafe' | 'bar' | null;
+    console.log('[Index.tsx] useEffect[searchParams]: categoryFromUrl from searchParams:', categoryFromUrl);
+
+    // 将URL参数规范化为 'cafe' 或 'bar'，如果参数不存在或无效，则默认为 'cafe'
+    const newCategoryToSet = (categoryFromUrl === 'bar') ? 'bar' : 'cafe';
+    console.log('[Index.tsx] useEffect[searchParams]: newCategoryToSet based on URL:', newCategoryToSet);
+    console.log('[Index.tsx] useEffect[searchParams]: current selectedCategory state BEFORE potential update:', selectedCategory);
+
+    // 只有当URL导出的分类与当前React state中的分类不一致时，才更新state
+    // 这避免了在按钮点击（已同时更新state和URL）后不必要的state重设
+    if (newCategoryToSet !== selectedCategory) {
+      console.log('[Index.tsx] useEffect[searchParams]: Updating selectedCategory to:', newCategoryToSet);
+      setSelectedCategory(newCategoryToSet);
+    } else {
+      console.log('[Index.tsx] useEffect[searchParams]: No update to selectedCategory needed, already in sync.');
+    }
+  }, [searchParams, selectedCategory]); // 主要依赖 searchParams，避免循环更新
+
   // Geolocation fetch function
   const fetchUserLocationAndProcessCafes = async () => {
     if (!navigator.geolocation) {
@@ -143,6 +188,19 @@ const Index = () => {
   useEffect(() => {
     fetchUserLocationAndProcessCafes();
   }, []);
+
+  // DIAGNOSTIC: Track component mounting/unmounting (for debugging scroll issue)
+  useEffect(() => {
+    console.log('[DIAGNOSTIC] Index.tsx: Component Did MOUNT. Timestamp:', Date.now());
+    return () => {
+      console.log('[DIAGNOSTIC] Index.tsx: Component Will UNMOUNT. Timestamp:', Date.now());
+    };
+  }, []); // Empty dependency array means this runs only on mount and unmount
+
+  // Effect to manage isHomepageActive based on location
+  useEffect(() => {
+    setIsHomepageActive(location.pathname === '/');
+  }, [location.pathname]);
 
   // Re-fetch geolocation on tab visibility change if stale
   useEffect(() => {
@@ -194,7 +252,7 @@ const Index = () => {
 
     // If we have user location, calculate distances and sort by distance
     if (userLocation) {
-      console.log("Sorting cafes by distance from user location");
+      console.log(`Sorting ${selectedCategory}s by distance from user location`);
       const cafesWithDistance = cafes.map(cafe => {
         const distanceInKm = getDistanceFromLatLonInKm(
           userLocation.latitude,
@@ -225,7 +283,38 @@ const Index = () => {
       if (!a.isOpenNow && b.isOpenNow) return 1;
       return 0;
     });
-  }, [cafes, userLocation]);
+  }, [cafes, userLocation, selectedCategory]);
+
+  // Main preloading logic for homepage images
+  useEffect(() => {
+    // Return early if not on homepage or no cafes available
+    if (!isHomepageActive || !sortedCafes || sortedCafes.length === 0) {
+      return;
+    }
+
+    const preloadImage = (url: string) => {
+      if (!preloadedUrls.current.has(url)) {
+        const img = new Image();
+        img.src = url;
+        preloadedUrls.current.add(url);
+        // console.log(`Preloading initiated for: ${url}`); // Optional debug log
+      }
+    };
+
+    // Round 1: Preload first images of all cafes
+    sortedCafes.forEach(cafe => {
+      if (cafe.photos && cafe.photos.length > 0 && cafe.photos[0]) {
+        preloadImage(cafe.photos[0]);
+      }
+    });
+
+    // Round 2: Preload second images of all cafes
+    sortedCafes.forEach(cafe => {
+      if (cafe.photos && cafe.photos.length > 1 && cafe.photos[1]) {
+        preloadImage(cafe.photos[1]);
+      }
+    });
+  }, [sortedCafes, isHomepageActive]);
 
   // Filter cafes for search modal based on searchTerm
   const modalFilteredCafes = useMemo(() => {
@@ -242,7 +331,7 @@ const Index = () => {
 
   const handleCafeCardClick = (cafe: Cafe) => {
     addCafeToCache(queryClient, cafe);
-    navigate(`/cafe/${cafe.placeId}`, { state: { cafeData: cafe } });
+    navigate(`/places/${cafe.placeId}?type=${selectedCategory}`, { state: { cafeData: cafe } });
   };
 
   return (
@@ -291,12 +380,47 @@ const Index = () => {
         </div>
       </div>
       
+      {/* Category Switching Buttons */}
+      <div className="py-4 px-4">
+        <div className="flex gap-3">
+          {/* Cafe Button */}
+          <button
+            onClick={() => handleCategoryChange('cafe')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm transition-colors ${
+              selectedCategory === 'cafe'
+                ? 'bg-white text-[rgb(41,55,31)] border border-black'
+                : 'bg-white text-gray-500 border border-gray-400'
+            }`}
+            style={{ height: '32px' }}
+          >
+            <Coffee className="w-4 h-4" />
+            <span>Cafe</span>
+          </button>
+          
+          {/* Bar Button */}
+          <button
+            onClick={() => handleCategoryChange('bar')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm transition-colors ${
+              selectedCategory === 'bar'
+                ? 'bg-white text-[rgb(41,55,31)] border border-black'
+                : 'bg-white text-gray-500 border border-gray-400'
+            }`}
+            style={{ height: '32px' }}
+          >
+            <Wine className="w-4 h-4" />
+            <span>Bar</span>
+          </button>
+        </div>
+      </div>
+      
       {/* Search Modal */}
       {isSearchModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-20"> 
           <div className="bg-white p-6 rounded-lg shadow-xl w-[398px]">
             <div className="flex items-center mb-4">
-              <h2 className="flex-1 text-xl font-semibold text-center">Search Cafes</h2>
+              <h2 className="flex-1 text-xl font-semibold text-center">
+                Search {selectedCategory === 'cafe' ? 'Cafes' : 'Bars'}
+              </h2>
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -307,7 +431,7 @@ const Index = () => {
             </div>
             <input
               type="text"
-              placeholder="Enter cafe name..."
+              placeholder={`Enter ${selectedCategory} name...`}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -316,7 +440,7 @@ const Index = () => {
             {/* Search Results */}
             <div className="mt-4 max-h-60 overflow-y-auto">
               {searchTerm.trim() && modalFilteredCafes.length === 0 && (
-                <p className="text-gray-500">No cafes found matching "{searchTerm}".</p>
+                <p className="text-gray-500">No {selectedCategory === 'cafe' ? 'cafes' : 'bars'} found matching "{searchTerm}".</p>
               )}
               {modalFilteredCafes.map(cafe => (
                 <div
@@ -324,7 +448,7 @@ const Index = () => {
                   className="p-2 hover:bg-gray-100 cursor-pointer rounded"
                   onClick={() => {
                     setIsSearchModalOpen(false); // Close modal on selection
-                    navigate(`/cafe/${cafe.placeId}`); // Navigate to cafe detail page
+                    navigate(`/places/${cafe.placeId}?type=${selectedCategory}`); // Navigate to place detail page
                   }}
                 >
                   {cafe.name}
@@ -351,7 +475,7 @@ const Index = () => {
           
           {sortedCafes.length === 0 && !isLoading && (
             <div className="text-center py-10">
-              <p className="text-gray-500">No cafes found</p>
+              <p className="text-gray-500">No {selectedCategory === 'cafe' ? 'cafes' : 'bars'} found</p>
             </div>
           )}
         </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchCafeDetails } from '../services/cafeService';
+import { fetchPlaceDetails } from '../services/cafeService';
 import { type Cafe } from '../types';
 import CafeDetail from '@/components/CafeDetail';
 import { toast } from "@/hooks/use-toast";
@@ -10,6 +10,8 @@ import { ArrowLeft } from "lucide-react";
 
 const CafeDetailPage: React.FC = () => {
   const { placeId } = useParams<{ placeId: string }>();
+  const [searchParams] = useSearchParams();
+  const categoryType = searchParams.get('type') as 'cafe' | 'bar' || 'cafe';
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -74,12 +76,12 @@ const CafeDetailPage: React.FC = () => {
   const initialCafeData = location.state?.cafeData as Cafe | undefined;
 
   // Try to get existing data from cache if available
-  const existingData = queryClient.getQueryData<Cafe>(['cafeDetails', placeId]);
+  const existingData = queryClient.getQueryData<Cafe>(['placeDetails', placeId, categoryType]);
 
-  // Fetch cafe details using React Query with initialData
+  // Fetch place details using React Query with initialData
   const { data: cafe, isLoading, error } = useQuery({
-    queryKey: ['cafeDetails', placeId],
-    queryFn: () => placeId ? fetchCafeDetails(placeId) : Promise.reject('No placeId provided'),
+    queryKey: ['placeDetails', placeId, categoryType],
+    queryFn: () => placeId ? fetchPlaceDetails(placeId, categoryType) : Promise.reject('No placeId provided'),
     enabled: !!placeId,
     // Use either the data passed via navigation state or existing cache data
     initialData: initialCafeData || existingData,
@@ -89,11 +91,11 @@ const CafeDetailPage: React.FC = () => {
     ...(initialCafeData && { placeholderData: initialCafeData })
   });
 
-  // Prefetch related cafes when initial data is loaded
+  // Prefetch related places when initial data is loaded
   useEffect(() => {
     if (cafe && cafe.types && cafe.types.length > 0) {
-      // We could potentially prefetch other related cafes here
-      // For example, we could fetch cafes with similar types or nearby location
+      // We could potentially prefetch other related places here
+      // For example, we could fetch places with similar types or nearby location
       // This is just a placeholder for potential future optimizations
     }
   }, [cafe, queryClient]);
@@ -102,16 +104,24 @@ const CafeDetailPage: React.FC = () => {
   useEffect(() => {
     if (error) {
       toast({
-        title: "Failed to load cafe details",
-        description: "Unable to fetch cafe details. Please try again later.",
+        title: "Failed to load place details",
+        description: "Unable to fetch place details. Please try again later.",
         variant: "destructive"
       });
-      console.error("Error loading cafe details:", error);
+      console.error("Error loading place details:", error);
     }
   }, [error]);
 
   const handleGoBack = () => {
-    navigate(-1);
+    const typeFromUrl = searchParams.get('type');
+    const categoryTypeForNav = typeFromUrl === 'bar' ? 'bar' : 'cafe';
+    const targetNavUrl = `/?type=${categoryTypeForNav}`;
+
+    console.log('[CafeDetailPage] handleGoBack: typeFromUrl from searchParams:', typeFromUrl);
+    console.log('[CafeDetailPage] handleGoBack: categoryTypeForNav being used for navigation:', categoryTypeForNav);
+    console.log('[CafeDetailPage] handleGoBack: Navigating to URL:', targetNavUrl);
+
+    navigate(targetNavUrl);
   };
 
   // Only show loading if we don't have any data yet
@@ -127,8 +137,8 @@ const CafeDetailPage: React.FC = () => {
   if (error || !cafe) {
     return (
       <div className="min-h-screen w-full flex flex-col justify-center items-center p-6 text-white" style={{ backgroundColor: bgColor || '#534540' }}>
-        <h2 className="text-2xl font-bold mb-4">Cafe not found</h2>
-        <p className="mb-6 text-center">The cafe you're looking for could not be found or there was an error loading it.</p>
+        <h2 className="text-2xl font-bold mb-4">Place not found</h2>
+        <p className="mb-6 text-center">The place you're looking for could not be found or there was an error loading it.</p>
         <Button onClick={handleGoBack} variant="outline" className="flex items-center">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Go Back
@@ -137,7 +147,7 @@ const CafeDetailPage: React.FC = () => {
     );
   }
 
-  // Display cafe detail (back button removed)
+  // Display place detail (back button removed)
   return (
     <div 
       className="relative w-full pb-8"

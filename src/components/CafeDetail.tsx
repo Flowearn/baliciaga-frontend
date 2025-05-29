@@ -269,10 +269,13 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
         {/* Title Row */}
         <div className="flex items-center justify-between w-full relative z-10">
           {/* Home Icon (Left) */}
-          <Button variant="ghost" size="icon" className="text-white hover:bg-slate-700" asChild>
-            <Link to="/">
-              <HomeIcon className="h-6 w-6" />
-            </Link>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white hover:bg-slate-700"
+            onClick={onClose}
+          >
+            <HomeIcon className="h-6 w-6" />
           </Button>
 
           {/* Title (Center) */}
@@ -368,25 +371,59 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
         
         {/* Floating Button Row */}
         <div className="floating-button-row my-5 flex items-center space-x-3 z-30 relative">
+          {/* 🆕 诊断日志 - Delivery 按钮 */}
+          {(() => {
+            console.log('[CafeDetail] Value of cafe.gofoodUrl (for Delivery button):', cafe?.gofoodUrl);
+            console.log('[CafeDetail] Type of cafe.gofoodUrl:', typeof cafe?.gofoodUrl);
+            
+            const shouldShowDeliveryButton = cafe && cafe.gofoodUrl;
+            console.log('[CafeDetail] Condition evaluation for "Delivery" button (cafe.gofoodUrl):', shouldShowDeliveryButton);
+            
+            return null; // 这个IIFE仅用于日志记录，不渲染任何内容
+          })()}
+          
           {/* Delivery button - conditional rendering based on gofoodUrl */}
           {cafe.gofoodUrl && (
             <Button
               asChild
-              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1"
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 gap-x-1.5"
             >
-              <a href={cafe.gofoodUrl} target="_blank" rel="noopener noreferrer">
-                <Bike size={16} className="mr-2" />
+              <a href={cafe.gofoodUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
+                <Bike size={16} />
                 Delivery
               </a>
             </Button>
           )}
           
+          {/* Book a table button - conditional rendering based on table URL */}
+          {(() => {
+            // Debug logging for Book a table button
+            console.log('[CafeDetail] Received cafe object for rendering buttons:', JSON.parse(JSON.stringify(cafe || {})));
+            console.log('[CafeDetail] Value of cafe.table:', cafe?.table);
+            console.log('[CafeDetail] Value of cafe.gofoodUrl (for Delivery button context):', cafe?.gofoodUrl);
+            
+            const shouldShowBookTableButton = cafe && cafe.table && typeof cafe.table === 'string' && cafe.table.trim() !== '';
+            console.log('[CafeDetail] Condition evaluation for "Book a table" button (cafe.table && cafe.table.trim() !== ""):', shouldShowBookTableButton);
+            
+            return shouldShowBookTableButton ? (
+              <Button
+                asChild
+                className="bg-white/20 text-white hover:bg-white/30 hover:text-white rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 gap-x-1.5 focus:ring-0 focus:ring-offset-0 active:bg-white/25 active:text-white focus-visible:ring-0 focus-visible:ring-offset-0"
+              >
+                <a href={cafe.table} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
+                  <BookOpen size={16} />
+                  Book a table
+                </a>
+              </Button>
+            ) : null;
+          })()}
+          
           {/* Share button */}
           <Button 
-            className="bg-white text-gray-800 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 focus:ring-0 focus:ring-offset-0 active:bg-white active:text-gray-800 focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-white hover:text-gray-800"
+            className="bg-white text-gray-800 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 gap-x-1.5 focus:ring-0 focus:ring-offset-0 active:bg-white active:text-gray-800 focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-white hover:text-gray-800"
             onClick={handleShareClick}
           >
-            <Share2 size={16} className="mr-2" />
+            <Share2 size={16} />
             Share
           </Button>
         </div>
@@ -493,10 +530,10 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
               <Button
                 // variant="outline" // Variant removed
                 // size="sm" // Size prop removed
-                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
+                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center justify-center grow basis-0 gap-x-1.5"
                 onClick={() => window.location.href = `tel:${cafe.phoneNumber}`}
               >
-                <Phone className="mr-1.5 h-4 w-4" />
+                <Phone className="h-4 w-4" />
                 Tel
               </Button>
             )}
@@ -504,20 +541,20 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
               <Button
                 // variant="outline" // Variant removed
                 // size="sm" // Size prop removed
-                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
+                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center justify-center grow basis-0 gap-x-1.5"
                 onClick={() => window.open(cafe.website, '_blank')}
               >
-                <Globe className="mr-1.5 h-4 w-4" />
+                <Globe className="h-4 w-4" />
                 Web
               </Button>
             )}
             {cafe.instagram && (
               <Button
                 asChild
-                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center grow basis-0"
+                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center justify-center grow basis-0 gap-x-1.5"
               >
-                <a href={cafe.instagram} target="_blank" rel="noopener noreferrer">
-                  <Instagram className="mr-1.5 h-4 w-4" />
+                <a href={cafe.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
+                  <Instagram className="h-4 w-4" />
                   Instagram
                 </a>
               </Button>
