@@ -334,6 +334,59 @@ const Index = () => {
     navigate(`/places/${cafe.placeId}?type=${selectedCategory}`, { state: { cafeData: cafe } });
   };
 
+  // Helper function to copy link to clipboard (same as in CafeDetail.tsx)
+  async function copyLinkToClipboard(urlToCopy: string) {
+    try {
+      await navigator.clipboard.writeText(urlToCopy);
+      alert('Link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy link using navigator.clipboard: ', err);
+      // Final fallback if navigator.clipboard.writeText also fails
+      alert('Failed to copy link automatically. Please copy manually from address bar.');
+    }
+  }
+
+  // Handle Share button click from dropdown menu
+  const handleShareClick = async () => {
+    const currentCategoryType = searchParams.get('type');
+    
+    // Build share URL based on current category
+    let shareUrl = window.location.origin + '/'; // Default homepage
+    if (currentCategoryType === 'bar') {
+      shareUrl = window.location.origin + '/?type=bar';
+    } else if (currentCategoryType === 'cafe') {
+      shareUrl = window.location.origin + '/?type=cafe';
+    }
+    
+    const shareData = {
+      title: 'Baliciaga - Bali Cafe & Bar Explorer',
+      text: '探索巴厘岛超棒的咖啡馆和酒吧！来看看Baliciaga吧！',
+      url: shareUrl
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        console.log('Content shared successfully via Web Share API');
+      } catch (error) {
+        console.error('Error using Web Share API:', error);
+        
+        // Check if user cancelled the share action
+        if (error.name === 'AbortError') {
+          console.log('Share cancelled by user.');
+          return; // Don't show fallback if user explicitly cancelled
+        }
+        
+        // Only fall back to clipboard copy for actual errors
+        await copyLinkToClipboard(shareUrl);
+      }
+    } else {
+      // Fallback if Web Share API is not supported
+      console.log('Web Share API not supported, falling back to clipboard copy.');
+      await copyLinkToClipboard(shareUrl);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Sticky Wrapper Div */}
@@ -373,6 +426,12 @@ const Index = () => {
                   onSelect={() => { window.location.href = 'mailto:yo@baliciaga.com'; }}
                 >
                   Contact
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="flex justify-center" 
+                  onSelect={handleShareClick}
+                >
+                  Share
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

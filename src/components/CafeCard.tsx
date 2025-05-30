@@ -62,6 +62,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
                     src={photoUrl}
                     alt={`${cafe.name} - Photo ${index + 1}`}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </div>
               ))
