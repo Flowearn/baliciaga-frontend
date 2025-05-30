@@ -49,8 +49,6 @@ const Index = () => {
   // State for category selection - initialize from URL parameter
   const initialCategoryFromURL = searchParams.get('type') as 'cafe' | 'bar' | null;
   const initialSelectedCategoryValue = initialCategoryFromURL === 'bar' ? 'bar' : 'cafe';
-  console.log('[Index.tsx] useState init: initialCategoryFromURL:', initialCategoryFromURL);
-  console.log('[Index.tsx] useState init: initialSelectedCategoryValue set to:', initialSelectedCategoryValue);
   const [selectedCategory, setSelectedCategory] = useState<'cafe' | 'bar'>(
     initialSelectedCategoryValue
   );
@@ -128,31 +126,21 @@ const Index = () => {
   
   // Handle category change - update both state and URL
   const handleCategoryChange = (newCategory: 'cafe' | 'bar') => {
-    console.log('[Index.tsx] handleCategoryChange: Clicked category:', newCategory);
-    console.log('[Index.tsx] handleCategoryChange: current selectedCategory BEFORE update:', selectedCategory);
     setSelectedCategory(newCategory); // 1. 更新 React state
     setSearchParams({ type: newCategory }, { replace: true }); // 2. 更新 URL search param (使用 replace 避免不必要的历史记录)
-    console.log('[Index.tsx] handleCategoryChange: selectedCategory AFTER update (expected):', newCategory);
-    console.log('[Index.tsx] handleCategoryChange: searchParams AFTER update (expected):', `type=${newCategory}`);
   };
   
   // Effect to update selectedCategory when URL parameter changes (for external URL changes like browser back/forward)
   useEffect(() => {
     const categoryFromUrl = searchParams.get('type') as 'cafe' | 'bar' | null;
-    console.log('[Index.tsx] useEffect[searchParams]: categoryFromUrl from searchParams:', categoryFromUrl);
 
     // 将URL参数规范化为 'cafe' 或 'bar'，如果参数不存在或无效，则默认为 'cafe'
     const newCategoryToSet = (categoryFromUrl === 'bar') ? 'bar' : 'cafe';
-    console.log('[Index.tsx] useEffect[searchParams]: newCategoryToSet based on URL:', newCategoryToSet);
-    console.log('[Index.tsx] useEffect[searchParams]: current selectedCategory state BEFORE potential update:', selectedCategory);
 
     // 只有当URL导出的分类与当前React state中的分类不一致时，才更新state
     // 这避免了在按钮点击（已同时更新state和URL）后不必要的state重设
     if (newCategoryToSet !== selectedCategory) {
-      console.log('[Index.tsx] useEffect[searchParams]: Updating selectedCategory to:', newCategoryToSet);
       setSelectedCategory(newCategoryToSet);
-    } else {
-      console.log('[Index.tsx] useEffect[searchParams]: No update to selectedCategory needed, already in sync.');
     }
   }, [searchParams, selectedCategory]); // 主要依赖 searchParams，避免循环更新
 

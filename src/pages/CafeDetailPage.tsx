@@ -117,10 +117,6 @@ const CafeDetailPage: React.FC = () => {
     const categoryTypeForNav = typeFromUrl === 'bar' ? 'bar' : 'cafe';
     const targetNavUrl = `/?type=${categoryTypeForNav}`;
 
-    console.log('[CafeDetailPage] handleGoBack: typeFromUrl from searchParams:', typeFromUrl);
-    console.log('[CafeDetailPage] handleGoBack: categoryTypeForNav being used for navigation:', categoryTypeForNav);
-    console.log('[CafeDetailPage] handleGoBack: Navigating to URL:', targetNavUrl);
-
     navigate(targetNavUrl);
   };
 

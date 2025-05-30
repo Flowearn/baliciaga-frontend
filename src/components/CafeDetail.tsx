@@ -371,17 +371,6 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
         
         {/* Floating Button Row */}
         <div className="floating-button-row my-5 flex items-center space-x-3 z-30 relative">
-          {/* 🆕 诊断日志 - Delivery 按钮 */}
-          {(() => {
-            console.log('[CafeDetail] Value of cafe.gofoodUrl (for Delivery button):', cafe?.gofoodUrl);
-            console.log('[CafeDetail] Type of cafe.gofoodUrl:', typeof cafe?.gofoodUrl);
-            
-            const shouldShowDeliveryButton = cafe && cafe.gofoodUrl;
-            console.log('[CafeDetail] Condition evaluation for "Delivery" button (cafe.gofoodUrl):', shouldShowDeliveryButton);
-            
-            return null; // 这个IIFE仅用于日志记录，不渲染任何内容
-          })()}
-          
           {/* Delivery button - conditional rendering based on gofoodUrl */}
           {cafe.gofoodUrl && (
             <Button
@@ -396,27 +385,17 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           )}
           
           {/* Book a table button - conditional rendering based on table URL */}
-          {(() => {
-            // Debug logging for Book a table button
-            console.log('[CafeDetail] Received cafe object for rendering buttons:', JSON.parse(JSON.stringify(cafe || {})));
-            console.log('[CafeDetail] Value of cafe.table:', cafe?.table);
-            console.log('[CafeDetail] Value of cafe.gofoodUrl (for Delivery button context):', cafe?.gofoodUrl);
-            
-            const shouldShowBookTableButton = cafe && cafe.table && typeof cafe.table === 'string' && cafe.table.trim() !== '';
-            console.log('[CafeDetail] Condition evaluation for "Book a table" button (cafe.table && cafe.table.trim() !== ""):', shouldShowBookTableButton);
-            
-            return shouldShowBookTableButton ? (
-              <Button
-                asChild
-                className="bg-white/20 text-white hover:bg-white/30 hover:text-white rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 gap-x-1.5 focus:ring-0 focus:ring-offset-0 active:bg-white/25 active:text-white focus-visible:ring-0 focus-visible:ring-offset-0"
-              >
-                <a href={cafe.table} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
-                  <BookOpen size={16} />
-                  Book a table
-                </a>
-              </Button>
-            ) : null;
-          })()}
+          {cafe && cafe.table && typeof cafe.table === 'string' && cafe.table.trim() !== '' && (
+            <Button
+              asChild
+              className="bg-white/20 text-white hover:bg-white/30 hover:text-white rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 gap-x-1.5 focus:ring-0 focus:ring-offset-0 active:bg-white/25 active:text-white focus-visible:ring-0 focus-visible:ring-offset-0"
+            >
+              <a href={cafe.table} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
+                <BookOpen size={16} />
+                Book a table
+              </a>
+            </Button>
+          )}
           
           {/* Share button */}
           <Button 
