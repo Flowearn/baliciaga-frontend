@@ -55,7 +55,6 @@ const Index = () => {
   
   // State for preloading control
   const [isHomepageActive, setIsHomepageActive] = useState<boolean>(true);
-  const preloadedUrls = useRef(new Set<string>());
   
   // State for geolocation
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number; } | null>(null);
@@ -272,37 +271,6 @@ const Index = () => {
       return 0;
     });
   }, [cafes, userLocation, selectedCategory]);
-
-  // Main preloading logic for homepage images
-  useEffect(() => {
-    // Return early if not on homepage or no cafes available
-    if (!isHomepageActive || !sortedCafes || sortedCafes.length === 0) {
-      return;
-    }
-
-    const preloadImage = (url: string) => {
-      if (!preloadedUrls.current.has(url)) {
-        const img = new Image();
-        img.src = url;
-        preloadedUrls.current.add(url);
-        // console.log(`Preloading initiated for: ${url}`); // Optional debug log
-      }
-    };
-
-    // Round 1: Preload first images of all cafes
-    sortedCafes.forEach(cafe => {
-      if (cafe.photos && cafe.photos.length > 0 && cafe.photos[0]) {
-        preloadImage(cafe.photos[0]);
-      }
-    });
-
-    // Round 2: Preload second images of all cafes
-    sortedCafes.forEach(cafe => {
-      if (cafe.photos && cafe.photos.length > 1 && cafe.photos[1]) {
-        preloadImage(cafe.photos[1]);
-      }
-    });
-  }, [sortedCafes, isHomepageActive]);
 
   // Filter cafes for search modal based on searchTerm
   const modalFilteredCafes = useMemo(() => {
