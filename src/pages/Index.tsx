@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import CafeCard from '../components/CafeCard';
+import CafeCardSkeleton from '../components/CafeCardSkeleton';
 import { fetchCafes } from '../services/cafeService';
 import { type Cafe } from '../types';
 import { toast } from "@/hooks/use-toast";
@@ -14,6 +15,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Menu as MenuIcon, Search as SearchIcon, X as XIcon, Coffee, Wine } from "lucide-react";
+
+// Constant for stale location threshold - moved to module level to avoid ReferenceError
+const STALE_LOCATION_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
 
 // Haversine formula to calculate distance between two points on Earth
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -56,75 +60,69 @@ const Index = () => {
   // State for preloading control
   const [isHomepageActive, setIsHomepageActive] = useState<boolean>(true);
   
-  // State for geolocation
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number; } | null>(null);
+  // State for geolocation - Try to restore from sessionStorage first
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number; } | null>(() => {
+    // 尝试从 sessionStorage 快速恢复用户位置
+    try {
+      const storedLocation = sessionStorage.getItem('userLocation');
+      const storedTimestamp = sessionStorage.getItem('lastLocationFetchTimestamp');
+      
+      if (storedLocation && storedTimestamp) {
+        const location = JSON.parse(storedLocation);
+        const timestamp = parseInt(storedTimestamp, 10);
+        const timeElapsed = Date.now() - timestamp;
+        
+        // 检查位置是否在15分钟新鲜度阈值内
+        if (timeElapsed <= STALE_LOCATION_THRESHOLD_MS) {
+          console.log(`[SCROLL_DEBUG] Restored fresh user location from sessionStorage. Age: ${timeElapsed}ms`);
+          return location;
+        } else {
+          console.log(`[SCROLL_DEBUG] Stored location is stale (${timeElapsed}ms), will fetch fresh location`);
+        }
+      }
+    } catch (error) {
+      console.error('[SCROLL_DEBUG] Failed to restore user location from sessionStorage:', error);
+    }
+    
+    console.log('[SCROLL_DEBUG] No valid cached location, starting with null');
+    return null;
+  });
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [lastLocationFetchTimestamp, setLastLocationFetchTimestamp] = useState<number | null>(null);
+  const [lastLocationFetchTimestamp, setLastLocationFetchTimestamp] = useState<number | null>(() => {
+    // 同时恢复时间戳
+    try {
+      const storedTimestamp = sessionStorage.getItem('lastLocationFetchTimestamp');
+      return storedTimestamp ? parseInt(storedTimestamp, 10) : null;
+    } catch (error) {
+      return null;
+    }
+  });
   
-  // Constant for stale location threshold
-  const STALE_LOCATION_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
-  
+  // State for tracking geolocation failure count for smart error handling
+  const [geolocationFailureCount, setGeolocationFailureCount] = useState<number>(0);
+
   const { data: cafes, isLoading, error } = useQuery({
     queryKey: ['cafes', selectedCategory],
     queryFn: () => fetchCafes(selectedCategory),
-    placeholderData: [
-      {
-        placeId: '1',
-        name: 'Two Face Coffee',
-        address: 'Jl. Pantai Berawa No.20, Canggu, Bali',
-        latitude: -8.650337,
-        longitude: 115.159063,
-        photos: ['https://via.placeholder.com/400x300?text=Two+Face+Coffee'],
-        openingHours: [
-          'Monday: 7:30 AM – 4:00 PM',
-          'Tuesday: 7:30 AM – 4:00 PM',
-          'Wednesday: 7:30 AM – 4:00 PM',
-          'Thursday: 7:30 AM – 4:00 PM',
-          'Friday: 7:30 AM – 4:00 PM',
-          'Saturday: 7:30 AM – 4:00 PM',
-          'Sunday: 7:30 AM – 4:00 PM'
-        ],
-        isOpenNow: true,
-        rating: 4.5,
-        userRatingsTotal: 512,
-        website: 'https://twofacecoffee.com',
-        phoneNumber: '+62 123 456789',
-        priceLevel: 2,
-        types: ['cafe', 'restaurant', 'food', 'point_of_interest', 'establishment'],
-        region: 'canggu',
-        businessStatus: 'OPERATIONAL',
-      },
-      {
-        placeId: '2',
-        name: 'Satu Jalan Coffee',
-        address: 'Jl. Batu Bolong No.64, Canggu, Bali',
-        latitude: -8.651857,
-        longitude: 115.131256,
-        photos: ['https://via.placeholder.com/400x300?text=Satu+Jalan+Coffee'],
-        openingHours: [
-          'Monday: 7:00 AM – 6:00 PM',
-          'Tuesday: 7:00 AM – 6:00 PM',
-          'Wednesday: 7:00 AM – 6:00 PM',
-          'Thursday: 7:00 AM – 6:00 PM',
-          'Friday: 7:00 AM – 6:00 PM',
-          'Saturday: 7:00 AM – 6:00 PM',
-          'Sunday: 7:00 AM – 6:00 PM'
-        ],
-        isOpenNow: true,
-        rating: 4.7,
-        userRatingsTotal: 328,
-        website: 'https://satujalan.coffee',
-        phoneNumber: '+62 987 654321',
-        priceLevel: 2,
-        types: ['cafe', 'restaurant', 'food', 'point_of_interest', 'establishment'],
-        region: 'canggu',
-        businessStatus: 'OPERATIONAL',
-      }
-    ]
   });
+  
+  // BAR FOCUS: 监控查询状态变化，特别关注 bar 分类
+  useEffect(() => {
+    if (selectedCategory === 'bar') {
+      console.log(`[Index.tsx BAR_FOCUS] selectedCategory is 'bar'. isLoading: ${isLoading}`);
+      console.log(`[Index.tsx BAR_FOCUS] Current fetched data length: ${Array.isArray(cafes) ? cafes.length : 0}`);
+      if (Array.isArray(cafes)) {
+        console.log(`[Index.tsx BAR_FOCUS] First item name: ${cafes[0]?.name || 'N/A'}`);
+        console.log(`[Index.tsx BAR_FOCUS] Data types: ${cafes.map(item => item.types?.[0] || 'unknown').join(', ')}`);
+      }
+    }
+  }, [selectedCategory, isLoading, cafes]);
   
   // Handle category change - update both state and URL
   const handleCategoryChange = (newCategory: 'cafe' | 'bar') => {
+    if (newCategory === 'bar') {
+      console.log(`[Index.tsx BAR_FOCUS] Category change initiated to 'bar'`);
+    }
     setSelectedCategory(newCategory); // 1. 更新 React state
     setSearchParams({ type: newCategory }, { replace: true }); // 2. 更新 URL search param (使用 replace 避免不必要的历史记录)
   };
@@ -147,6 +145,12 @@ const Index = () => {
   const fetchUserLocationAndProcessCafes = async () => {
     if (!navigator.geolocation) {
       setLocationError("Geolocation is not supported by your browser");
+      // Show user-friendly toast for unsupported browsers
+      toast({
+        title: "Location services unavailable",
+        description: "Your browser doesn't support location services. Listings will be shown in default order.",
+        variant: "default"
+      });
       return;
     }
 
@@ -160,25 +164,117 @@ const Index = () => {
       });
 
       const { latitude, longitude } = position.coords;
-      setUserLocation({ latitude, longitude });
-      setLastLocationFetchTimestamp(Date.now());
+      const locationData = { latitude, longitude };
+      const currentTimestamp = Date.now();
+      
+      setUserLocation(locationData);
+      setLastLocationFetchTimestamp(currentTimestamp);
       setLocationError(null);
+      // Reset failure count on successful location fetch
+      setGeolocationFailureCount(0);
+      
+      // 保存新位置到 sessionStorage 以供下次快速恢复
+      try {
+        sessionStorage.setItem('userLocation', JSON.stringify(locationData));
+        sessionStorage.setItem('lastLocationFetchTimestamp', currentTimestamp.toString());
+        console.log(`[SCROLL_DEBUG] Saved fresh user location to sessionStorage:`, locationData);
+      } catch (error) {
+        console.error('[SCROLL_DEBUG] Failed to save user location to sessionStorage:', error);
+      }
+      
       console.log("User location fetched:", latitude, longitude);
     } catch (error) {
-      setLocationError("Unable to retrieve location. Displaying default order.");
+      // Enhanced error handling with specific GeolocationPositionError analysis
+      const geoError = error as GeolocationPositionError;
+      let errorMessage = "Unable to retrieve location. Displaying default order.";
+      let userToastMessage = "";
+      let shouldClearStorage = false;
+      
+      // Increment failure count
+      const newFailureCount = geolocationFailureCount + 1;
+      setGeolocationFailureCount(newFailureCount);
+      
+      // Analyze specific geolocation error codes
+      if (geoError && typeof geoError.code === 'number') {
+        switch (geoError.code) {
+          case 1: // PERMISSION_DENIED
+            errorMessage = "Location access denied by user.";
+            userToastMessage = "Location access was denied. To sort by distance, please enable location permissions in your browser settings.";
+            // Don't clear storage immediately - user might grant permission later
+            shouldClearStorage = false;
+            break;
+          case 2: // POSITION_UNAVAILABLE  
+            errorMessage = "Position update is unavailable.";
+            userToastMessage = "Unable to determine your location. Please check your device's location services and internet connection.";
+            // Only clear storage after multiple failures to avoid removing good cached data
+            shouldClearStorage = newFailureCount >= 3;
+            break;
+          case 3: // TIMEOUT
+            errorMessage = "Location request timed out.";
+            userToastMessage = "Location request timed out. Please try again or check your connection.";
+            // Don't clear storage for timeout - it's likely temporary
+            shouldClearStorage = false;
+            break;
+          default:
+            errorMessage = "Unknown location error occurred.";
+            userToastMessage = "Unable to get your location. Listings will be shown in default order.";
+            shouldClearStorage = newFailureCount >= 2;
+        }
+        
+        console.error(`[GEO_ERROR] Code: ${geoError.code}, Message: ${geoError.message}`);
+      } else {
+        console.error("[GEO_ERROR] Unknown geolocation error:", error);
+        shouldClearStorage = newFailureCount >= 2;
+      }
+      
+      setLocationError(errorMessage);
       setUserLocation(null);
+      
+      // Smart sessionStorage cleanup - only clear after multiple failures or specific error types
+      if (shouldClearStorage) {
+        try {
+          sessionStorage.removeItem('userLocation');
+          sessionStorage.removeItem('lastLocationFetchTimestamp');
+          console.log(`[SCROLL_DEBUG] Cleared cached location data after ${newFailureCount} failures`);
+        } catch (e) {
+          // ignore storage errors
+        }
+      } else {
+        console.log(`[SCROLL_DEBUG] Keeping cached location data (failure count: ${newFailureCount})`);
+      }
+      
+      // Show user-friendly toast only on multiple failures or critical errors to avoid spam
+      if (newFailureCount >= 2 || geoError?.code === 1) {
+        toast({
+          title: "Location access issue",
+          description: userToastMessage,
+          variant: "default"
+        });
+      }
+      
       console.error("Geolocation error:", error);
     }
   };
 
   // Initial geolocation fetch on mount
   useEffect(() => {
-    fetchUserLocationAndProcessCafes();
-  }, []);
+    // 如果已经从 sessionStorage 恢复了有效位置，可以延长延迟
+    // 如果没有恢复到位置，则正常获取
+    const hasRestoredLocation = userLocation !== null;
+    const delay = hasRestoredLocation ? 2000 : 100; // 有缓存位置时延迟2秒，无缓存位置时延迟100ms
+    
+    const timer = setTimeout(() => {
+      console.log(`[SCROLL_DEBUG] Starting ${hasRestoredLocation ? 'delayed' : 'immediate'} geolocation fetch. Has restored location: ${hasRestoredLocation}`);
+      fetchUserLocationAndProcessCafes();
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, []); // 只在组件挂载时运行一次
 
   // DIAGNOSTIC: Track component mounting/unmounting (for debugging scroll issue)
   useEffect(() => {
     console.log('[DIAGNOSTIC] Index.tsx: Component Did MOUNT. Timestamp:', Date.now());
+    console.log(`[SCROLL_DEBUG] Component mounted. Initial state - isLoading: ${isLoading}, userLocation: ${!!userLocation}, cafes length: ${Array.isArray(cafes) ? cafes.length : 0}`);
     return () => {
       console.log('[DIAGNOSTIC] Index.tsx: Component Will UNMOUNT. Timestamp:', Date.now());
     };
@@ -234,7 +330,16 @@ const Index = () => {
   // Sort cafes by distance if user location is available, otherwise sort by open status
   const sortedCafes = useMemo<CafeWithDistance[]>(() => {
     if (!Array.isArray(cafes) || cafes.length === 0) {
+      if (selectedCategory === 'bar') {
+        console.log(`[Index.tsx BAR_FOCUS] sortedCafes computation: cafes array is empty or invalid. Length: ${Array.isArray(cafes) ? cafes.length : 'not array'}`);
+      }
       return [];
+    }
+
+    // BAR FOCUS: 在开始排序前记录状态
+    if (selectedCategory === 'bar') {
+      console.log(`[Index.tsx BAR_FOCUS] sortedCafes computation: Starting sort for ${cafes.length} bars`);
+      console.log(`[Index.tsx BAR_FOCUS] sortedCafes computation: userLocation available: ${!!userLocation}`);
     }
 
     // If we have user location, calculate distances and sort by distance
@@ -254,7 +359,7 @@ const Index = () => {
         };
       });
       
-      return cafesWithDistance.sort((a, b) => {
+      const sortedResult = cafesWithDistance.sort((a, b) => {
         // First prioritize open status
         if (a.isOpenNow && !b.isOpenNow) return -1;
         if (!a.isOpenNow && b.isOpenNow) return 1;
@@ -262,14 +367,28 @@ const Index = () => {
         // Then sort by distance
         return (a.distanceInKm || Infinity) - (b.distanceInKm || Infinity);
       });
+
+      // BAR FOCUS: 记录排序结果
+      if (selectedCategory === 'bar') {
+        console.log(`[Index.tsx BAR_FOCUS] sortedCafes computation: Sorted ${sortedResult.length} bars with distance`);
+      }
+
+      return sortedResult;
     }
     
     // Default sorting by open status if no location
-    return [...cafes].sort((a, b) => {
+    const sortedResult = [...cafes].sort((a, b) => {
       if (a.isOpenNow && !b.isOpenNow) return -1;
       if (!a.isOpenNow && b.isOpenNow) return 1;
       return 0;
     });
+
+    // BAR FOCUS: 记录默认排序结果
+    if (selectedCategory === 'bar') {
+      console.log(`[Index.tsx BAR_FOCUS] sortedCafes computation: Sorted ${sortedResult.length} bars without distance (default sort)`);
+    }
+
+    return sortedResult;
   }, [cafes, userLocation, selectedCategory]);
 
   // Filter cafes for search modal based on searchTerm
@@ -474,21 +593,38 @@ const Index = () => {
         </div>
       )}
       
-      {isLoading && (
-        <div className="flex justify-center items-center py-20 px-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
-      )}
-      
-      {!isLoading && (
+      {/* Content Area - Show skeleton screen only when necessary */}
+      {isLoading ? (
         <div className="space-y-2 px-4">
-          {sortedCafes.map(cafe => (
-            <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
-              <CafeCard cafe={cafe} />
-            </div>
+          {/* VERIFICATION LOG: Track when skeleton is shown */}
+          {(() => {
+            console.log(`[SCROLL_DEBUG] Showing skeleton screen - data loading. isLoading: ${isLoading}, userLocation: ${!!userLocation}, timestamp: ${Date.now()}`);
+            return null;
+          })()}
+          {/* Render skeleton cards */}
+          {[...Array(5)].map((_, index) => (
+            <CafeCardSkeleton key={`skeleton-${index}`} />
           ))}
+        </div>
+      ) : (
+        <div className="space-y-2 px-4">
+          {/* VERIFICATION LOG: Track when real content is shown */}
+          {(() => {
+            console.log(`[SCROLL_DEBUG] Showing real content. sortedCafes length: ${sortedCafes?.length || 0}, userLocation: ${!!userLocation}, timestamp: ${Date.now()}`);
+            return null;
+          })()}
+          {selectedCategory === 'bar' && (() => {
+            console.log(`[Index.tsx BAR_FOCUS] Rendering final list for bars. sortedCafes length: ${sortedCafes?.length || 0}`);
+            return null;
+          })()}
           
-          {sortedCafes.length === 0 && !isLoading && (
+          {sortedCafes.length > 0 ? (
+            sortedCafes.map(cafe => (
+              <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
+                <CafeCard cafe={cafe} />
+              </div>
+            ))
+          ) : (
             <div className="text-center py-10">
               <p className="text-gray-500">No {selectedCategory === 'cafe' ? 'cafes' : 'bars'} found</p>
             </div>

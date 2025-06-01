@@ -138,6 +138,56 @@ npm run build
 
 这将在 `dist` 目录下生成优化后的生产构建文件，可以部署到任何静态文件托管服务。
 
+## 近期主要更新 (自2025年5月下旬以来)
+
+### **核心功能与用户体验增强**
+
+#### **分类切换功能 (`Index.tsx`)**
+* 首页顶部新增 "Cafe" 和 "Bar" 分类切换按钮，允许用户浏览不同类型的地点列表
+* `cafeService.ts` 和 `Index.tsx` 中的数据请求逻辑已更新，能根据所选分类从后端API (`/api/places?type=cafe|bar`) 获取对应数据
+* URL参数自动同步分类状态，支持直接访问 `/?type=bar` 或 `/?type=cafe`
+
+#### **滚动恢复机制 (`App.tsx`, `Index.tsx`)**
+* **架构升级**: 前端路由从传统的 `<BrowserRouter>` 迁移到使用 `createBrowserRouter` (React Router v6 Data Router)
+* 在根布局中集成了 `<ScrollRestoration getKey={(location) => location.pathname + location.search} />` 组件，实现更准确的滚动位置恢复
+* **用户位置优化**: 优化了 `Index.tsx` 中 `userLocation` 状态的初始化逻辑，通过 `sessionStorage` 快速恢复最近的用户位置（15分钟"新鲜度"检查），为滚动恢复提供稳定的初始布局
+* **智能地理位置管理**: 
+  - 组件挂载时自动从缓存恢复位置，并根据缓存状态调整获取新位置的延迟（有缓存时2秒延迟，无缓存时100ms延迟）
+  - 标签页可见性变化时，检查位置数据是否过期并按需更新
+  - 增强的错误处理，区分不同的 `GeolocationPositionError` 类型，提供智能的存储清理策略
+
+#### **图片加载策略优化 (`Index.tsx`, `CafeCard.tsx`)**
+* 移除了 `Index.tsx` 中原有的、可能导致加载顺序不符合预期的 JavaScript 图片预加载逻辑
+* 现在主要依赖 `CafeCard.tsx` 中 `<img>` 标签的 `loading="lazy"` 属性进行浏览器原生懒加载，实现"视口优先"的图片加载
+* **骨架屏组件**: 新增 `CafeCardSkeleton.tsx` 组件，在数据加载时显示，改善用户体验和布局稳定性（辅助滚动恢复）
+
+#### **详情页交互增强 (`CafeDetail.tsx`)**
+* 新增 "Book a table" 按钮，当地点数据中包含有效的 `table` 字段（预订URL）时显示，直接链接到预订页面
+* 优化了操作按钮行（包含 "Delivery", "Share", "Book a table"）中各按钮内部图标与文字的间距和对齐
+
+#### **全局分享功能**
+* 在主导航的下拉菜单中新增"Share"按钮，允许用户分享当前的首页URL
+* 能正确区分并分享 `/?type=cafe` 或 `/?type=bar` 的URL
+* 使用 Web Share API 并包含剪贴板回退机制
+
+### **UI样式与交互改进**
+* 对 "Cafe" / "Bar" 分类切换按钮的选中和未选中状态进行了多轮样式优化
+* 改进了搜索模态框的用户体验，支持分类特定的搜索提示文本
+* 优化了各种错误状态的用户反馈，使用 Toast 通知提供清晰的错误指引
+
+### **技术架构升级**
+* **路由**: 升级到 React Router v6 Data Router (`createBrowserRouter`)
+* **状态管理**: 继续使用 React Hooks + TanStack Query (`useQuery`)
+* **错误处理**: 增强的地理位置错误处理，包含失败计数跟踪和智能重试机制
+* **性能优化**: 通过 `sessionStorage` 缓存和智能延迟策略，提升应用响应性
+
+### **已知依赖与关键组件**
+* 路由: `react-router-dom` (v6 Data Router)
+* 状态管理: React Hooks, TanStack Query (`useQuery`)
+* UI组件库: `shadcn/ui`, `lucide-react` (图标)
+* 地理位置: 浏览器原生 `navigator.geolocation` API
+* 持久化: `sessionStorage` 用于用户位置缓存
+
 # 项目开发进展和更新日志
 
 ## 项目概述与目标回顾
@@ -194,86 +244,4 @@ Baliciaga项目是一个专注于展示和管理巴厘岛Canggu地区咖啡馆�
 - **`src/api/placesApiService.js`**:
   - 封装了对Google Places API的调用。包含 `searchNearbyPlaces`, `searchTextPlaces`, `getPlaceDetails`, `getPhotoUrl` 等函数
   - `getPlaceDetails` 使用了优化后的 `fieldMask`
-- **`src/models/BaliciagaCafe.js`**: 定义了咖啡馆数据模型，处理从API原始数据到应用所需数据结构的转换，包含 `openingPeriods` 和 `instagram` 字段
-- **`src/fetchCangguCafes.js`** (或 `handler.js`中的核心逻辑):
-  - `/dev/cafes` 等接口的实现
-  - **当前已修改为从S3读取 `data/cafes.json` 作为数据源**
-  - 实现了 `isOpenNow` 的实时计算
-  - 包含内存缓存机制（例如5分钟TTL）
-- **`scripts/` 目录下的辅助脚本**:
-  - `enrichCafeData.js`: 批量获取地点详情并合并数据
-  - `downloadCafePhotos.js`: 下载Google图片到本地
-  - `renameScreenshotFiles.js` (或 `renameManualPhotos.js`): 重命名本地截图文件
-  - `uploadAssetsToS3.js`: 上传图片到S3并更新JSON中的图片链接
-
-## 重要注意事项和未来工作提示
-
-- **API密钥管理**：`.env` 文件需要正确配置 `MAPS_API_KEY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `S3_BUCKET_NAME`
-- **S3权限配置**：S3存储桶策略需要允许对 `image/*` 的公共读取，以及Lambda执行角色需要有读取 `data/cafes.json` 的权限
-- **数据一致性**：如果手动修改了S3上的 `data/cafes.json` 或图片，需要有流程确保所有引用该数据的地方都能获取最新状态
-- **未来可实现的 `isOpenNow` 状态的后台定期更新Lambda**：这是计划中的优化方向
-- **本地脚本的运行环境**：脚本通常在 `BALICIAGA/backend/` 或 `BALICIAGA/backend/scripts/` 目录下通过 `node` 运行，依赖于根目录或 `backend` 目录下的 `.env` 文件
-
-## 前端开发进展更新 (2025年5月20日)
-
-### 项目概述与目标回顾
-
-Baliciaga的前端设计专注于为用户提供直观、美观的界面，用于展示和浏览巴厘岛苍古(Canggu)地区的精选咖啡馆，通过高质量的UI和良好的用户体验，帮助用户快速找到符合自己需求的咖啡馆。
-
-### 主要技术栈与关键库
-
-- **核心技术**：React, TypeScript, Vite, Tailwind CSS
-- **UI库**：`shadcn/ui` 组件库（基于Radix UI的可定制组件）
-- **图标**：`lucide-react` 图标库
-- **轮播**：`embla-carousel-react` 用于图片轮播
-- **数据获取**：React Query 用于数据获取、缓存和状态管理
-- **路由**：React Router DOM 用于页面导航
-
-### 开发历程中的重要UI调整与决策
-
-#### 首页 (`Index.tsx`)
-
-- 实现了吸顶头部，包含标题、Slogan、下拉式"Contact"菜单按钮和搜索框
-- 解决了吸顶头部在滚动时两侧"露边"的问题（通过调整最外层容器和吸顶容器自身的 `padding/margin`）
-- 咖啡馆卡片 (`CafeCard.tsx`) 图片容器的高度调整为响应式（16:9宽高比，有最大高度限制）
-
-#### 详情页 (`CafeDetailPage.tsx`, `CafeDetail.tsx`)
-
-- 解决了最初因内容不足导致的页面底部"露白"或"露底"问题（通过调整页面级容器和内容组件的高度与滚动逻辑）
-- 图片容器 (`floating-image-container`) 实现了响应式高度（4:3宽高比，有最大高度限制），并解决了其右侧视觉间距偏大的问题（通过统一父级 `px-4` 并移除子级 `mx-4`）
-- 对图片下方的两排按钮（第一排Info/Share，第二排Tel/Web/Instagram）进行了多次UI微调：
-  - 按钮高度、内部图标与文字间距、按钮间距、按钮弹性宽度和两端对齐
-  - 按钮文本（中英文切换）
-  - 按钮颜色样式（例如，"浅灰底、白色字"）
-- 调整了评分信息的垂直位置
-- 移除了"Menu"按钮和联系信息区的固有标题及多余内容
-- 实现了营业时间的折叠/展开显示
-
-#### 地图功能
-
-- 前端通过 `placeId` (或地点名称/地址) 构建链接以跳转到Google Maps
-- 详情页展示静态地图图片 (Static Map API)，并计划将这些图片及链接存储到S3
-
-#### 数据获取
-
-- 前端通过 `cafeService.ts` 调用后端API (`/dev/cafes` 或 `/dev/cafes/:placeId`) 获取数据
-- 后端API已切换为从S3读取JSON数据
-
-### 当前前端主要组件结构与功能
-
-- **`App.tsx`**: 路由和全局Provider
-- **`pages/Index.tsx`**: 首页，包含吸顶头部、搜索、咖啡馆卡片列表
-- **`pages/CafeDetailPage.tsx`**: 详情页的页面级容器，负责背景和整体布局
-- **`components/CafeCard.tsx`**: 首页咖啡馆卡片组件
-- **`components/CafeDetail.tsx`**: 详情页核心内容组件，包含图片轮播、所有文本信息、按钮、地图等
-- **`components/ui/`**: `shadcn/ui` 组件
-- **`services/cafeService.ts`**: 封装了对后端API的调用
-- **`types.ts`**: 定义了如 `Cafe` 等TypeScript类型
-
-### 重要注意事项和未来工作提示
-
-- **环境变量**：前端可能需要通过 `.env` 文件配置 `VITE_MAPS_API_KEY` (用于静态地图等) 和后端API的基础URL
-- **图片加载**：目前图片链接最终应指向S3
-- **`isOpenNow`状态**：前端直接使用从后端获取的 `isOpenNow` 布尔值，该值由后端（未来是定期任务）计算
-- **按距离排序功能**：这是用户提出的未来需求，需要在前端获取用户位置，并传递给后端API来实现
-- **响应式设计**：虽然已对手机端做了很多调整，但后续适配平板和PC端时，首页卡片列表的列数（一行多个卡片）和整体布局可能需要进一步的响应式处理
+- **`src/models/BaliciagaCafe.js`
