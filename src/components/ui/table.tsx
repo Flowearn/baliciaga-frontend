@@ -14,7 +14,7 @@ const Table = React.forwardRef<
     />
   </div>
 ))
-Table.displayName = "Table"
+Table.displayName = "tableUrl"
 
 const TableHeader = React.forwardRef<
   HTMLTableSectionElement,

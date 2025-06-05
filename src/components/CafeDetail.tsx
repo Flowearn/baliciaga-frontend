@@ -207,11 +207,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
     return 'https://www.google.com/maps';
   };
 
-  // Handle Menu button click
-  const handleMenuClick = () => {
-    console.log("Menu button clicked for cafe:", cafe.placeId);
-    alert("Menu feature coming soon!");
-  };
+
 
   // Helper function to copy link to clipboard
   async function copyLinkToClipboard(urlToCopy: string) {
@@ -369,37 +365,50 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           </div>
         </div>
         
-        {/* Floating Button Row */}
-        <div className="floating-button-row my-5 flex items-center space-x-3 z-30 relative">
-          {/* Delivery button - conditional rendering based on gofoodUrl */}
+        {/* Floating Button Row - Responsive Flex Wrap Layout */}
+        <div className="floating-button-row my-5 flex flex-wrap gap-3 z-30 relative">
+          {/* Order a delivery button - conditional rendering based on gofoodUrl */}
           {cafe.gofoodUrl && (
             <Button
               asChild
-              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 gap-x-1.5"
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
             >
               <a href={cafe.gofoodUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
                 <Bike size={16} />
-                Delivery
+                Order a delivery
               </a>
             </Button>
           )}
-          
+
           {/* Book a table button - conditional rendering based on table URL */}
-          {cafe && cafe.table && typeof cafe.table === 'string' && cafe.table.trim() !== '' && (
+          {cafe && cafe.tableUrl && typeof cafe.tableUrl === 'string' && cafe.tableUrl.trim() !== '' && (
             <Button
               asChild
-              className="bg-white/20 text-white hover:bg-white/30 hover:text-white rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 gap-x-1.5 focus:ring-0 focus:ring-offset-0 active:bg-white/25 active:text-white focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
             >
-              <a href={cafe.table} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
+              <a href={cafe.tableUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
                 <BookOpen size={16} />
                 Book a table
+              </a>
+            </Button>
+          )}
+
+          {/* Menu button - conditional rendering based on menu URL */}
+          {cafe && cafe.menuUrl && typeof cafe.menuUrl === 'string' && cafe.menuUrl.trim() !== '' && (
+            <Button
+              asChild
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
+            >
+              <a href={cafe.menuUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
+                <FileText size={16} />
+                Menu
               </a>
             </Button>
           )}
           
           {/* Share button */}
           <Button 
-            className="bg-white text-gray-800 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 gap-x-1.5 focus:ring-0 focus:ring-offset-0 active:bg-white active:text-gray-800 focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-white hover:text-gray-800"
+            className="bg-white text-gray-800 hover:bg-gray-100 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
             onClick={handleShareClick}
           >
             <Share2 size={16} />

@@ -100,7 +100,7 @@ const Index = () => {
   
   // State for tracking geolocation failure count for smart error handling
   const [geolocationFailureCount, setGeolocationFailureCount] = useState<number>(0);
-
+  
   const { data: cafes, isLoading, error } = useQuery({
     queryKey: ['cafes', selectedCategory],
     queryFn: () => fetchCafes(selectedCategory),
@@ -265,7 +265,7 @@ const Index = () => {
     
     const timer = setTimeout(() => {
       console.log(`[SCROLL_DEBUG] Starting ${hasRestoredLocation ? 'delayed' : 'immediate'} geolocation fetch. Has restored location: ${hasRestoredLocation}`);
-      fetchUserLocationAndProcessCafes();
+    fetchUserLocationAndProcessCafes();
     }, delay);
 
     return () => clearTimeout(timer);
@@ -511,39 +511,39 @@ const Index = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </div>
-      </div>
-      
-      {/* Category Switching Buttons */}
-      <div className="py-4 px-4">
-        <div className="flex gap-3">
-          {/* Cafe Button */}
-          <button
-            onClick={() => handleCategoryChange('cafe')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm transition-colors ${
-              selectedCategory === 'cafe'
-                ? 'bg-white text-[rgb(41,55,31)] border border-black'
-                : 'bg-white text-gray-500 border border-gray-400'
-            }`}
-            style={{ height: '32px' }}
-          >
-            <Coffee className="w-4 h-4" />
-            <span>Cafe</span>
-          </button>
           
-          {/* Bar Button */}
-          <button
-            onClick={() => handleCategoryChange('bar')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm transition-colors ${
-              selectedCategory === 'bar'
-                ? 'bg-white text-[rgb(41,55,31)] border border-black'
-                : 'bg-white text-gray-500 border border-gray-400'
-            }`}
-            style={{ height: '32px' }}
-          >
-            <Wine className="w-4 h-4" />
-            <span>Bar</span>
-          </button>
+          {/* Category Switching Buttons - Moved inside sticky header */}
+          <div className="mt-2">
+            <div className="flex gap-3">
+              {/* Cafe Button */}
+              <button
+                onClick={() => handleCategoryChange('cafe')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm transition-colors ${
+                  selectedCategory === 'cafe'
+                    ? 'bg-white text-[rgb(41,55,31)] border border-black'
+                    : 'bg-white text-gray-500 border border-gray-400'
+                }`}
+                style={{ height: '32px' }}
+              >
+                <Coffee className="w-4 h-4" />
+                <span>Cafe</span>
+              </button>
+              
+              {/* Bar Button */}
+              <button
+                onClick={() => handleCategoryChange('bar')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm transition-colors ${
+                  selectedCategory === 'bar'
+                    ? 'bg-white text-[rgb(41,55,31)] border border-black'
+                    : 'bg-white text-gray-500 border border-gray-400'
+                }`}
+                style={{ height: '32px' }}
+              >
+                <Wine className="w-4 h-4" />
+                <span>Bar</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -620,9 +620,9 @@ const Index = () => {
           
           {sortedCafes.length > 0 ? (
             sortedCafes.map(cafe => (
-              <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
-                <CafeCard cafe={cafe} />
-              </div>
+            <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
+              <CafeCard cafe={cafe} />
+            </div>
             ))
           ) : (
             <div className="text-center py-10">
