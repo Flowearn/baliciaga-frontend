@@ -24,4 +24,56 @@ export interface Cafe {
   servesVegetarianFood?: boolean; // Optional, whether the cafe serves vegetarian food
   "tableUrl"?: string; // Optional, table booking URL
   "menuUrl"?: string; // Optional, menu URL
+}
+
+// Rental Listing Types
+export interface Listing {
+  listingId: string;
+  title: string;
+  description: string;
+  location: {
+    address: string;
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  pricing: {
+    monthlyRent: number;
+    deposit: number;
+    utilities: number;
+    currency: string;
+  };
+  details: {
+    bedrooms: number;
+    bathrooms: number;
+    squareFootage?: number;
+    furnished: boolean;
+    petFriendly: boolean;
+    smokingAllowed: boolean;
+  };
+  photos: string[];
+  availability: {
+    availableFrom: string;
+    minimumStay: number;
+    maximumStay?: number;
+  };
+  status: 'active' | 'paused' | 'closed';
+  initiatorId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListingsPagination {
+  hasMore: boolean;
+  nextCursor: string | null;
+  totalCount: number;
+}
+
+export interface ListingsApiResponse {
+  success: boolean;
+  data: {
+    listings: Listing[];
+    pagination: ListingsPagination;
+  };
 } 

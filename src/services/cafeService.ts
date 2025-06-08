@@ -15,7 +15,19 @@ export const fetchCafes = async (category: 'cafe' | 'bar' = 'cafe'): Promise<Caf
   const endpoint = `${API_BASE_URL}/places?type=${category}`;
   console.log('DEBUG: About to fetch from URL:', endpoint);
   
+  // Enhanced debugging for network issues
+  console.log('[cafeService DEBUG] 正在请求URL:', endpoint);
+  console.log('[cafeService DEBUG] API_BASE_URL value:', API_BASE_URL);
+  console.log('[cafeService DEBUG] Category parameter:', category);
+  console.log('[cafeService DEBUG] Full endpoint breakdown:', {
+    baseUrl: API_BASE_URL,
+    path: '/places',
+    queryParam: `type=${category}`,
+    fullUrl: endpoint
+  });
+  
   try {
+    console.log('[cafeService DEBUG] Starting fetch request...');
     const response = await fetch(endpoint);
     
     if (!response.ok) {
@@ -28,7 +40,19 @@ export const fetchCafes = async (category: 'cafe' | 'bar' = 'cafe'): Promise<Caf
     console.log('DEBUG: Successfully fetched data, count:', data.length, 'for category:', category);
     return data;
   } catch (error) {
-    console.error('Error fetching data:', error);
+    // Enhanced error logging for better debugging
+    console.error('[cafeService ERROR] Error fetching data:', error);
+    console.error('[cafeService ERROR] Error type:', typeof error);
+    console.error('[cafeService ERROR] Error name:', error instanceof Error ? error.name : 'Unknown');
+    console.error('[cafeService ERROR] Error message:', error instanceof Error ? error.message : 'Unknown message');
+    console.error('[cafeService ERROR] Request URL that failed:', endpoint);
+    
+    // Check if it's a network-related error
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      console.error('[cafeService ERROR] This appears to be a network/CORS/connectivity issue');
+      console.error('[cafeService ERROR] Possible causes: CORS policy, server down, incorrect URL, network connectivity');
+    }
+    
     throw error;
   }
 };

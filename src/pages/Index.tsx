@@ -139,7 +139,7 @@ const Index = () => {
     if (newCategoryToSet !== selectedCategory) {
       setSelectedCategory(newCategoryToSet);
     }
-  }, [searchParams, selectedCategory]); // 主要依赖 searchParams，避免循环更新
+  }, [searchParams]); // 只依赖 searchParams，移除 selectedCategory 以避免循环更新
 
   // Geolocation fetch function
   const fetchUserLocationAndProcessCafes = async () => {
