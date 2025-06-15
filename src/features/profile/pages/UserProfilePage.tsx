@@ -513,8 +513,6 @@ const UserProfilePage: React.FC = () => {
             </div>
           </div>
 
-        </div>
-
         {/* Change Password */}
         <div className="mb-8 mx-4">
           <div className="bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-3">
