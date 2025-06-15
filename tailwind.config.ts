@@ -20,6 +20,9 @@ export default {
 		},
 		extend: {
 			colors: {
+				brand: {
+					DEFAULT: "#B7AC93",
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -98,5 +101,5 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [],
 } satisfies Config;

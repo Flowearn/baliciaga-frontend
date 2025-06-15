@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu as MenuIcon, Search as SearchIcon, X as XIcon, Coffee, Wine } from "lucide-react";
+import { Menu as MenuIcon, Search as SearchIcon, X as XIcon, Coffee, Wine, Home } from "lucide-react";
 
 // Constant for stale location threshold - moved to module level to avoid ReferenceError
 const STALE_LOCATION_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
@@ -74,17 +74,13 @@ const Index = () => {
         
         // 检查位置是否在15分钟新鲜度阈值内
         if (timeElapsed <= STALE_LOCATION_THRESHOLD_MS) {
-          console.log(`[SCROLL_DEBUG] Restored fresh user location from sessionStorage. Age: ${timeElapsed}ms`);
           return location;
-        } else {
-          console.log(`[SCROLL_DEBUG] Stored location is stale (${timeElapsed}ms), will fetch fresh location`);
         }
       }
     } catch (error) {
       console.error('[SCROLL_DEBUG] Failed to restore user location from sessionStorage:', error);
     }
     
-    console.log('[SCROLL_DEBUG] No valid cached location, starting with null');
     return null;
   });
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -101,28 +97,16 @@ const Index = () => {
   // State for tracking geolocation failure count for smart error handling
   const [geolocationFailureCount, setGeolocationFailureCount] = useState<number>(0);
   
-  const { data: cafes, isLoading, error } = useQuery({
+  const { data: cafes, isLoading, error, refetch, isRefetching } = useQuery<Cafe[], Error>({
     queryKey: ['cafes', selectedCategory],
-    queryFn: () => fetchCafes(selectedCategory),
+    queryFn: () => fetchCafes(selectedCategory as 'cafe' | 'bar'),
+    enabled: !!selectedCategory,
   });
   
-  // BAR FOCUS: 监控查询状态变化，特别关注 bar 分类
-  useEffect(() => {
-    if (selectedCategory === 'bar') {
-      console.log(`[Index.tsx BAR_FOCUS] selectedCategory is 'bar'. isLoading: ${isLoading}`);
-      console.log(`[Index.tsx BAR_FOCUS] Current fetched data length: ${Array.isArray(cafes) ? cafes.length : 0}`);
-      if (Array.isArray(cafes)) {
-        console.log(`[Index.tsx BAR_FOCUS] First item name: ${cafes[0]?.name || 'N/A'}`);
-        console.log(`[Index.tsx BAR_FOCUS] Data types: ${cafes.map(item => item.types?.[0] || 'unknown').join(', ')}`);
-      }
-    }
-  }, [selectedCategory, isLoading, cafes]);
+
   
   // Handle category change - update both state and URL
   const handleCategoryChange = (newCategory: 'cafe' | 'bar') => {
-    if (newCategory === 'bar') {
-      console.log(`[Index.tsx BAR_FOCUS] Category change initiated to 'bar'`);
-    }
     setSelectedCategory(newCategory); // 1. 更新 React state
     setSearchParams({ type: newCategory }, { replace: true }); // 2. 更新 URL search param (使用 replace 避免不必要的历史记录)
   };
@@ -177,12 +161,9 @@ const Index = () => {
       try {
         sessionStorage.setItem('userLocation', JSON.stringify(locationData));
         sessionStorage.setItem('lastLocationFetchTimestamp', currentTimestamp.toString());
-        console.log(`[SCROLL_DEBUG] Saved fresh user location to sessionStorage:`, locationData);
       } catch (error) {
         console.error('[SCROLL_DEBUG] Failed to save user location to sessionStorage:', error);
       }
-      
-      console.log("User location fetched:", latitude, longitude);
     } catch (error) {
       // Enhanced error handling with specific GeolocationPositionError analysis
       const geoError = error as GeolocationPositionError;
@@ -235,12 +216,9 @@ const Index = () => {
         try {
           sessionStorage.removeItem('userLocation');
           sessionStorage.removeItem('lastLocationFetchTimestamp');
-          console.log(`[SCROLL_DEBUG] Cleared cached location data after ${newFailureCount} failures`);
         } catch (e) {
           // ignore storage errors
         }
-      } else {
-        console.log(`[SCROLL_DEBUG] Keeping cached location data (failure count: ${newFailureCount})`);
       }
       
       // Show user-friendly toast only on multiple failures or critical errors to avoid spam
@@ -264,21 +242,13 @@ const Index = () => {
     const delay = hasRestoredLocation ? 2000 : 100; // 有缓存位置时延迟2秒，无缓存位置时延迟100ms
     
     const timer = setTimeout(() => {
-      console.log(`[SCROLL_DEBUG] Starting ${hasRestoredLocation ? 'delayed' : 'immediate'} geolocation fetch. Has restored location: ${hasRestoredLocation}`);
-    fetchUserLocationAndProcessCafes();
+      fetchUserLocationAndProcessCafes();
     }, delay);
 
     return () => clearTimeout(timer);
   }, []); // 只在组件挂载时运行一次
 
-  // DIAGNOSTIC: Track component mounting/unmounting (for debugging scroll issue)
-  useEffect(() => {
-    console.log('[DIAGNOSTIC] Index.tsx: Component Did MOUNT. Timestamp:', Date.now());
-    console.log(`[SCROLL_DEBUG] Component mounted. Initial state - isLoading: ${isLoading}, userLocation: ${!!userLocation}, cafes length: ${Array.isArray(cafes) ? cafes.length : 0}`);
-    return () => {
-      console.log('[DIAGNOSTIC] Index.tsx: Component Will UNMOUNT. Timestamp:', Date.now());
-    };
-  }, []); // Empty dependency array means this runs only on mount and unmount
+
 
   // Effect to manage isHomepageActive based on location
   useEffect(() => {
@@ -330,21 +300,11 @@ const Index = () => {
   // Sort cafes by distance if user location is available, otherwise sort by open status
   const sortedCafes = useMemo<CafeWithDistance[]>(() => {
     if (!Array.isArray(cafes) || cafes.length === 0) {
-      if (selectedCategory === 'bar') {
-        console.log(`[Index.tsx BAR_FOCUS] sortedCafes computation: cafes array is empty or invalid. Length: ${Array.isArray(cafes) ? cafes.length : 'not array'}`);
-      }
       return [];
-    }
-
-    // BAR FOCUS: 在开始排序前记录状态
-    if (selectedCategory === 'bar') {
-      console.log(`[Index.tsx BAR_FOCUS] sortedCafes computation: Starting sort for ${cafes.length} bars`);
-      console.log(`[Index.tsx BAR_FOCUS] sortedCafes computation: userLocation available: ${!!userLocation}`);
     }
 
     // If we have user location, calculate distances and sort by distance
     if (userLocation) {
-      console.log(`Sorting ${selectedCategory}s by distance from user location`);
       const cafesWithDistance = cafes.map(cafe => {
         const distanceInKm = getDistanceFromLatLonInKm(
           userLocation.latitude,
@@ -368,11 +328,6 @@ const Index = () => {
         return (a.distanceInKm || Infinity) - (b.distanceInKm || Infinity);
       });
 
-      // BAR FOCUS: 记录排序结果
-      if (selectedCategory === 'bar') {
-        console.log(`[Index.tsx BAR_FOCUS] sortedCafes computation: Sorted ${sortedResult.length} bars with distance`);
-      }
-
       return sortedResult;
     }
     
@@ -382,11 +337,6 @@ const Index = () => {
       if (!a.isOpenNow && b.isOpenNow) return 1;
       return 0;
     });
-
-    // BAR FOCUS: 记录默认排序结果
-    if (selectedCategory === 'bar') {
-      console.log(`[Index.tsx BAR_FOCUS] sortedCafes computation: Sorted ${sortedResult.length} bars without distance (default sort)`);
-    }
 
     return sortedResult;
   }, [cafes, userLocation, selectedCategory]);
@@ -462,90 +412,20 @@ const Index = () => {
     }
   };
 
+  // Effect to open search modal if ?search=true is in the URL
+  useEffect(() => {
+    if (searchParams.get('search') === 'true') {
+      setIsSearchModalOpen(true);
+      // Remove the search param from URL to avoid re-opening on refresh
+      searchParams.delete('search');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Sticky Wrapper Div */}
-      <div className="sticky top-0 z-50 bg-gray-50 py-3 px-4">
-        {/* HeaderContentDiv */}
-        <div className="pt-0 pb-0">
-          {/* Title Row */}
-          <div className="flex items-center justify-between w-full">
-            {/* Search Icon (Left) */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-black hover:bg-gray-200"
-              onClick={() => setIsSearchModalOpen(true)}
-            >
-              <SearchIcon className="h-6 w-6" />
-            </Button>
-
-            {/* Title (Center) */}
-            <h1 
-              className="text-3xl font-bold text-black cursor-pointer"
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            >
-              Baliciaga
-            </h1>
-
-            {/* Menu Icon (Right) */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-black hover:bg-gray-200">
-                  <MenuIcon className="h-6 w-6" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem 
-                  className="flex justify-center" 
-                  onSelect={() => { window.location.href = 'mailto:yo@baliciaga.com'; }}
-                >
-                  Contact
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="flex justify-center" 
-                  onSelect={handleShareClick}
-                >
-                  Share
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          
-          {/* Category Switching Buttons - Moved inside sticky header */}
-          <div className="mt-2">
-            <div className="flex gap-3">
-              {/* Cafe Button */}
-              <button
-                onClick={() => handleCategoryChange('cafe')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm transition-colors ${
-                  selectedCategory === 'cafe'
-                    ? 'bg-white text-[rgb(41,55,31)] border border-black'
-                    : 'bg-white text-gray-500 border border-gray-400'
-                }`}
-                style={{ height: '32px' }}
-              >
-                <Coffee className="w-4 h-4" />
-                <span>Cafe</span>
-              </button>
-              
-              {/* Bar Button */}
-              <button
-                onClick={() => handleCategoryChange('bar')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full text-sm transition-colors ${
-                  selectedCategory === 'bar'
-                    ? 'bg-white text-[rgb(41,55,31)] border border-black'
-                    : 'bg-white text-gray-500 border border-gray-400'
-                }`}
-                style={{ height: '32px' }}
-              >
-                <Wine className="w-4 h-4" />
-                <span>Bar</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* The sticky header and category buttons have been removed from here. */}
+      {/* They are now handled globally by GlobalHeader.tsx in App.tsx. */}
       
       {/* Search Modal */}
       {isSearchModalOpen && (
@@ -593,42 +473,22 @@ const Index = () => {
         </div>
       )}
       
-      {/* Content Area - Show skeleton screen only when necessary */}
+      {/* Conditional Rendering for Loading and Content */}
       {isLoading ? (
-        <div className="space-y-2 px-4">
-          {/* VERIFICATION LOG: Track when skeleton is shown */}
-          {(() => {
-            console.log(`[SCROLL_DEBUG] Showing skeleton screen - data loading. isLoading: ${isLoading}, userLocation: ${!!userLocation}, timestamp: ${Date.now()}`);
-            return null;
-          })()}
-          {/* Render skeleton cards */}
-          {[...Array(5)].map((_, index) => (
-            <CafeCardSkeleton key={`skeleton-${index}`} />
-          ))}
+        <div className="pt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12 px-4">
+            {Array.from({ length: 6 }).map((_, i) => <CafeCardSkeleton key={i} />)}
+          </div>
         </div>
       ) : (
-        <div className="space-y-2 px-4">
-          {/* VERIFICATION LOG: Track when real content is shown */}
-          {(() => {
-            console.log(`[SCROLL_DEBUG] Showing real content. sortedCafes length: ${sortedCafes?.length || 0}, userLocation: ${!!userLocation}, timestamp: ${Date.now()}`);
-            return null;
-          })()}
-          {selectedCategory === 'bar' && (() => {
-            console.log(`[Index.tsx BAR_FOCUS] Rendering final list for bars. sortedCafes length: ${sortedCafes?.length || 0}`);
-            return null;
-          })()}
-          
-          {sortedCafes.length > 0 ? (
-            sortedCafes.map(cafe => (
-            <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
-              <CafeCard cafe={cafe} />
-            </div>
-            ))
-          ) : (
-            <div className="text-center py-10">
-              <p className="text-gray-500">No {selectedCategory === 'cafe' ? 'cafes' : 'bars'} found</p>
-            </div>
-          )}
+        <div className="pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12 px-4">
+            {cafes?.map((cafe) => (
+              <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
+                <CafeCard cafe={cafe} />
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

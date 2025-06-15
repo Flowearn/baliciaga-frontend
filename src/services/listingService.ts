@@ -17,6 +17,7 @@ export interface AnalyzeSourceResponse {
       petFriendly: boolean;
       smokingAllowed: boolean;
       address: string;
+      locationArea?: string;
       availableFrom: string;
       minimumStay: number;
       description: string;
@@ -68,7 +69,7 @@ export const analyzeListingSource = async (sourceText: string): Promise<AnalyzeS
 
 export interface CreateListingPayload {
   title: string;
-  description: string;
+  posterRole: 'tenant' | 'landlord';
   monthlyRent: number;
   currency: string;
   deposit: number;
@@ -80,9 +81,11 @@ export interface CreateListingPayload {
   petFriendly: boolean;
   smokingAllowed: boolean;
   address: string;
+  locationArea?: string;
   availableFrom: string;
   minimumStay: number;
   amenities: string[];
+  photos: string[]; // 图片 URL 数组
 }
 
 export interface CreateListingResponse {
@@ -179,4 +182,52 @@ export const fetchMyListings = async ({
   
   const response = await apiClient.get(`/users/me/listings?${params.toString()}`);
   return response.data;
+};
+
+export interface FinalizeListingResponse {
+  success: boolean;
+  data?: {
+    listingId: string;
+    status: string;
+    updatedApplicationsCount: number;
+    message: string;
+  };
+  error?: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+}
+
+export const finalizeListing = async (listingId: string): Promise<FinalizeListingResponse> => {
+  const response = await apiClient.patch(`/listings/${listingId}/finalize`);
+  return response.data;
+};
+
+export interface CancelListingResponse {
+  success: boolean;
+  data?: {
+    listingId: string;
+    status: string;
+    message: string;
+  };
+  error?: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+}
+
+export const cancelListing = async (listingId: string): Promise<CancelListingResponse> => {
+  const response = await apiClient.patch(`/listings/${listingId}/cancel`);
+  return response.data;
+}; 
+
+export const incrementView = async (listingId: string): Promise<void> => {
+  try {
+    // Fire-and-forget, no need to await or handle response
+    apiClient.post(`/listings/${listingId}/view`);
+  } catch (error) {
+    console.warn("Failed to increment view count, but continuing.", error);
+  }
 }; 

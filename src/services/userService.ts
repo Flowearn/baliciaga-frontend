@@ -8,8 +8,10 @@ export interface UserProfile {
     whatsApp: string;
     gender?: 'male' | 'female' | 'other';
     age?: number;
-    nationality?: string;
+    languages?: string[];
     socialMedia?: string;
+    occupation?: string;
+    profilePictureUrl?: string;
   };
   createdAt: string;
   updatedAt: string;
@@ -21,6 +23,17 @@ export interface CreateUserProfileData {
   nationality: string;
   age: number;
   whatsapp: string;
+}
+
+export interface UpdateUserProfileData {
+  name?: string;
+  whatsApp?: string;
+  gender?: 'male' | 'female' | 'other';
+  age?: number;
+  languages?: string[];
+  socialMedia?: string;
+  occupation?: string;
+  profilePictureUrl?: string;
 }
 
 export const fetchUserProfile = async (): Promise<UserProfile> => {
@@ -38,6 +51,16 @@ export const createUserProfile = async (profileData: CreateUserProfileData): Pro
       age: profileData.age,
       nationality: profileData.nationality,
     }
+  };
+  
+  const response = await apiClient.post('/users/profile', backendPayload);
+  return response.data.data; // Backend returns { success: true, data: {...} }
+};
+
+export const updateUserProfile = async (profileData: UpdateUserProfileData): Promise<UserProfile> => {
+  // 使用相同的端点，因为后端的createUserProfile实际上是upsert操作
+  const backendPayload = {
+    profile: profileData
   };
   
   const response = await apiClient.post('/users/profile', backendPayload);

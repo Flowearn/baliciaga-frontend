@@ -1,61 +1,62 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import React from "react";
+import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
+import { ScrollRestoration } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createBrowserRouter, RouterProvider, Outlet, ScrollRestoration } from "react-router-dom";
-import { withAuthenticator, Authenticator, AuthenticatorProps } from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css';
-import { useEffect, useState } from 'react';
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster as UIToaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { useAuth } from "./context/AuthContext";
+
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 import CafeDetailPage from "./pages/CafeDetailPage";
-import UserProfileForm from "./features/rentals/components/UserProfileForm";
 import ListingsPage from "./features/rentals/pages/ListingsPage";
 import ListingDetailPage from "./features/rentals/pages/ListingDetailPage";
 import CreateListingPage from "./features/rentals/pages/CreateListingPage";
 import MyApplicationsPage from "./features/rentals/pages/MyApplicationsPage";
 import MyListingsPage from "./features/rentals/pages/MyListingsPage";
-import { fetchUserProfile, UserProfile } from "./services/userService";
-import { toast } from "sonner";
-import axios from "axios";
+import ManageListingApplications from "./features/rentals/pages/ManageListingApplications";
+import UserProfilePage from "./features/profile/pages/UserProfilePage";
+import NotFound from "./pages/NotFound";
+import AccountPage from "./pages/AccountPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import CreateProfilePage from "./pages/CreateProfilePage";
+
+import GlobalHeader from "./components/GlobalHeader";
+import { BottomNavBar } from "./components/BottomNavBar";
+import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
-const formFields: AuthenticatorProps['formFields'] = {
-  signUp: {
-    email: {
-      order: 1,
-      isRequired: true,
-    },
-    password: {
-      order: 2,
-      isRequired: true,
-    },
-    confirm_password: {
-      order: 3,
-      isRequired: true,
-    },
-  },
-};
+// Main Layout component that provides the shared layout and scroll restoration
+const MainLayout = () => {
+  const location = useLocation();
+  // 修复：确保底部导航栏在所有相关页面都显示，包括 /create-listing
+  const showBottomNav = location.pathname.startsWith('/listings') || 
+                       location.pathname.startsWith('/login') || 
+                       location.pathname === '/create-listing' ||
+                       location.pathname.startsWith('/my-') ||
+                       location.pathname.startsWith('/profile');
 
-// Root Layout component that provides the shared layout and scroll restoration
-const RootLayout = () => (
-  <>
-    <Outlet />
-    <ScrollRestoration 
-      getKey={(location, matches) => {
-        // Scroll restoration based on pathname and search params to ensure independent scroll position memory for different URL states
-        return location.pathname + location.search;
-      }} 
-    />
-  </>
-);
+  return (
+    <>
+      <GlobalHeader />
+      <Outlet />
+      {showBottomNav && <BottomNavBar />}
+      <ScrollRestoration 
+        getKey={(location, matches) => {
+          // Scroll restoration based on pathname and search params to ensure independent scroll position memory for different URL states
+          return location.pathname + location.search;
+        }} 
+      />
+    </>
+  );
+};
 
 // Route configuration for createBrowserRouter
 const routeObjects = [
   {
     path: "/",
-    element: <RootLayout />, // All routes use this root layout
+    element: <MainLayout />, // All routes use this main layout
     children: [
       {
         index: true, // Represents the default child route for parent path "/"
@@ -74,16 +75,32 @@ const routeObjects = [
         element: <ListingDetailPage />,
       },
       {
-        path: "create-listing", // AI-assisted listing creation page
-        element: <CreateListingPage />,
+        path: "create-listing", // AI-assisted listing creation page - Protected
+        element: <ProtectedRoute><CreateListingPage /></ProtectedRoute>,
       },
       {
-        path: "my-applications", // User's applications management page
-        element: <MyApplicationsPage />,
+        path: "my-applications", // User's applications management page - Protected
+        element: <ProtectedRoute><MyApplicationsPage /></ProtectedRoute>,
       },
       {
-        path: "my-listings", // Property owner's listings management page
-        element: <MyListingsPage />,
+        path: "my-listings", // Property owner's listings management page - Protected
+        element: <ProtectedRoute><MyListingsPage /></ProtectedRoute>,
+      },
+      {
+        path: "my-listings/:listingId/manage", // Manage applications for a specific listing - Protected
+        element: <ProtectedRoute><ManageListingApplications /></ProtectedRoute>,
+      },
+      {
+        path: "profile", // User profile management page - Protected
+        element: <ProtectedRoute><UserProfilePage /></ProtectedRoute>,
+      },
+      {
+        path: "login", // Login page - handles login and registration
+        element: <AccountPage />,
+      },
+      {
+        path: "create-profile", // Profile creation page for authenticated users without profile
+        element: <CreateProfilePage />,
       },
       {
         path: "*", // Catch-all for 404 pages
@@ -96,136 +113,34 @@ const routeObjects = [
 // Create router instance using Data Router API
 const router = createBrowserRouter(routeObjects);
 
-interface AppProps {
-  signOut?: () => void;
-  user?: {
-    attributes?: {
-      email?: string;
-    };
-  };
-}
+function App() {
+  // 1. 使用我们更可靠的 AuthContext 获取加载状态
+  const { isAuthLoading } = useAuth();
 
-const App = ({ signOut, user }: AppProps) => {
-  const [profileExists, setProfileExists] = useState<boolean | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkUserProfile = async () => {
-      try {
-        setIsLoading(true);
-        const profile = await fetchUserProfile();
-        setUserProfile(profile);
-        setProfileExists(true);
-      } catch (error: unknown) {
-        if (axios.isAxiosError(error) && error.response?.status === 404) {
-          // This is the expected "new user" case
-          console.log("New user detected. Rendering profile form.");
-          setProfileExists(false); // Update state to show UserProfileForm
-        } else {
-          // This is an unexpected error (like 500 error or network issues)
-          console.error("An unexpected error occurred during profile check:", error);
-          // Set error state to show error page
-          toast.error('Failed to fetch user information. Please try again.');
-          setProfileExists(null);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkUserProfile();
-  }, []);
-
-  const handleProfileCreated = async () => {
-    // Re-check user profile
-    try {
-      const profile = await fetchUserProfile();
-      setUserProfile(profile);
-      setProfileExists(true);
-      toast.success('Welcome to Baliciaga!');
-    } catch (error) {
-      console.error('Error fetching updated profile:', error);
-      toast.error('Failed to fetch user information');
-    }
-  };
-
-  // Show loading state
-  if (isLoading) {
+  // 2. 当 AuthContext 仍在加载关键信息时，显示一个全屏的加载动画，阻止渲染任何子路由
+  // 这是解决硬刷新竞态条件问题的关键：在状态明确前，不渲染任何路由
+  if (isAuthLoading) {
     return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading...</p>
-            </div>
-          </div>
-        </TooltipProvider>
-      </QueryClientProvider>
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-lg font-semibold text-gray-700">Loading application...</p>
+          <p className="text-sm text-gray-500 mt-2">Please wait while we initialize your session</p>
+        </div>
+      </div>
     );
   }
-
-  // If user hasn't created a profile, show profile creation form
-  if (profileExists === false) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <UserProfileForm onProfileCreated={handleProfileCreated} />
-        </TooltipProvider>
-      </QueryClientProvider>
-    );
-  }
-
-  // If there's an error or unknown state, show error page
-  if (profileExists === null) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Something went wrong</h2>
-              <p className="text-gray-600 mb-4">Unable to load user information. Please refresh the page and try again.</p>
-              <button 
-                onClick={() => window.location.reload()} 
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Refresh Page
-              </button>
-            </div>
-          </div>
-        </TooltipProvider>
-      </QueryClientProvider>
-    );
-  }
-
-  // Show normal app interface
+  
+  // 3. 只有当加载完成后，才渲染真正的应用布局和路由
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
+        <UIToaster />
         <Sonner />
         <RouterProvider router={router} />
-        {/* Debug info: Show current logged in user */}
-        {user && (
-          <div style={{ position: 'fixed', bottom: '10px', right: '10px', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '10px', borderRadius: '5px', fontSize: '12px' }}>
-            <p>👤 {user.attributes?.email}</p>
-            {userProfile && <p>📝 {userProfile.profile.name}</p>}
-            <button onClick={signOut} style={{ marginTop: '5px', padding: '5px 10px', background: '#ff4444', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}>
-              Sign Out
-            </button>
-          </div>
-        )}
       </TooltipProvider>
     </QueryClientProvider>
   );
-};
+}
 
-export default withAuthenticator(App, {
-  formFields,
-  loginMechanisms: ['email'],
-});
+export default App;

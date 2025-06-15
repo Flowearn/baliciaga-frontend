@@ -40,6 +40,7 @@ export interface Listing {
   };
   pricing: {
     monthlyRent: number;
+    yearlyRent: number;
     deposit: number;
     utilities: number;
     currency: string;
@@ -60,6 +61,8 @@ export interface Listing {
   };
   status: 'active' | 'paused' | 'closed';
   initiatorId: string;
+  acceptedApplicantsCount: number;
+  totalSpots: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,4 +79,24 @@ export interface ListingsApiResponse {
     listings: Listing[];
     pagination: ListingsPagination;
   };
+}
+
+export interface ListingFormData {
+  title: string;
+  monthlyRent: number;
+  currency: string;
+  deposit: number;
+  utilities: number;
+  bedrooms: number;
+  bathrooms: number;
+  squareFootage: number | null;
+  furnished: boolean;
+  petFriendly: boolean;
+  smokingAllowed: boolean;
+  address: string;
+  availableFrom: string;
+  minimumStay: number;
+  description: string;
+  amenities: string[];
+  photos: File[];
 } 

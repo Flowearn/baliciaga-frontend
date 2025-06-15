@@ -32,25 +32,29 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ onProfileCreated }) =
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      // Basic validation
-      if (!formData.fullName.trim()) {
+    // Basic validation
+          if (!formData.fullName.trim()) {
         toast.error('Please enter your full name');
+        setIsLoading(false);
         return;
       }
-      if (!formData.nationality.trim()) {
-        toast.error('Please enter your nationality');
-        return;
-      }
-      if (formData.age < 0 || formData.age > 200) {
-        toast.error('Age must be between 0 and 200');
-        return;
-      }
-      if (!formData.whatsapp.trim()) {
+    if (!formData.nationality.trim()) {
+      toast.error('Please enter your nationality');
+      setIsLoading(false);
+      return;
+    }
+    if (formData.age < 0 || formData.age > 200) {
+      toast.error('Age must be between 0 and 200');
+      setIsLoading(false);
+      return;
+    }
+          if (!formData.whatsapp.trim()) {
         toast.error('Please enter your WhatsApp number');
+        setIsLoading(false);
         return;
       }
 
+    try {
       await createUserProfile(formData);
       toast.success('Profile created successfully!');
       onProfileCreated();
@@ -72,7 +76,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ onProfileCreated }) =
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
               <Label htmlFor="fullName">Full Name</Label>
               <Input
@@ -91,7 +95,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ onProfileCreated }) =
                 value={formData.gender}
                 onValueChange={(value: 'male' | 'female' | 'other') => handleInputChange('gender', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger id="gender">
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
@@ -119,10 +123,13 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ onProfileCreated }) =
               <Input
                 id="age"
                 type="number"
-                min="0"
-                max="200"
                 value={formData.age}
-                onChange={(e) => handleInputChange('age', parseInt(e.target.value))}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // 如果输入为空，设为0；否则直接转换（包括负数）
+                  const numValue = value === '' ? 0 : parseInt(value);
+                  handleInputChange('age', isNaN(numValue) ? 0 : numValue);
+                }}
                 required
               />
             </div>

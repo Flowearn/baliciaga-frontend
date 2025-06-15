@@ -1,0 +1,1 @@
+export const pantoneColors = ["#F0F1E3", "#DFC9B8", "#B7AC93", "#BDA08A", "#9E7B66", "#9E8977", "#86675B", "#534540"]; export function pickPantone(seed?: string): string { if (seed) { const idx = seed.charCodeAt(0) % pantoneColors.length; return pantoneColors[idx]; } const idx = Math.floor(Math.random() * pantoneColors.length); return pantoneColors[idx]; }

@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
-// API Gateway基础URL - 从dev-rent stage获取
-const API_BASE_URL = 'https://77z66u4qd6.execute-api.ap-southeast-1.amazonaws.com/dev-rent';
+// API Gateway基础URL - 根据环境变量自动切换
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3006/dev';
 
 // 创建axios实例
 const apiClient = axios.create({
@@ -25,6 +25,31 @@ apiClient.interceptors.request.use(
         // 添加Authorization header
         config.headers.Authorization = `Bearer ${idToken}`;
       }
+
+      // --- NEW: Add dynamic user headers for local development ---
+      if (import.meta.env.DEV) {
+        try {
+          const { getCurrentUser } = await import('aws-amplify/auth');
+          const currentUser = await getCurrentUser();
+          const userSub = currentUser.userId;
+          const userEmail = currentUser.signInDetails?.loginId;
+
+          if (userSub) {
+            // --- 关键诊断日志 (前端部分) ---
+            console.log(
+              `%c[FRONTEND-AUTH-DIAGNOSIS] Interceptor sending header x-test-user-sub: ${userSub}`,
+              'color: orange; font-weight: bold;'
+            );
+            // ------------------------------------
+            config.headers['x-test-user-sub'] = userSub;
+            config.headers['x-test-user-email'] = userEmail || '';
+          }
+        } catch (e) {
+          // User might not be logged in, that's okay.
+          // The backend will handle the case where headers are missing.
+        }
+      }
+      // -----------------------------------------------------------
     } catch (error) {
       // 如果用户未登录，继续发送请求（对于公开端点）
       console.log('User not authenticated, proceeding without auth token');

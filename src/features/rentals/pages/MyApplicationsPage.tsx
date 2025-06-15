@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   AlertCircle,
   FileText,
@@ -11,6 +10,8 @@ import {
   RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuthenticator } from '@aws-amplify/ui-react';
+import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
 
 import ApplicationCard from '../components/ApplicationCard';
 import { 
@@ -19,24 +20,22 @@ import {
   FetchMyApplicationsParams 
 } from '@/services/applicationService';
 
-type ApplicationStatus = 'all' | 'pending' | 'accepted' | 'rejected' | 'signed';
-
 const MyApplicationsPage: React.FC = () => {
+  const { user } = useAuthenticator((context) => [context.user]);
   const [applications, setApplications] = useState<MyApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<ApplicationStatus>('all');
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
 
   const loadApplications = async (
-    status: ApplicationStatus = 'all', 
-    cursor?: string, 
+    cursor?: string | null, 
     append: boolean = false
   ) => {
     try {
+      // 重置错误状态并设置加载状态
       if (!append) {
         setIsLoading(true);
         setError(null);
@@ -45,7 +44,6 @@ const MyApplicationsPage: React.FC = () => {
       }
 
       const params: FetchMyApplicationsParams = {
-        status,
         limit: 10
       };
 
@@ -53,23 +51,47 @@ const MyApplicationsPage: React.FC = () => {
         params.pageParam = cursor;
       }
 
+      console.log('Making API request with params:', params);
       const response = await fetchMyApplications(params);
+      console.log('API response received:', response);
 
-      if (response.success && response.data) {
-        const newApplications = response.data.applications;
-        
-        if (append) {
-          setApplications(prev => [...prev, ...newApplications]);
-        } else {
-          setApplications(newApplications);
+      // 更健壮的响应处理 - 匹配后端实际返回的响应格式
+      let newApplications: MyApplication[] = [];
+      let pagination: { nextCursor?: string | null; hasMore?: boolean; total?: number } | null = null;
+
+      if (response && typeof response === 'object') {
+        // 处理axios响应，后端直接返回数据结构
+        if (response.data) {
+          newApplications = response.data.applications || [];
+          pagination = response.data.pagination;
         }
-
-        setNextCursor(response.data.pagination.nextCursor);
-        setHasNextPage(response.data.pagination.hasNextPage);
-        setTotalCount(response.data.pagination.totalCount);
-      } else {
-        throw new Error(response.error?.message || 'Failed to fetch applications');
+        // 如果响应直接包含应用数据（后端的实际格式）
+        else if ('applications' in response) {
+          const directResponse = response as { applications?: MyApplication[]; pagination?: { nextCursor?: string | null; hasMore?: boolean; total?: number } };
+          newApplications = directResponse.applications || [];
+          pagination = directResponse.pagination || null;
+        }
+        // 如果响应有success字段，使用标准结构（备用格式）
+        else if ('success' in response && response.success) {
+          newApplications = response.data?.applications || [];
+          pagination = response.data?.pagination;
+        }
       }
+
+      console.log('Processed applications:', newApplications.length, 'items');
+
+      // 根据是否为"加载更多"来决定如何更新状态
+      if (append) {
+        setApplications(prev => [...prev, ...newApplications]);
+      } else {
+        setApplications(newApplications);
+      }
+
+      // 更新分页状态
+      setNextCursor(pagination?.nextCursor || null);
+      setHasNextPage(pagination?.hasMore || false);
+      setTotalCount(pagination?.total || newApplications.length);
+
     } catch (error: unknown) {
       console.error('Error loading applications:', error);
       
@@ -79,7 +101,7 @@ const MyApplicationsPage: React.FC = () => {
       let errorMessage = 'Failed to load applications. Please try again.';
       
       if (axiosError.response?.status === 401) {
-        errorMessage = 'Please sign in to view your applications.';
+        errorMessage = 'Please log in to view your applications.';
       } else if (axiosError.response?.status && axiosError.response.status >= 500) {
         errorMessage = 'Server error. Please try again later.';
       } else if (errorWithMessage.message) {
@@ -100,19 +122,12 @@ const MyApplicationsPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadApplications(activeTab);
-  }, [activeTab]);
-
-  const handleTabChange = (status: ApplicationStatus) => {
-    setActiveTab(status);
-    setApplications([]);
-    setNextCursor(null);
-    setHasNextPage(false);
-  };
+    loadApplications();
+  }, []);
 
   const handleLoadMore = () => {
     if (nextCursor && hasNextPage && !isLoadingMore) {
-      loadApplications(activeTab, nextCursor, true);
+      loadApplications(nextCursor, true);
     }
   };
 
@@ -120,227 +135,158 @@ const MyApplicationsPage: React.FC = () => {
     setApplications([]);
     setNextCursor(null);
     setHasNextPage(false);
-    loadApplications(activeTab);
+    loadApplications();
   };
 
-  const getStatusCount = (status: ApplicationStatus) => {
-    if (status === 'all') return totalCount;
-    return applications.filter(app => app.status === status).length;
+  const handleApplicationCanceled = (applicationId: string) => {
+    // 从当前列表中移除已取消的申请
+    setApplications(prev => prev.filter(app => app.applicationId !== applicationId));
+    // 更新总数
+    setTotalCount(prev => Math.max(0, prev - 1));
+    
+    toast.success('Application has been removed from your list');
   };
 
   if (isLoading) {
-    return <MyApplicationsSkeleton />;
+    return (
+      <ColoredPageWrapper seed="applications">
+        <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
+          <h1 className="text-white font-semibold text-xl">My Applications</h1>
+        </div>
+        <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
+          <div className="space-y-4">
+            {[...Array(3)].map((_, index) => (
+              <div key={index} className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md">
+                <div className="flex gap-4">
+                  <Skeleton className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-white/20" />
+                  <div className="flex-1 space-y-2">
+                    <div className="flex justify-between">
+                      <Skeleton className="h-5 w-3/4 bg-white/20" />
+                      <Skeleton className="h-6 w-16 bg-white/20" />
+                    </div>
+                    <Skeleton className="h-4 w-full bg-white/20" />
+                    <div className="flex justify-between">
+                      <Skeleton className="h-4 w-24 bg-white/20" />
+                      <Skeleton className="h-4 w-20 bg-white/20" />
+                    </div>
+                    <div className="flex justify-between">
+                      <Skeleton className="h-4 w-32 bg-white/20" />
+                      <Skeleton className="h-8 w-24 bg-white/20" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </ColoredPageWrapper>
+    );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="max-w-4xl mx-auto pt-8">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>{error}</span>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleRefresh}
-              >
-                <RefreshCw className="w-4 h-4 mr-1" />
-                Retry
-              </Button>
-            </AlertDescription>
-          </Alert>
+      <ColoredPageWrapper seed="applications">
+        <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
+          <h1 className="text-white font-semibold text-xl">My Applications</h1>
         </div>
-      </div>
+        <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
+          <div className="bg-black/40 backdrop-blur-sm rounded-2xl flex flex-col items-center p-8 text-white/80">
+            <AlertCircle className="h-12 w-12 stroke-red-400 mb-4" />
+            <h3 className="text-lg font-semibold mb-2 text-white">Something went wrong</h3>
+            <p className="text-white/70 mb-6 max-w-sm text-center">{error}</p>
+            <Button 
+              onClick={handleRefresh}
+              className="bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-2"
+            >
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Retry
+            </Button>
+          </div>
+        </div>
+      </ColoredPageWrapper>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Applications</h1>
-              <p className="text-gray-600 mt-1">
-                Track the status of your rental applications
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading}
-            >
-              <RefreshCw className={`w-4 h-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </div>
+    <ColoredPageWrapper seed="applications">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
+        <div className="flex items-center justify-between">
+          <h1 className="text-white font-semibold text-xl">My Applications</h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="bg-white/20 hover:bg-white/30 text-white rounded-full px-3 h-8"
+          >
+            <RefreshCw className={`w-4 h-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
-
-        {/* Status Tabs */}
-        <Tabs value={activeTab} onValueChange={(value) => handleTabChange(value as ApplicationStatus)}>
-          <TabsList className="grid w-full grid-cols-5 mb-6">
-            <TabsTrigger value="all" className="text-xs sm:text-sm">
-              All ({totalCount})
-            </TabsTrigger>
-            <TabsTrigger value="pending" className="text-xs sm:text-sm">
-              Pending
-            </TabsTrigger>
-            <TabsTrigger value="accepted" className="text-xs sm:text-sm">
-              Accepted
-            </TabsTrigger>
-            <TabsTrigger value="rejected" className="text-xs sm:text-sm">
-              Rejected
-            </TabsTrigger>
-            <TabsTrigger value="signed" className="text-xs sm:text-sm">
-              Signed
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value={activeTab} className="space-y-4">
-            {applications.length === 0 ? (
-              <EmptyState status={activeTab} />
-            ) : (
-              <>
-                {/* Applications List */}
-                <div className="space-y-0">
-                  {applications.map((application) => (
-                    <ApplicationCard
-                      key={application.applicationId}
-                      application={application}
-                    />
-                  ))}
-                </div>
-
-                {/* Load More Button */}
-                {hasNextPage && (
-                  <div className="flex justify-center pt-4">
-                    <Button
-                      variant="outline"
-                      onClick={handleLoadMore}
-                      disabled={isLoadingMore}
-                      className="min-w-[120px]"
-                    >
-                      {isLoadingMore ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Loading...
-                        </>
-                      ) : (
-                        `Load More`
-                      )}
-                    </Button>
-                  </div>
-                )}
-
-                {/* Results Summary */}
-                <div className="text-center text-sm text-gray-500 pt-4">
-                  Showing {applications.length} of {totalCount} applications
-                </div>
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
       </div>
-    </div>
+
+      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 max-w-4xl">
+
+        {/* Applications List */}
+        {applications.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <>
+            <div className="space-y-0">
+              {applications.map((application) => (
+                <ApplicationCard
+                  key={application.applicationId}
+                  application={application}
+                  onApplicationCanceled={handleApplicationCanceled}
+                />
+              ))}
+            </div>
+
+            {/* Load More Button */}
+            {hasNextPage && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
+                  className="bg-white/20 hover:bg-white/30 text-white rounded-full px-6 py-2 min-w-[120px]"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    `Load More`
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {/* Results Summary */}
+            <div className="text-center text-sm text-white/70 pt-4">
+              Showing {applications.length} of {totalCount} applications
+            </div>
+          </>
+        )}
+      </div>
+    </ColoredPageWrapper>
   );
 };
 
 // Empty State Component
-const EmptyState: React.FC<{ status: ApplicationStatus }> = ({ status }) => {
-  const getEmptyMessage = () => {
-    switch (status) {
-      case 'pending':
-        return {
-          title: 'No pending applications',
-          description: 'You don\'t have any applications waiting for review.'
-        };
-      case 'accepted':
-        return {
-          title: 'No accepted applications',
-          description: 'You haven\'t received any acceptances yet.'
-        };
-      case 'rejected':
-        return {
-          title: 'No rejected applications',
-          description: 'None of your applications have been rejected.'
-        };
-      case 'signed':
-        return {
-          title: 'No signed applications',
-          description: 'You haven\'t signed any rental agreements yet.'
-        };
-      default:
-        return {
-          title: 'No applications yet',
-          description: 'You haven\'t submitted any rental applications. Start browsing properties to find your perfect home!'
-        };
-    }
-  };
-
-  const message = getEmptyMessage();
-
+const EmptyState: React.FC = () => {
   return (
-    <Card>
-      <CardContent className="flex flex-col items-center justify-center py-12">
-        <FileText className="w-12 h-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          {message.title}
-        </h3>
-        <p className="text-gray-600 text-center max-w-md mb-6">
-          {message.description}
-        </p>
-        {status === 'all' && (
-          <Button onClick={() => window.location.href = '/listings'}>
-            Browse Properties
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-// Loading Skeleton Component
-const MyApplicationsSkeleton: React.FC = () => {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="mb-6">
-          <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-5 w-64" />
-        </div>
-
-        <Skeleton className="h-10 w-full mb-6" />
-
-        <div className="space-y-4">
-          {[...Array(3)].map((_, index) => (
-            <Card key={index} className="mb-4">
-              <CardContent className="p-4">
-                <div className="flex gap-4">
-                  <Skeleton className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg" />
-                  <div className="flex-1 space-y-2">
-                    <div className="flex justify-between">
-                      <Skeleton className="h-5 w-3/4" />
-                      <Skeleton className="h-6 w-16" />
-                    </div>
-                    <Skeleton className="h-4 w-full" />
-                    <div className="flex justify-between">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-20" />
-                    </div>
-                    <div className="flex justify-between">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-8 w-24" />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+    <div className="bg-black/40 backdrop-blur-sm rounded-2xl flex flex-col items-center p-8 text-white/80">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="stroke-white/60 mb-4">
+        <path d="M12 22a10 10 0 1 0-10-10h.01"/>
+        <path d="M17 10a5 5 0 0 0-5-5h-1.5"/>
+      </svg>
+      <h3 className="text-xl font-semibold text-white">No applications yet</h3>
+      <p className="mt-2 text-base text-white/70 text-center">You haven't submitted any rental applications. Start browsing properties to find your perfect home!</p>
+      <Button className="mt-4 bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-2" onClick={() => window.location.href = '/listings'}>
+        Browse Properties
+      </Button>
     </div>
   );
 };

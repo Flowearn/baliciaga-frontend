@@ -16,6 +16,8 @@ import {
   Clock,
   CheckCircle
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
 
 const MyListingsPage: React.FC = () => {
   const [listings, setListings] = useState<MyListing[]>([]);
@@ -52,6 +54,14 @@ const MyListingsPage: React.FC = () => {
 
       if (response.success) {
         const newListings = response.data.listings;
+        
+        // 添加诊断日志
+        console.log('%c[MY LISTINGS DIAGNOSTIC] API response received:', 'color: orange; font-weight: bold;', response);
+        console.log('%c[MY LISTINGS DIAGNOSTIC] Status filter:', 'color: orange; font-weight: bold;', status);
+        console.log('%c[MY LISTINGS DIAGNOSTIC] Number of listings returned:', 'color: orange; font-weight: bold;', newListings.length);
+        if (newListings.length > 0) {
+          console.log('%c[MY LISTINGS DIAGNOSTIC] Sample listing:', 'color: orange; font-weight: bold;', newListings[0]);
+        }
         
         if (isLoadMore && cursor) {
           setListings(prev => [...prev, ...newListings]);
@@ -126,26 +136,24 @@ const MyListingsPage: React.FC = () => {
   const LoadingSkeleton = () => (
     <div className="space-y-4">
       {[1, 2, 3].map((i) => (
-        <Card key={i}>
-          <CardContent className="p-6">
-            <div className="flex gap-4">
-              <Skeleton className="w-24 h-24 rounded-lg" />
-              <div className="flex-1 space-y-3">
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <div className="flex gap-4">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-                <div className="flex gap-4">
-                  <Skeleton className="h-8 w-32" />
-                  <Skeleton className="h-8 w-24" />
-                </div>
+        <div key={i} className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md">
+          <div className="flex gap-4">
+            <Skeleton className="w-24 h-24 rounded-lg bg-white/20" />
+            <div className="flex-1 space-y-3">
+              <Skeleton className="h-6 w-3/4 bg-white/20" />
+              <Skeleton className="h-4 w-1/2 bg-white/20" />
+              <div className="flex gap-4">
+                <Skeleton className="h-4 w-20 bg-white/20" />
+                <Skeleton className="h-4 w-20 bg-white/20" />
+                <Skeleton className="h-4 w-24 bg-white/20" />
+              </div>
+              <div className="flex gap-4">
+                <Skeleton className="h-8 w-32 bg-white/20" />
+                <Skeleton className="h-8 w-24 bg-white/20" />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -188,117 +196,120 @@ const MyListingsPage: React.FC = () => {
     const { icon: Icon, title, description, action } = getEmptyStateContent();
 
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-          <Icon className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">{title}</h3>
-          <p className="text-muted-foreground mb-6 max-w-sm">{description}</p>
-          {action && (
-            <Button>
+      <div className="bg-black/40 backdrop-blur-sm rounded-2xl flex flex-col items-center p-8 text-white/80">
+        <Icon className="h-12 w-12 stroke-white/60 mb-4" />
+        <h3 className="text-lg font-semibold mb-2 text-white">{title}</h3>
+        <p className="text-white/70 mb-6 max-w-sm text-center">{description}</p>
+        {action && (
+          <Link to="/rentals/create">
+            <Button className="bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-2">
               <PlusCircle className="h-4 w-4 mr-2" />
               {action}
             </Button>
-          )}
-        </CardContent>
-      </Card>
+          </Link>
+        )}
+      </div>
     );
   };
 
+  // Error state
+  const ErrorState = ({ onRetry }: { onRetry: () => void }) => (
+    <div className="bg-black/40 backdrop-blur-sm rounded-2xl flex flex-col items-center p-8 text-white/80">
+      <AlertCircle className="h-12 w-12 stroke-red-400 mb-4" />
+      <h3 className="text-lg font-semibold mb-2 text-white">Something went wrong</h3>
+      <p className="text-white/70 mb-6 max-w-sm text-center">{error}</p>
+      <Button onClick={onRetry} className="bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-2">
+        <RefreshCw className="h-4 w-4 mr-2" />
+        Try again
+      </Button>
+    </div>
+  );
+
+  // 添加关键诊断日志 - 在 return 语句之前
+  console.log(
+    '%c[MyListingsPage DIAGNOSIS] State before render:',
+    'color: purple; font-weight: bold;',
+    {
+      isLoading,
+      error,
+      listings,
+      listingsCount: listings?.length,
+      activeTab,
+    }
+  );
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Page Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">My Listings</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your rental property listings and applications
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
+    <ColoredPageWrapper seed="listings">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
+        <div className="flex items-center justify-between">
+          <h1 className="text-white font-semibold text-xl">My Listings</h1>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleRefresh} 
+            disabled={isLoading}
+            className="bg-white/20 hover:bg-white/30 text-white rounded-full px-3 h-8"
+          >
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
-          </Button>
-          <Button>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Create Listing
           </Button>
         </div>
       </div>
 
-      {/* Status Tabs */}
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-8">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <TabsTrigger key={tab.value} value={tab.value} className="flex items-center gap-2">
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
+      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 max-w-4xl">
+        {/* Status Tabs */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-8 bg-black/20 border-white/20">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.value;
+              return (
+                <TabsTrigger 
+                  key={tab.value} 
+                  value={tab.value} 
+                  className={`flex items-center gap-2 ${
+                    isActive 
+                      ? 'bg-white/20 text-white' 
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
-        {tabs.map((tab) => (
-          <TabsContent key={tab.value} value={tab.value}>
-            {/* Error State */}
-            {error && !isLoading && (
-              <Alert variant="destructive" className="mb-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="flex items-center justify-between w-full">
-                  <span>{error}</span>
-                  <Button variant="outline" size="sm" onClick={handleRetry}>
-                    Try Again
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Loading State */}
-            {isLoading ? (
-              <LoadingSkeleton />
-            ) : (
-              <>
-                {/* Listings Grid */}
-                {listings.length > 0 ? (
-                  <div className="space-y-6">
-                    <div className="grid gap-6">
-                      {listings.map((listing) => (
-                        <MyListingCard key={listing.listingId} listing={listing} />
-                      ))}
-                    </div>
-
-                    {/* Load More Button */}
-                    {hasNextPage && (
-                      <div className="flex justify-center pt-6">
-                        <Button
-                          variant="outline"
-                          onClick={handleLoadMore}
-                          disabled={isLoadingMore}
-                        >
-                          {isLoadingMore ? (
-                            <>
-                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                              Loading...
-                            </>
-                          ) : (
-                            'Load More'
-                          )}
-                        </Button>
-                      </div>
-                    )}
+        <TabsContent value={activeTab}>
+          {isLoading ? (
+            <LoadingSkeleton />
+          ) : error ? (
+            <ErrorState onRetry={handleRetry} />
+          ) : listings.length > 0 ? (
+            <div className="space-y-4">
+              {listings.map((listing) => (
+                <MyListingCard key={listing.listingId} listing={listing} />
+              ))}
+              {hasNextPage && (
+                                  <div className="flex justify-center mt-8">
+                    <Button 
+                      onClick={handleLoadMore} 
+                      disabled={isLoadingMore}
+                      className="bg-white/20 hover:bg-white/30 text-white rounded-full px-6 py-2"
+                    >
+                      {isLoadingMore ? 'Loading...' : 'Load More'}
+                    </Button>
                   </div>
-                ) : (
-                  /* Empty State */
-                  <EmptyState status={activeTab} />
                 )}
-              </>
+              </div>
+            ) : (
+              <EmptyState status={activeTab} />
             )}
           </TabsContent>
-        ))}
-      </Tabs>
-    </div>
+        </Tabs>
+      </div>
+    </ColoredPageWrapper>
   );
 };
 

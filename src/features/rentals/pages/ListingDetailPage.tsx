@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuthenticator } from '@aws-amplify/ui-react';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,18 +38,22 @@ import {
   Zap,
   Wind,
   Loader2,
-  Check
+  Check,
+  CheckCircle2
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Listing } from '@/types';
-import { fetchListingById } from '@/services/listingService';
+import { fetchListingById, incrementView } from '@/services/listingService';
 import { createApplication } from '@/services/applicationService';
 import SimpleMap from '../components/SimpleMap';
+import { formatPrice } from '@/utils/currencyUtils';
 
 const ListingDetailPage: React.FC = () => {
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuthenticator((context) => [context.user]);
+  const { user: authUser } = useAuth();
   
   const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,6 +65,8 @@ const ListingDetailPage: React.FC = () => {
   const [applicationMessage, setApplicationMessage] = useState('');
   const [isSubmittingApplication, setIsSubmittingApplication] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
+
+
 
   useEffect(() => {
     if (!listingId) {
@@ -74,8 +82,25 @@ const ListingDetailPage: React.FC = () => {
         
         const response = await fetchListingById(listingId);
         
-        if (response.success) {
-          setListing(response.data);
+        if (response.success && response.data) {
+          // Log the actual data structure for debugging
+          console.log('Received listing data:', response.data);
+          
+          // Check if the data has the expected structure
+          const listingData = response.data;
+          
+          // If the data doesn't match our expected Listing interface,
+          // we need to handle it gracefully
+          if (!listingData.title && !listingData.location && !listingData.pricing) {
+            console.warn('Listing data structure mismatch. Received:', listingData);
+            setError('Listing data is incomplete. This listing may not be fully configured.');
+            return;
+          }
+          
+          setListing(listingData);
+          
+          // Increment view count after successfully loading listing
+          incrementView(listingId);
         } else {
           throw new Error('Failed to fetch listing details');
         }
@@ -93,14 +118,14 @@ const ListingDetailPage: React.FC = () => {
   }, [listingId]);
 
   const handlePrevPhoto = () => {
-    if (!listing?.photos.length) return;
+    if (!listing?.photos?.length) return;
     setCurrentPhotoIndex((prev) => 
       prev === 0 ? listing.photos.length - 1 : prev - 1
     );
   };
 
   const handleNextPhoto = () => {
-    if (!listing?.photos.length) return;
+    if (!listing?.photos?.length) return;
     setCurrentPhotoIndex((prev) => 
       prev === listing.photos.length - 1 ? 0 : prev + 1
     );
@@ -114,6 +139,14 @@ const ListingDetailPage: React.FC = () => {
     if (hasApplied) {
       return; // Prevent multiple applications
     }
+    
+    // Check if user is logged in
+    if (!user) {
+      // Redirect to login page
+      navigate('/login');
+      return;
+    }
+    
     setIsApplicationModalOpen(true);
   };
 
@@ -158,7 +191,7 @@ const ListingDetailPage: React.FC = () => {
         });
       } else if (axiosError.response?.status === 401) {
         toast.error('Authentication required', {
-          description: 'Please sign in to submit applications.'
+                          description: 'Please log in to submit applications.'
         });
       } else if (axiosError.response?.status && axiosError.response.status >= 500) {
         toast.error('Server error', {
@@ -181,14 +214,7 @@ const ListingDetailPage: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -198,13 +224,15 @@ const ListingDetailPage: React.FC = () => {
     });
   };
 
+
+
   if (isLoading) {
     return <ListingDetailSkeleton />;
   }
 
   if (error || !listing) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4">
+      <div className="min-h-screen bg-gray-50 p-4 pb-20">
         <div className="max-w-lg mx-auto pt-8">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -224,8 +252,15 @@ const ListingDetailPage: React.FC = () => {
     );
   }
 
+  // Additional safety check for nested properties
+  if (!listing.location || !listing.details || !listing.pricing || !listing.availability) {
+    return <ListingDetailSkeleton />;
+  }
+
+
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <div className="max-w-lg mx-auto bg-white min-h-screen relative">
         
         {/* 1. Image Carousel */}
@@ -262,7 +297,7 @@ const ListingDetailPage: React.FC = () => {
               <>
                 <img
                   src={listing.photos[currentPhotoIndex]}
-                  alt={`${listing.title} - Photo ${currentPhotoIndex + 1}`}
+                  alt={`${listing.title || 'Property'} - Photo ${currentPhotoIndex + 1}`}
                   className="w-full h-full object-cover"
                 />
                 
@@ -309,19 +344,19 @@ const ListingDetailPage: React.FC = () => {
             
             <div className="flex items-center text-gray-600 mb-3">
               <MapPin className="w-5 h-5 mr-2 flex-shrink-0" />
-              <span className="text-base">{listing.location.address}</span>
+              <span className="text-base">{listing.location?.address || 'Address not available'}</span>
             </div>
 
             <div className="flex flex-wrap gap-4 text-sm text-gray-600">
               <div className="flex items-center">
                 <Bed className="w-4 h-4 mr-1" />
-                <span>{listing.details.bedrooms} bedroom{listing.details.bedrooms !== 1 ? 's' : ''}</span>
+                <span>{listing.details?.bedrooms || 0} bedroom{(listing.details?.bedrooms || 0) !== 1 ? 's' : ''}</span>
               </div>
               <div className="flex items-center">
                 <Bath className="w-4 h-4 mr-1" />
-                <span>{listing.details.bathrooms} bathroom{listing.details.bathrooms !== 1 ? 's' : ''}</span>
+                <span>{listing.details?.bathrooms || 0} bathroom{(listing.details?.bathrooms || 0) !== 1 ? 's' : ''}</span>
               </div>
-              {listing.details.squareFootage && (
+              {listing.details?.squareFootage && (
                 <div className="flex items-center">
                   <Home className="w-4 h-4 mr-1" />
                   <span>{listing.details.squareFootage} sqft</span>
@@ -339,22 +374,31 @@ const ListingDetailPage: React.FC = () => {
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Monthly Rent</span>
                 <span className="font-bold text-xl text-green-600">
-                  {formatPrice(listing.pricing.monthlyRent, listing.pricing.currency)}
+                  {formatPrice(listing.pricing?.monthlyRent || 0, listing.pricing?.currency || 'USD')}
                 </span>
               </div>
+              
+              {(listing.pricing?.yearlyRent || 0) > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Yearly Rent</span>
+                  <span className="font-bold text-lg text-blue-600">
+                    {formatPrice(listing.pricing.yearlyRent, listing.pricing?.currency || 'USD')}
+                  </span>
+                </div>
+              )}
               
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Security Deposit</span>
                 <span className="font-semibold">
-                  {formatPrice(listing.pricing.deposit, listing.pricing.currency)}
+                  {formatPrice(listing.pricing?.deposit || 0, listing.pricing?.currency || 'USD')}
                 </span>
               </div>
               
-              {listing.pricing.utilities > 0 && (
+              {(listing.pricing?.utilities || 0) > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Utilities</span>
                   <span className="font-semibold">
-                    {formatPrice(listing.pricing.utilities, listing.pricing.currency)}/month
+                    {formatPrice(listing.pricing.utilities, listing.pricing?.currency || 'USD')}/month
                   </span>
                 </div>
               )}
@@ -362,7 +406,7 @@ const ListingDetailPage: React.FC = () => {
               <div className="pt-2 border-t border-gray-100">
                 <div className="flex items-center text-sm text-gray-600 mb-2">
                   <Calendar className="w-4 h-4 mr-2" />
-                  <span>Available from {formatDate(listing.availability.availableFrom)}</span>
+                  <span>Available from {listing.availability?.availableFrom ? formatDate(listing.availability.availableFrom) : 'Date not specified'}</span>
                 </div>
               </div>
             </CardContent>
@@ -372,18 +416,18 @@ const ListingDetailPage: React.FC = () => {
           <div className="p-4 border-b border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Features & Amenities</h3>
             <div className="flex flex-wrap gap-2">
-              {listing.details.furnished && (
+              {listing.details?.furnished && (
                 <Badge variant="secondary" className="text-sm py-1 px-3">
                   <Home className="w-4 h-4 mr-1" />
                   Furnished
                 </Badge>
               )}
-              {listing.details.petFriendly && (
+              {listing.details?.petFriendly && (
                 <Badge variant="secondary" className="text-sm py-1 px-3">
                   🐕 Pet Friendly
                 </Badge>
               )}
-              {listing.details.smokingAllowed && (
+              {listing.details?.smokingAllowed && (
                 <Badge variant="secondary" className="text-sm py-1 px-3">
                   🚬 Smoking OK
                 </Badge>
@@ -435,27 +479,34 @@ const ListingDetailPage: React.FC = () => {
           {/* 7. Location */}
           <div className="p-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Location</h3>
-            <SimpleMap address={listing.location.address} className="mb-3" />
-            <p className="text-gray-600 text-sm">{listing.location.address}</p>
+            {listing.location?.address && (
+              <SimpleMap address={listing.location?.address || ''} className="mb-3" />
+            )}
+            <p className="text-gray-600 text-sm">{listing.location?.address || 'Address not available'}</p>
           </div>
         </div>
 
-        {/* Sticky Footer */}
-        <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-lg bg-white border-t border-gray-200 p-4">
+        {/* Apply Button Footer - Only for non-owners */}
+        <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-lg bg-white border-t border-gray-200 p-4 z-50">
           <Button 
             onClick={handleApply}
             className="w-full h-12 text-lg font-semibold"
             size="lg"
-            disabled={hasApplied}
-            variant={hasApplied ? "secondary" : "default"}
+            disabled={hasApplied || listing?.status === 'closed'}
+            variant={hasApplied || listing?.status === 'closed' ? "secondary" : "default"}
           >
-            {hasApplied ? (
+            {listing?.status === 'closed' ? (
+              <>
+                <AlertCircle className="w-5 h-5 mr-2" />
+                招租已关闭
+              </>
+            ) : hasApplied ? (
               <>
                 <Check className="w-5 h-5 mr-2" />
-                Application Sent
+                申请已发送
               </>
             ) : (
-              "Apply to Join as Roommate"
+              "申请加入室友"
             )}
           </Button>
         </div>
@@ -512,6 +563,8 @@ const ListingDetailPage: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+
       </div>
     </div>
   );
@@ -519,7 +572,7 @@ const ListingDetailPage: React.FC = () => {
 
 const ListingDetailSkeleton: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <div className="max-w-lg mx-auto bg-white">
         <Skeleton className="h-80 w-full" />
         

@@ -3,9 +3,9 @@
 ## 🚀 后端部署信息
 
 **已成功部署的后端信息：**
-- **Stage**: `dev-rent`
+- **Stage**: `dev`
 - **Region**: `ap-southeast-1`
-- **API Gateway 基础URL**: `https://77z66u4qd6.execute-api.ap-southeast-1.amazonaws.com/dev-rent`
+- **API Gateway 基础URL**: `https://77z66u4qd6.execute-api.ap-southeast-1.amazonaws.com/dev`
 
 ## 📋 需要完成的配置
 
@@ -16,7 +16,7 @@
 #### 方法一：AWS Console
 1. 登录 [AWS Console](https://console.aws.amazon.com)
 2. 前往 **Cognito** 服务
-3. 在 **ap-southeast-1** 区域查找名为 `baliciaga-user-pool-dev-rent` 的 User Pool
+3. 在 **ap-southeast-1** 区域查找名为 `baliciaga-user-pool-dev` 的 User Pool
 4. 记录下 **User Pool ID** (格式：`ap-southeast-1_xxxxxxxxx`)
 5. 进入该 User Pool，查看 **App Integration** 标签页
 6. 找到 App Client 并记录下 **Client ID**
@@ -24,7 +24,7 @@
 #### 方法二：AWS CLI
 ```bash
 # 获取 User Pool ID
-aws cognito-idp list-user-pools --max-results 10 --region ap-southeast-1 --query 'UserPools[?contains(Name, `baliciaga-user-pool-dev-rent`)].{Name:Name,Id:Id}' --output table
+aws cognito-idp list-user-pools --max-results 10 --region ap-southeast-1 --query 'UserPools[?contains(Name, `baliciaga-user-pool-dev`)].{Name:Name,Id:Id}' --output table
 
 # 获取 Client ID (替换 USER_POOL_ID)
 aws cognito-idp list-user-pool-clients --user-pool-id USER_POOL_ID --region ap-southeast-1 --query 'UserPoolClients[0].ClientId' --output text
@@ -33,7 +33,7 @@ aws cognito-idp list-user-pool-clients --user-pool-id USER_POOL_ID --region ap-s
 #### 方法三：Serverless 输出（如果可用）
 ```bash
 cd backend
-npx serverless info --stage dev-rent
+npx serverless info --stage dev
 ```
 
 ### 2. 更新配置文件

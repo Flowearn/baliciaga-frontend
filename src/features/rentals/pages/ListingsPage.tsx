@@ -1,225 +1,147 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, Plus } from "lucide-react";
-import { toast } from "sonner";
-import { useNavigate } from 'react-router-dom';
-
-import { Listing, ListingsPagination } from '@/types';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus } from "lucide-react";
+import { toast } from 'sonner';
 import { fetchListings } from '@/services/listingService';
+import { Listing, ListingsApiResponse } from '@/types';
 import ListingCard from '../components/ListingCard';
 import ListingCardSkeleton from '../components/ListingCardSkeleton';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 const ListingsPage: React.FC = () => {
   const navigate = useNavigate();
   const [listings, setListings] = useState<Listing[]>([]);
-  const [pagination, setPagination] = useState<ListingsPagination>({
-    hasMore: false,
-    nextCursor: null,
-    totalCount: 0,
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Initial data load
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
+  
+  // Load listings function
+  const loadListings = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetchListings({ limit: 10 });
-      
+
+      const response: ListingsApiResponse = await fetchListings({
+        limit: 50 // Get more listings for the main page
+      });
+
       if (response.success) {
-        setListings(response.data.listings);
-        setPagination(response.data.pagination);
+        const fetchedListings = response.data.listings;
+        setListings(fetchedListings);
+        
+        // 添加诊断日志
+        console.log('%c[DIAGNOSTIC LOG] Listings stored in state:', 'color: green; font-weight: bold;', fetchedListings);
+        console.log('%c[DIAGNOSTIC LOG] Number of listings:', 'color: green; font-weight: bold;', fetchedListings.length);
+        
+        if (fetchedListings.length > 0) {
+          console.log('%c[DIAGNOSTIC LOG] Sample listing structure:', 'color: green; font-weight: bold;', fetchedListings[0]);
+        }
       } else {
         throw new Error('Failed to fetch listings');
       }
-    } catch (error) {
-      console.error('Error loading listings:', error);
-      const errorMessage = 'Failed to load rental listings. Please try again.';
+    } catch (error: unknown) {
+      console.error('Error fetching listings:', error);
+      
+      let errorMessage = 'Failed to load listings';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as { response?: { data?: { error?: { message?: string } } } }).response;
+        errorMessage = response?.data?.error?.message || errorMessage;
+      }
+      
       setError(errorMessage);
-      toast.error(errorMessage);
+      toast.error('Failed to load listings', {
+        description: errorMessage
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loadMoreListings = async () => {
-    if (!pagination.nextCursor || isLoadingMore) return;
+  // Load listings on component mount
+  useEffect(() => {
+    loadListings();
+  }, []);
 
-    try {
-      setIsLoadingMore(true);
-      setError(null);
-
-      const response = await fetchListings({ 
-        pageParam: pagination.nextCursor, 
-        limit: 10 
-      });
-
-      if (response.success) {
-        setListings(prev => [...prev, ...response.data.listings]);
-        setPagination(response.data.pagination);
-      } else {
-        throw new Error('Failed to fetch more listings');
-      }
-    } catch (error) {
-      console.error('Error loading more listings:', error);
-      const errorMessage = 'Failed to load more listings. Please try again.';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
-
+  // Handle card click - navigate to listing detail
   const handleCardClick = (listingId: string) => {
     navigate(`/listings/${listingId}`);
   };
 
-  const handleCreateListing = () => {
-    navigate('/listings/create');
-  };
-
+  // Handle retry
   const handleRetry = () => {
-    if (listings.length === 0) {
-      loadInitialData();
-    } else {
-      loadMoreListings();
-    }
+    loadListings();
   };
-
-  // Loading state for initial load
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Find Roommate</h1>
-              <p className="text-gray-600 mt-2">Discover available rental properties</p>
-            </div>
-            <Button onClick={handleCreateListing} className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Post a Listing
-            </Button>
-          </div>
-
-          {/* Loading Skeletons */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <ListingCardSkeleton key={index} />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Find Roommate</h1>
-            <p className="text-gray-600 mt-2">
-              {pagination.totalCount > 0 
-                ? `${pagination.totalCount} available rental${pagination.totalCount !== 1 ? 's' : ''}`
-                : 'Discover available rental properties'
-              }
-            </p>
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {/* Post Villa Button */}
+        <Link
+          to="/create-listing"
+          className="flex flex-col items-center justify-center p-3 mb-6 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:bg-gray-50 hover:border-brand transition-colors"
+        >
+          <div className="flex items-center justify-center w-12 h-12 mb-2 bg-brand rounded-full">
+            <Plus className="w-6 h-6 text-white" />
           </div>
-          <Button onClick={handleCreateListing} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Post a Listing
-          </Button>
-        </div>
+          <p className="font-semibold">Post villas & Find roommates</p>
+        </Link>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <ListingCardSkeleton />
+            <ListingCardSkeleton />
+            <ListingCardSkeleton />
+            <ListingCardSkeleton />
+            <ListingCardSkeleton />
+            <ListingCardSkeleton />
+          </div>
+        )}
 
         {/* Error State */}
-        {error && (
-          <Alert className="mb-6" variant="destructive">
+        {error && !isLoading && (
+          <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="flex items-center justify-between">
               <span>{error}</span>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleRetry}
-                className="ml-4"
-              >
+              <Button variant="outline" size="sm" onClick={handleRetry}>
+                <RefreshCw className="h-4 w-4 mr-2" />
                 Retry
               </Button>
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Empty State */}
-        {!isLoading && listings.length === 0 && !error && (
-          <div className="text-center py-12">
-            <div className="max-w-md mx-auto">
-              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Plus className="w-12 h-12 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No listings found</h3>
-              <p className="text-gray-500 mb-6">
-                Be the first to post a rental listing in your area.
-              </p>
-              <Button onClick={handleCreateListing} className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Post the First Listing
-              </Button>
-            </div>
-          </div>
-        )}
-
         {/* Listings Grid */}
-        {listings.length > 0 && (
+        {!isLoading && !error && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {listings.map((listing) => (
-                <ListingCard
-                  key={listing.listingId}
-                  listing={listing}
-                  onCardClick={handleCardClick}
-                />
-              ))}
-            </div>
-
-            {/* Load More Button */}
-            {pagination.hasMore && (
-              <div className="text-center">
-                <Button
-                  onClick={loadMoreListings}
-                  disabled={isLoadingMore}
-                  variant="outline"
-                  size="lg"
-                  className="min-w-32"
-                >
-                  {isLoadingMore ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    'Load More'
-                  )}
-                </Button>
+            {listings.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {listings.map((listing) => (
+                  <ListingCard 
+                    key={listing.listingId} 
+                    listing={listing}
+                    onCardClick={handleCardClick}
+                  />
+                ))}
               </div>
-            )}
-
-            {/* End of Results Message */}
-            {!pagination.hasMore && listings.length > 0 && (
-              <div className="text-center py-6">
-                <p className="text-gray-500">
-                  You've seen all {listings.length} available listing{listings.length !== 1 ? 's' : ''}
-                </p>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-gray-500 mb-4">
+                  <Plus className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">No listings available</h3>
+                  <p>Be the first to post a villa and find roommates!</p>
+                </div>
+                <Link to="/create-listing">
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create First Listing
+                  </Button>
+                </Link>
               </div>
             )}
           </>
