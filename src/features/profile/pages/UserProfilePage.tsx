@@ -424,7 +424,7 @@ const UserProfilePage: React.FC = () => {
         </div>
 
         {/* Information List */}
-        <div className="space-y-4 mb-8 mx-4">
+        <div className="space-y-4 mb-8 mx-8">
             {/* Name Field */}
             <div className="bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2">
               <EditableField
@@ -514,7 +514,7 @@ const UserProfilePage: React.FC = () => {
           </div>
 
         {/* Change Password */}
-        <div className="mb-8 mx-4">
+        <div className="mb-8 mx-8">
           <div className="bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-3">
             <div 
               className="flex items-center justify-between cursor-pointer hover:bg-black/20 transition-colors rounded-lg p-1 -m-1 w-full"
@@ -599,7 +599,7 @@ const UserProfilePage: React.FC = () => {
         </div>
 
         {/* Sign Out */}
-        <div className="mx-4 mb-8">
+        <div className="mx-8 mb-8">
           <Button 
             onClick={handleSignOut}
             variant="destructive"
