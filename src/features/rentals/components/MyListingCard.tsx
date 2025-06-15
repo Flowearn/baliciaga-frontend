@@ -170,15 +170,15 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing }) => {
 
   return (
     <Accordion type="single" collapsible onValueChange={handleAccordionChange}>
-      <AccordionItem value={listingId} className="border rounded-lg">
+      <AccordionItem value={listingId} className="border-white/10 rounded-xl">
         {/* Main Card UI (The Trigger) */}
         <AccordionTrigger className="hover:no-underline p-0 [&>svg]:hidden">
-          <Card className="w-full hover:shadow-lg transition-shadow duration-200 border-0">
+          <Card className="w-full hover:shadow-lg transition-shadow duration-200 border-0 bg-black/40 backdrop-blur-sm text-white/90">
             <CardContent className="p-4">
               {/* Edit Button - positioned above two-column layout */}
               <div className="flex justify-end mb-3">
                 <div 
-                  className="px-3 py-1 border border-gray-300 rounded-md text-xs text-gray-600 hover:bg-gray-50 cursor-pointer flex items-center"
+                  className="px-3 py-1 border border-white/20 rounded-md text-xs text-white/70 hover:bg-white/10 cursor-pointer flex items-center"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Edit className="h-3 w-3 mr-1" />
@@ -197,8 +197,8 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing }) => {
                       className="aspect-square w-full h-full object-cover rounded-lg"
                     />
                   ) : (
-                    <div className="aspect-square w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-                      <div className="text-sm text-gray-400 text-center px-2">
+                    <div className="aspect-square w-full h-full flex items-center justify-center bg-black/20 rounded-lg">
+                      <div className="text-sm text-white/40 text-center px-2">
                         No Image
                       </div>
                     </div>
@@ -206,7 +206,7 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing }) => {
                   
                   {/* X/Y Filled Badge - positioned at top-left */}
                   <div className="absolute top-3 left-3">
-                    <Badge variant="secondary" className="bg-teal-500 text-white">
+                    <Badge variant="secondary" className="bg-teal-500/80 backdrop-blur-sm text-white">
                       {filledSlots}/{totalSlots} Filled
                     </Badge>
                   </div>
@@ -216,25 +216,25 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing }) => {
                 <div className="w-2/3 pl-4 flex flex-col">
                   {/* First Row - Title only */}
                   <div className="mb-2">
-                    <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+                    <h3 className="text-lg font-bold text-white">{title}</h3>
                   </div>
 
                   {/* Second Row - Location Area (Extract area from address) */}
-                  <div className="flex items-center text-gray-600 mb-2">
-                    <MapPin className="h-3 w-3 mr-2 text-red-500" />
+                  <div className="flex items-center text-white/70 mb-2">
+                    <MapPin className="h-3 w-3 mr-2 text-red-400" />
                     <span className="text-sm">{location.address.split(',').pop()?.trim() || location.address}</span>
                   </div>
 
                   {/* Third Row - Monthly Rent */}
                   <div className="flex items-center mb-2">
-                    <span className="text-lg font-bold text-gray-900">
+                    <span className="text-lg font-bold text-green-400">
                       {formatPrice(pricing.monthlyRent, pricing.currency)}
                     </span>
-                    <span className="text-sm text-gray-600 ml-1">/month</span>
+                    <span className="text-sm text-white/70 ml-1">/month</span>
                   </div>
 
                   {/* Fourth Row - Bedrooms and Bathrooms */}
-                  <div className="flex items-center text-gray-600 mb-2">
+                  <div className="flex items-center text-white/70 mb-2">
                     <Bed className="h-3 w-3 mr-2" />
                     <span className="text-sm mr-6">{details.bedrooms} Bed{details.bedrooms !== 1 ? 's' : ''}</span>
                     <Bath className="h-3 w-3 mr-2" />
@@ -242,14 +242,14 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing }) => {
                   </div>
 
                   {/* Fifth Row - Listed Date */}
-                  <div className="flex items-center text-gray-600 mb-2">
-                    <Calendar className="h-3 w-3 mr-2 text-red-500" />
+                  <div className="flex items-center text-white/70 mb-2">
+                    <Calendar className="h-3 w-3 mr-2 text-red-400" />
                     <span className="text-sm">Listed {formatDate(listing.createdAt)}</span>
                   </div>
 
                   {/* Sixth Row - Available Date */}
-                  <div className="flex items-center text-gray-600 mb-4">
-                    <Calendar className="h-3 w-3 mr-2 text-red-500" />
+                  <div className="flex items-center text-white/70 mb-4">
+                    <Calendar className="h-3 w-3 mr-2 text-red-400" />
                     <span className="text-sm">Available {formatDate(availability.availableFrom)}</span>
                   </div>
                 </div>
@@ -260,7 +260,7 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing }) => {
                 {(status === 'active' || status === 'open') && (
                   <>
                     <div 
-                      className="flex-1 px-3 py-2 border border-red-300 text-red-600 hover:bg-red-50 rounded-md text-xs font-medium cursor-pointer flex items-center justify-center"
+                      className="flex-1 px-3 py-2 border border-red-400/50 text-red-400 hover:bg-red-400/10 rounded-full text-xs font-medium cursor-pointer flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleCancel();
@@ -280,7 +280,7 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing }) => {
                     </div>
                     
                     <div 
-                      className="flex-1 px-3 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-md text-xs font-medium cursor-pointer flex items-center justify-center"
+                      className="flex-1 px-3 py-2 bg-teal-500/80 hover:bg-teal-500 text-white rounded-full text-xs font-medium cursor-pointer flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleFinalize();
@@ -304,11 +304,11 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing }) => {
 
               {/* Applications Toggle Text with Custom Chevron */}
               {applicationsCount > 0 && (
-                <div className="border-t mt-4 pt-4">
+                <div className="border-t border-white/10 mt-4 pt-4">
                   <div className="flex items-center">
-                    <span className="font-medium text-sm text-gray-900">Applications</span>
+                    <span className="font-medium text-sm text-white">Applications</span>
                     <svg 
-                      className={`h-4 w-4 shrink-0 transition-transform duration-200 ml-2 ${isAccordionOpen ? 'rotate-180' : ''}`}
+                      className={`h-4 w-4 shrink-0 transition-transform duration-200 ml-2 text-white/70 ${isAccordionOpen ? 'rotate-180' : ''}`}
                       xmlns="http://www.w3.org/2000/svg" 
                       width="24" 
                       height="24" 
@@ -330,18 +330,18 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing }) => {
         
         {/* Applications List (The Content) */}
         <AccordionContent>
-          <div className="bg-gray-50 rounded-b-lg">
+          <div className="bg-black/20 backdrop-blur-sm rounded-b-xl">
             {isLoadingApplications ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                <span className="text-sm text-gray-600">Loading applications...</span>
+                <Loader2 className="h-6 w-6 animate-spin mr-2 text-white/70" />
+                <span className="text-sm text-white/70">Loading applications...</span>
               </div>
             ) : applicationsError ? (
-              <div className="py-8 text-center text-red-600">
+              <div className="py-8 text-center text-red-400">
                 <p>Error loading applications</p>
               </div>
             ) : applications.length === 0 ? (
-              <div className="py-8 text-center text-gray-500">
+              <div className="py-8 text-center text-white/60">
                 <p>No applications found</p>
               </div>
             ) : (
