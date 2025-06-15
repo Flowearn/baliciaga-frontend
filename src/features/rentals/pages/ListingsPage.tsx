@@ -90,7 +90,7 @@ const ListingsPage: React.FC = () => {
         {/* Post Villa Button */}
         <Link
           to="/create-listing"
-          className="flex flex-col items-center justify-center p-4 mb-6 bg-black/40 backdrop-blur-sm rounded-xl text-white/90 hover:bg-black/50 transition-colors shadow-md mx-8"
+          className="flex flex-col items-center justify-center p-4 mb-6 bg-black/40 backdrop-blur-sm rounded-xl text-white/90 hover:bg-black/50 transition-colors shadow-md"
         >
           <div className="flex items-center justify-center w-12 h-12 mb-2 bg-white/20 rounded-full">
             <Plus className="w-6 h-6 text-white" />
