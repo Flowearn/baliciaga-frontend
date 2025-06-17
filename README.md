@@ -82,6 +82,13 @@ npm run dev
    ```
    服务启动后，前端应用将在 `http://localhost:8080` 上运行 (在vite.config.ts中配置的端口)。
 
+### 2025-06-16 本地开发提醒
+
+**热更新机制**
+- 修改代码后**无需重启** Vite 开发服务器
+- 保存文件即可触发热更新，浏览器自动刷新
+- 仅在修改核心配置文件 (vite.config.ts, package.json) 时需要重启服务
+
 ## 与后端API的交互
 
 * 前端通过调用运行在 `http://localhost:3006` 的后端API来获取咖啡馆数据。
@@ -137,6 +144,85 @@ npm run build
 ```
 
 这将在 `dist` 目录下生成优化后的生产构建文件，可以部署到任何静态文件托管服务。
+
+### 2025-06-16 组件概览
+
+#### 租赁模块核心组件
+
+**ListingCard** (`src/features/rentals/components/ListingCard.tsx`)
+- **责任**：展示房源卡片，包含标题、图片、价格、状态胶囊
+- **图片比例**：4:3 (`aspect-[4/3]`)
+- **状态胶囊**：绝对定位 `top-5 right-5`，包含占用状态和可用性信息
+
+**EditListingForm** (`src/features/rentals/components/EditListingForm.tsx`)
+- **责任**：房源编辑表单，支持图片上传、价格设置、详情修改
+- **关联页面**：EditListingPage.tsx 作为页面容器
+
+**CreateListingPage** (`src/features/rentals/pages/CreateListingPage.tsx`)
+- **责任**：新建房源页面，集成AI辅助表单和图片处理
+- **特性**：支持拖拽上传、智能信息提取
+
+**MyApplicationCard** (`src/features/rentals/components/MyApplicationCard.tsx`)
+- **责任**：显示用户申请记录，包含房源信息和申请状态
+- **图片比例**：16:9 (`aspect-video`)
+- **状态管理**：支持取消申请、状态追踪
+
+### 2025-06-16 共享样式约定
+
+#### Tailwind CSS 颜色规范
+
+**品牌核心色彩**
+- **绿色成功状态**：`bg-green-500` (对应 #22C55E)
+- **玫红警告/取消**：`bg-rose-500`
+- **CTA主色调**：`#B7AC93` (金棕色，用于按钮和强调元素)
+
+**状态胶囊颜色映射**
+- `active` 状态：`bg-green-500` (活跃房源)
+- `closed` 状态：`bg-gray-600` (已完成)
+- `cancelled` 状态：`bg-rose-500` (已取消)
+
+#### 图片比例标准
+
+**列表卡片图片**：4:3 比例 (`aspect-[4/3]`)
+- 用于 ListingCard 主图显示
+- 确保网格布局一致性
+
+**申请卡片图片**：16:9 比例 (`aspect-video`)
+- 用于 MyApplicationCard 缩略图
+- 适配横向布局展示
+
+#### 状态胶囊实现
+
+**绝对定位规范**
+```tsx
+className="absolute top-5 right-5 z-[2] rounded-full px-3 py-0.5 text-xs font-semibold text-white shadow-md shadow-black/20"
+```
+
+**逻辑来源**：根据 `listing.status` 和 `acceptedApplicantsCount/totalSpots` 计算
+**颜色映射**：按状态自动分配对应的 Tailwind 背景色类
+**层级控制**：使用 `z-[2]` 确保胶囊在图片上层显示
+
+### 2025-06-16 价格格式化工具
+
+#### formatPrice 函数 (`src/utils/currencyUtils.ts`)
+
+**函数签名**
+```typescript
+formatPrice(amount: number, currency: string = 'IDR'): string
+```
+
+**输出格式**
+- **IDR**：`Rp 25,000k` (千位简化显示)
+- **USD**：`$1,234` (标准货币格式)
+- **其他货币**：遵循 Intl.NumberFormat 标准
+
+**使用示例**
+```typescript
+formatPrice(25000000, 'IDR') // => "Rp 25,000k"
+formatPrice(1234, 'USD')     // => "$1,234"
+```
+
+**错误处理**：对于无效金额返回 'Price Unavailable'，不支持的货币使用回退格式
 
 ## 近期主要更新 (自2025年5月下旬以来)
 
