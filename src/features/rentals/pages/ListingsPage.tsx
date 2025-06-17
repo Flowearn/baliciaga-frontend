@@ -9,7 +9,7 @@ import ListingCardSkeleton from '../components/ListingCardSkeleton';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
+
 
 const ListingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -78,29 +78,24 @@ const ListingsPage: React.FC = () => {
   };
 
   return (
-    <ColoredPageWrapper seed="listings">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
-        <div className="flex items-center justify-between">
-          <h1 className="text-white font-semibold text-xl">Rental Listings</h1>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-white">
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Post Villa Button */}
-        <Link
-          to="/create-listing"
-          className="flex flex-col items-center justify-center p-4 mb-6 bg-black/40 backdrop-blur-sm rounded-xl text-white/90 hover:bg-black/50 transition-colors shadow-md"
+        <Button
+          className="h-[98px] w-full border-2 border-[#B7AC93] text-[#B7AC93] rounded-3xl flex flex-col items-center justify-center gap-2 bg-transparent hover:bg-[#B7AC93]/10 active:bg-[#B7AC93]/20 mb-6 post-listing-btn"
+          asChild
         >
-          <div className="flex items-center justify-center w-12 h-12 mb-2 bg-white/20 rounded-full">
-            <Plus className="w-6 h-6 text-white" />
-          </div>
-          <p className="font-semibold">Post villas & Find roommates</p>
+          <Link to="/create-listing">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#B7AC93]">
+              <Plus className="h-5 w-5 text-white" />
+            </span>
+            <span className="text-sm font-medium">Post villas & Find roommates</span>
         </Link>
+        </Button>
 
         {/* Loading State */}
         {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mx-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <ListingCardSkeleton />
             <ListingCardSkeleton />
             <ListingCardSkeleton />
@@ -112,7 +107,7 @@ const ListingsPage: React.FC = () => {
 
         {/* Error State */}
         {error && !isLoading && (
-          <div className="mx-8 mb-6">
+          <div className="mb-6">
             <div className="bg-black/40 backdrop-blur-sm rounded-xl p-6 shadow-md">
               <div className="flex items-center text-red-400 mb-4">
                 <AlertCircle className="h-5 w-5 mr-2" />
@@ -134,7 +129,7 @@ const ListingsPage: React.FC = () => {
         {!isLoading && !error && (
           <>
             {listings.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mx-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {listings.map((listing) => (
                   <ListingCard 
                     key={listing.listingId} 
@@ -144,7 +139,7 @@ const ListingsPage: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="mx-8">
+              <div>
                 <div className="bg-black/40 backdrop-blur-sm rounded-xl p-8 text-center shadow-md">
                   <div className="text-white/60 mb-4">
                     <Plus className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -163,7 +158,7 @@ const ListingsPage: React.FC = () => {
           </>
         )}
       </div>
-    </ColoredPageWrapper>
+    </div>
   );
 };
 

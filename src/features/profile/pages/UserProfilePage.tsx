@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { updateUserProfile } from '../../../services/userService';
+import { uploadAvatarPhoto } from '../../../services/uploadService';
 import { toast } from 'sonner';
 import { LANGUAGES } from '../../../constants/languages';
 import apiClient from '../../../services/apiClient';
@@ -218,32 +219,17 @@ const UserProfilePage: React.FC = () => {
 
       // 上传头像到后端
       try {
-        // 1. 获取上传URL
-        const uploadResponse = await apiClient.post('/users/me/avatar-upload-url', {
-          fileName: croppedFile.name,
-          fileType: croppedFile.type,
-          fileSize: croppedFile.size
+        // 使用上传服务上传头像
+        const profilePictureUrl = await uploadAvatarPhoto(croppedFile);
+
+        // 更新用户资料 - 包含必填字段
+        const updatedProfile = await updateUserProfile({ 
+          name: user.profile?.name || '',
+          whatsApp: user.profile?.whatsApp || '',
+          profilePictureUrl 
         });
-
-        const { uploadUrl, profilePictureUrl } = uploadResponse.data;
-
-        // 2. 上传文件到S3
-        const uploadResult = await fetch(uploadUrl, {
-          method: 'PUT',
-          body: croppedFile,
-          headers: {
-            'Content-Type': croppedFile.type,
-          },
-        });
-
-        if (!uploadResult.ok) {
-          throw new Error('Failed to upload to S3');
-        }
-
-        // 3. 更新用户资料
-        const updatedProfile = await updateUserProfile({ profilePictureUrl });
         
-        // 4. 更新用户状态
+        // 更新用户状态
         setUser({
           ...user,
           profile: updatedProfile.profile,
@@ -254,7 +240,7 @@ const UserProfilePage: React.FC = () => {
         queryClient.invalidateQueries({ queryKey: ['currentUser'] });
         queryClient.invalidateQueries({ queryKey: ['userProfile'] });
         
-        // 5. 同步更新本地表单状态
+        // 同步更新本地表单状态
         const newFormData = {
           name: updatedProfile.profile.name || '',
           whatsApp: updatedProfile.profile.whatsApp || '',

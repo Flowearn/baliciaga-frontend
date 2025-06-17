@@ -84,6 +84,7 @@ export interface CreateListingPayload {
   locationArea?: string;
   availableFrom: string;
   minimumStay: number;
+  description: string;
   amenities: string[];
   photos: string[]; // 图片 URL 数组
 }
@@ -230,4 +231,43 @@ export const incrementView = async (listingId: string): Promise<void> => {
   } catch (error) {
     console.warn("Failed to increment view count, but continuing.", error);
   }
+}; 
+
+export interface UpdateListingPayload {
+  title?: string;
+  monthlyRent?: number;
+  currency?: string;
+  deposit?: number;
+  utilities?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  squareFootage?: number | null;
+  furnished?: boolean;
+  petFriendly?: boolean;
+  smokingAllowed?: boolean;
+  address?: string;
+  availableFrom?: string;
+  minimumStay?: number;
+  description?: string;
+  amenities?: string; // comma-separated string for backend
+  photos?: string[]; // photo URL array
+}
+
+export interface UpdateListingResponse {
+  success: boolean;
+  data?: {
+    listingId: string;
+    message: string;
+    listing: MyListing;
+  };
+  error?: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+}
+
+export const updateListing = async (listingId: string, payload: UpdateListingPayload): Promise<UpdateListingResponse> => {
+  const response = await apiClient.put(`/listings/${listingId}`, payload);
+  return response.data;
 }; 

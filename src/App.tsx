@@ -12,6 +12,7 @@ import CafeDetailPage from "./pages/CafeDetailPage";
 import ListingsPage from "./features/rentals/pages/ListingsPage";
 import ListingDetailPage from "./features/rentals/pages/ListingDetailPage";
 import CreateListingPage from "./features/rentals/pages/CreateListingPage";
+import EditListingPage from "./features/rentals/pages/EditListingPage";
 import MyApplicationsPage from "./features/rentals/pages/MyApplicationsPage";
 import MyListingsPage from "./features/rentals/pages/MyListingsPage";
 import ManageListingApplications from "./features/rentals/pages/ManageListingApplications";
@@ -75,6 +76,10 @@ const routeObjects = [
         element: <ListingDetailPage />,
       },
       {
+        path: "listings/:listingId/edit", // Edit listing page - Protected
+        element: <ProtectedRoute><EditListingPage /></ProtectedRoute>,
+      },
+      {
         path: "create-listing", // AI-assisted listing creation page - Protected
         element: <ProtectedRoute><CreateListingPage /></ProtectedRoute>,
       },
@@ -85,6 +90,10 @@ const routeObjects = [
       {
         path: "my-listings", // Property owner's listings management page - Protected
         element: <ProtectedRoute><MyListingsPage /></ProtectedRoute>,
+      },
+      {
+        path: "my-listings/:listingId", // My listing detail page - Protected
+        element: <ProtectedRoute><ListingDetailPage /></ProtectedRoute>,
       },
       {
         path: "my-listings/:listingId/manage", // Manage applications for a specific listing - Protected

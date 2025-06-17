@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, MapPin, Calendar, Users, Home, Bed, Bath, DollarSign } from "lucide-react";
+import React from 'react';
 import { Listing } from '@/types';
 import { formatPrice } from '@/utils/currencyUtils';
+import { formatNoYear } from '@/utils/formatDate';
+import { cn } from '@/lib/utils';
 
 interface ListingCardProps {
   listing: Listing;
@@ -12,166 +10,141 @@ interface ListingCardProps {
 }
 
 const ListingCard: React.FC<ListingCardProps> = ({ listing, onCardClick }) => {
-  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-
-  const handlePrevPhoto = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentPhotoIndex((prev) => 
-      prev === 0 ? listing.photos.length - 1 : prev - 1
-    );
-  };
-
-  const handleNextPhoto = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentPhotoIndex((prev) => 
-      prev === listing.photos.length - 1 ? 0 : prev + 1
-    );
-  };
-
   const handleCardClick = () => {
     if (onCardClick) {
       onCardClick(listing.listingId);
     }
   };
 
-
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+  // 获取状态胶囊信息 - 对标Café卡片颜色和阴影
+  const getStatusInfo = (listing: Listing) => {
+    const filled = listing.acceptedApplicantsCount ?? 0;
+    const total = listing.totalSpots ?? listing.details.bedrooms ?? 1;
+    
+    switch (listing.status) {
+      case 'active':
+        return { 
+          label: `${filled}/${total} Filled`, 
+          color: 'bg-green-500' // 匹配Café Open胶囊 #22C55E
+        };
+      case 'closed':
+        return { 
+          label: 'Finalized', 
+          color: 'bg-gray-600' // 匹配Café Closed胶囊
+        };
+      case 'paused':
+      default:
+        return { 
+          label: 'Cancelled', 
+          color: 'bg-rose-500' // 玫红色取消状态
+        };
+    }
   };
 
+  // 获取位置信息：智能提取区域信息
+  const getLocationDisplay = () => {
+    // 首先检查是否有locationArea字段（扩展支持）
+    const extendedListing = listing as { locationArea?: string; city?: string };
+    if (extendedListing.locationArea && extendedListing.locationArea.trim()) {
+      return extendedListing.locationArea.trim();
+    }
+    
+    // 检查是否有city字段（扩展支持）
+    if (extendedListing.city && extendedListing.city.trim()) {
+      return extendedListing.city.trim();
+    }
+    
+    // 从address中智能提取区域信息
+    const parts = listing.location.address.split(',').map(part => part.trim());
+    
+    // 尝试识别区域名称（通常是非数字的部分，排除邮编）
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const part = parts[i];
+      // 跳过纯数字（邮编）和国家名
+      if (!/^\d+$/.test(part) && part.toLowerCase() !== 'indonesia' && part.toLowerCase() !== 'bali') {
+        // 如果包含常见区域名称，优先返回
+        if (/canggu|ubud|seminyak|kuta|sanur|denpasar|jimbaran|nusa dua/i.test(part)) {
+          return part;
+        }
+        // 否则返回第一个非数字非国家的部分
+        if (part.length > 2) {
+          return part;
+        }
+      }
+    }
+    
+    // 兜底：返回地址的最后一个非数字部分或完整地址
+    const lastNonNumericPart = parts.find(part => !/^\d+$/.test(part));
+    return lastNonNumericPart || listing.location.address;
+  };
+
+  // 计算每房间价格
+  const calculatePricePerRoom = () => {
+    return listing.details.bedrooms 
+      ? Math.round(listing.pricing.monthlyRent / listing.details.bedrooms) 
+      : listing.pricing.monthlyRent;
+  };
+
+  const perRoomPrice = calculatePricePerRoom();
+  const { label, color } = getStatusInfo(listing);
+
   return (
-    <Card 
-      className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-200 bg-black/40 backdrop-blur-sm text-white/90 border-white/10"
-      onClick={handleCardClick}
-    >
-      {/* Photo Carousel */}
-      <div className="relative h-48 sm:h-52 lg:h-48 bg-black/20 rounded-xl overflow-hidden">
-        {listing.photos && listing.photos.length > 0 ? (
-          <>
+    <div className="w-full cursor-pointer" onClick={handleCardClick}>
+      {/* Image Container with Status Badge */}
+      <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3">
             <img
-              src={listing.photos[currentPhotoIndex]}
-              alt={`${listing.title} - Photo ${currentPhotoIndex + 1}`}
+          src={listing.photos?.[0] || '/placeholder-villa.jpg'}
+          alt={listing.title}
               className="w-full h-full object-cover"
             />
             
-            {/* Photo Navigation */}
-            {listing.photos.length > 1 && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 rounded-full w-8 h-8 p-0"
-                  onClick={handlePrevPhoto}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 rounded-full w-8 h-8 p-0"
-                  onClick={handleNextPhoto}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-                
-                {/* Photo Dots Indicator */}
-                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-                  {listing.photos.map((_, index) => (
-                    <div
-                      key={index}
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        index === currentPhotoIndex ? 'bg-white' : 'bg-white/50'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-white/40">
-            <Home className="w-12 h-12" />
-          </div>
-        )}
-      </div>
-
-      <CardContent className="p-3 sm:p-4">
-        {/* Title and Price */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 space-y-1 sm:space-y-0">
-          <h3 className="font-semibold text-base sm:text-lg text-white line-clamp-2 sm:line-clamp-1 flex-1 pr-2">
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+        
+        {/* Title Text */}
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <h3 className="text-white text-xl font-bold drop-shadow-md">
             {listing.title}
           </h3>
-          <div className="text-left sm:text-right flex-shrink-0">
-            <div className="font-bold text-lg sm:text-xl text-green-400">
-              {formatPrice(listing.pricing.monthlyRent, listing.pricing.currency)}
+        </div>
+
+        {/* Status Badge - 完全对标Café卡片样式和位置 */}
+        <span
+          className={cn(
+            'absolute top-5 right-5 z-[2] rounded-full px-3 py-0.5 text-xs font-semibold text-white shadow-md shadow-black/20',
+            color
+          )}
+        >
+          {label}
+        </span>
+        </div>
+
+      {/* Info Area - Two Rows */}
+      <div className="space-y-1">
+        {/* Row 1: Price + Location */}
+        <div className="flex items-baseline justify-between px-0.5">
+          <div className="flex items-baseline gap-1 whitespace-nowrap">
+            <span className="text-lg font-semibold text-green-600">
+              {formatPrice(listing.pricing.monthlyRent / listing.details.bedrooms)} {listing.pricing.currency}
+            </span>
+            <span className="text-sm text-gray-500">/ Room monthly</span>
+          </div>
+          <span className="text-sm text-gray-600 whitespace-nowrap">
+            {getLocationDisplay()}
+          </span>
+        </div>
+
+        {/* Row 2: Beds/Baths + Date */}
+        <div className="flex items-baseline justify-between px-0.5 listing-info-row-2">
+          <span className="text-sm text-gray-700 whitespace-nowrap">
+            {listing.details.bedrooms}&nbsp;&nbsp;Bedrooms&nbsp;&nbsp;{listing.details.bathrooms}&nbsp;&nbsp;Bathrooms
+          </span>
+          <span className="text-sm text-gray-600 whitespace-nowrap">
+            Available {formatNoYear(listing.availability.availableFrom)}
+          </span>
+        </div>
             </div>
-            <div className="text-xs text-white/60">per month</div>
-          </div>
         </div>
-
-        {/* Location */}
-        <div className="flex items-center text-white/70 mb-3">
-          <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-          <span className="text-sm line-clamp-1">{listing.location.address}</span>
-        </div>
-
-        {/* Property Details */}
-        <div className="flex items-center flex-wrap gap-3 sm:gap-4 mb-3 text-sm text-white/70">
-          <div className="flex items-center">
-            <Bed className="w-4 h-4 mr-1 flex-shrink-0" />
-            <span>{listing.details.bedrooms} bed{listing.details.bedrooms !== 1 ? 's' : ''}</span>
-          </div>
-          <div className="flex items-center">
-            <Bath className="w-4 h-4 mr-1 flex-shrink-0" />
-            <span>{listing.details.bathrooms} bath{listing.details.bathrooms !== 1 ? 's' : ''}</span>
-          </div>
-          {listing.details.squareFootage && (
-            <div className="flex items-center">
-              <Home className="w-4 h-4 mr-1 flex-shrink-0" />
-              <span>{listing.details.squareFootage} sqft</span>
-            </div>
-          )}
-        </div>
-
-        {/* Availability */}
-        <div className="flex items-center text-sm text-white/70 mb-3">
-          <Calendar className="w-4 h-4 mr-1" />
-          <span>Available from {formatDate(listing.availability.availableFrom)}</span>
-        </div>
-
-        {/* Features Badges */}
-        <div className="flex flex-wrap gap-1 mb-3">
-          {listing.details.furnished && (
-            <Badge variant="secondary" className="text-xs">Furnished</Badge>
-          )}
-          {listing.details.petFriendly && (
-            <Badge variant="secondary" className="text-xs">Pet Friendly</Badge>
-          )}
-          {listing.details.smokingAllowed && (
-            <Badge variant="secondary" className="text-xs">Smoking OK</Badge>
-          )}
-        </div>
-
-        {/* Additional Costs */}
-        <div className="text-xs text-white/60 space-y-1">
-          <div className="flex justify-between">
-            <span>Deposit:</span>
-            <span>{formatPrice(listing.pricing.deposit, listing.pricing.currency)}</span>
-          </div>
-          {listing.pricing.utilities > 0 && (
-            <div className="flex justify-between">
-              <span>Utilities:</span>
-              <span>{formatPrice(listing.pricing.utilities, listing.pricing.currency)}/month</span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
   );
 };
 

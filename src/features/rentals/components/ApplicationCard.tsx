@@ -10,6 +10,7 @@ import {
   Check
 } from 'lucide-react';
 import { ReceivedApplication, updateApplicationStatus } from '@/services/applicationService';
+import { formatNoYear } from '@/utils/formatDate';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -20,15 +21,6 @@ interface ApplicationCardProps {
 
 const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingId }) => {
   const queryClient = useQueryClient();
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
 
   // Handle application status update
   const handleStatusUpdate = async (newStatus: 'accepted' | 'ignored' | 'pending') => {
@@ -130,7 +122,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingI
                 {application.applicant?.profile?.name ?? 'Anonymous'}
               </h4>
               <div className="text-xs text-gray-500">
-                Applied {formatDate(application.createdAt)}
+                Applied {formatNoYear(application.createdAt)}
               </div>
             </div>
 

@@ -16,10 +16,11 @@ import {
   Clock,
   CheckCircle
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
 
 const MyListingsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [listings, setListings] = useState<MyListing[]>([]);
   const [activeTab, setActiveTab] = useState<string>('active');
   const [isLoading, setIsLoading] = useState(true);
@@ -54,14 +55,6 @@ const MyListingsPage: React.FC = () => {
 
       if (response.success) {
         const newListings = response.data.listings;
-        
-        // 添加诊断日志
-        console.log('%c[MY LISTINGS DIAGNOSTIC] API response received:', 'color: orange; font-weight: bold;', response);
-        console.log('%c[MY LISTINGS DIAGNOSTIC] Status filter:', 'color: orange; font-weight: bold;', status);
-        console.log('%c[MY LISTINGS DIAGNOSTIC] Number of listings returned:', 'color: orange; font-weight: bold;', newListings.length);
-        if (newListings.length > 0) {
-          console.log('%c[MY LISTINGS DIAGNOSTIC] Sample listing:', 'color: orange; font-weight: bold;', newListings[0]);
-        }
         
         if (isLoadMore && cursor) {
           setListings(prev => [...prev, ...newListings]);
@@ -130,6 +123,11 @@ const MyListingsPage: React.FC = () => {
   const handleRetry = () => {
     setError(null);
     loadListings(activeTab);
+  };
+
+  // Handle card click to navigate to listing detail
+  const handleCardClick = (listingId: string) => {
+    navigate(`/my-listings/${listingId}`);
   };
 
   // Loading skeleton
@@ -289,7 +287,7 @@ const MyListingsPage: React.FC = () => {
           ) : listings.length > 0 ? (
             <div className="space-y-4">
               {listings.map((listing) => (
-                <MyListingCard key={listing.listingId} listing={listing} />
+                <MyListingCard key={listing.listingId} listing={listing} onCardClick={handleCardClick} />
               ))}
               {hasNextPage && (
                                   <div className="flex justify-center mt-8">

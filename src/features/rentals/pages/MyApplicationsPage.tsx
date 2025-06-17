@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
 
-import ApplicationCard from '../components/ApplicationCard';
+import MyApplicationCard from '../components/MyApplicationCard';
 import { 
   fetchMyApplications, 
   MyApplication, 
@@ -235,7 +235,7 @@ const MyApplicationsPage: React.FC = () => {
           <>
             <div className="space-y-0">
               {applications.map((application) => (
-                <ApplicationCard
+                <MyApplicationCard
                   key={application.applicationId}
                   application={application}
                   onApplicationCanceled={handleApplicationCanceled}

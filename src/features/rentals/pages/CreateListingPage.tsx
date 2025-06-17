@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { X, Upload, Sparkles, Plus, UploadCloud, User, Building, Home as HomeIcon, Menu as MenuIcon } from 'lucide-react';
 import { analyzeListingSource, AnalyzeSourceResponse, createListing } from '@/services/listingService';
+import { uploadListingPhotos } from '@/services/uploadService';
 import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
 
 interface ListingFormData {
@@ -239,6 +240,9 @@ const CreateListingPage: React.FC = () => {
     try {
       setIsPublishing(true);
 
+      // 先上传图片获取URL（这里使用临时实现）
+      const photoUrls = await uploadListingPhotos(formData.photos);
+
       const response = await createListing({
         title: formData.title,
         posterRole: posterRole,
@@ -256,8 +260,9 @@ const CreateListingPage: React.FC = () => {
         locationArea: formData.locationArea,
         availableFrom: formData.availableFrom,
         minimumStay: minimumStay,
+        description: formData.description,
         amenities: formData.amenities,
-        photos: []
+        photos: photoUrls // 修复：传递实际的图片URL数组而不是空数组
       });
       
       if (response.success && response.data) {
@@ -345,8 +350,8 @@ const CreateListingPage: React.FC = () => {
                       <div className="space-y-4">
               <Textarea
                 ref={textareaRef}
-                className="w-full min-h-[80px] resize-none bg-white/10 focus:bg-white/20 placeholder-white/50 text-white border-white/20 focus:border-white/40"
-                placeholder="在此粘贴房源的文字描述，如URL、房产介绍等..."
+                className="w-full min-h-[80px] resize-none bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white border-white/20 focus:border-white/40"
+                placeholder="Paste the property description here, e.g. URL or details..."
                 value={aiInput}
                 onChange={(e) => setAiInput(e.target.value)}
               />
@@ -403,7 +408,7 @@ const CreateListingPage: React.FC = () => {
             <input
               id="title"
               type="text"
-              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/50 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
               value={formData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
               placeholder="e.g., Beautiful Villa in Canggu"
@@ -418,7 +423,7 @@ const CreateListingPage: React.FC = () => {
             <input
               id="address"
               type="text"
-              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/50 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
               value={formData.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
               placeholder="Property address"
@@ -433,7 +438,7 @@ const CreateListingPage: React.FC = () => {
             <input
               id="locationArea"
               type="text"
-              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/50 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
               value={formData.locationArea}
               onChange={(e) => handleInputChange('locationArea', e.target.value)}
               placeholder="e.g., Canggu, Ubud, Seminyak"
@@ -450,7 +455,7 @@ const CreateListingPage: React.FC = () => {
                 id="bedrooms"
                 type="number"
                 min="0"
-                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/50 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
                 value={formData.bedrooms || ''}
                 onChange={(e) => handleNumberInputChange('bedrooms', e)}
               />
@@ -463,7 +468,7 @@ const CreateListingPage: React.FC = () => {
                 id="bathrooms"
                 type="number"
                 min="0"
-                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/50 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
                 value={formData.bathrooms || ''}
                 onChange={(e) => handleNumberInputChange('bathrooms', e)}
               />
@@ -480,7 +485,7 @@ const CreateListingPage: React.FC = () => {
                 id="squareFootage"
                 type="number"
                 min="0"
-                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/50 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
                 value={formData.squareFootage || ''}
                 onChange={(e) => handleNumberInputChange('squareFootage', e)}
                 placeholder="Square footage"
@@ -494,26 +499,55 @@ const CreateListingPage: React.FC = () => {
                 id="minimumStay"
                 type="number"
                 min="1"
-                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/50 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
                 value={formData.minimumStay || ''}
                 onChange={(e) => handleNumberInputChange('minimumStay', e)}
               />
             </div>
           </div>
 
-          {/* Monthly Rent */}
+          {/* Monthly Rent with Currency */}
           <div className="mb-6">
-            <label htmlFor="monthlyRent" className="block text-sm font-medium text-white/90 mb-2">
+            <label className="block text-sm font-medium text-white/90 mb-2">
               Monthly Rent
             </label>
-            <input
-              id="monthlyRent"
-              type="number"
-              min="0"
-              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/50 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
-              value={formData.monthlyRent || ''}
-              onChange={(e) => handleNumberInputChange('monthlyRent', e)}
-              placeholder="Monthly rent amount"
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2">
+                <input
+                  id="monthlyRent"
+                  type="number"
+                  min="0"
+                  className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                  value={formData.monthlyRent || ''}
+                  onChange={(e) => handleNumberInputChange('monthlyRent', e)}
+                  placeholder="Monthly rent amount"
+                />
+              </div>
+              <div>
+                <select
+                  value={formData.currency}
+                  onChange={(e) => handleInputChange('currency', e.target.value)}
+                  className="block w-full rounded-lg bg-white/10 px-3 py-2 text-white/90 placeholder-white/20 focus:outline-none"
+                >
+                  <option value="IDR">IDR</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Property Description */}
+          <div className="mb-6">
+            <label htmlFor="description" className="block text-sm font-medium text-white/90 mb-2">
+              Property Description
+            </label>
+            <textarea
+              id="description"
+              rows={4}
+              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none resize-none"
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="Describe your property, location highlights, nearby amenities..."
             />
           </div>
         </div>
