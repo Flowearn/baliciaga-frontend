@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus } from "lucide-react";
+import { Plus, Archive, ArchiveX } from "lucide-react";
 import { toast } from 'sonner';
 import { fetchListings } from '@/services/listingService';
 import { Listing, ListingsApiResponse } from '@/types';
@@ -9,10 +9,12 @@ import ListingCardSkeleton from '../components/ListingCardSkeleton';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { useArchive } from '@/context/ArchiveContext';
 
 
 const ListingsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { showCancelled, toggleShowCancelled } = useArchive();
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,20 +25,38 @@ const ListingsPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
+      // Always fetch all listings, but filter on frontend
       const response: ListingsApiResponse = await fetchListings({
-        limit: 50 // Get more listings for the main page
+        limit: 50, // Get more listings for the main page
+        includeStatus: ['active', 'paused', 'closed'] // Fetch all statuses
       });
 
       if (response.success) {
         const fetchedListings = response.data.listings;
-        setListings(fetchedListings);
+        
+        // Filter listings based on showCancelled state
+        // When showCancelled is false (default), hide paused (cancelled) listings
+        // When showCancelled is true, show all listings including paused (cancelled)
+        const filteredListings = showCancelled 
+          ? fetchedListings 
+          : fetchedListings.filter(listing => listing.status !== 'paused');
+          
+        setListings(filteredListings);
         
         // 添加诊断日志
-        console.log('%c[DIAGNOSTIC LOG] Listings stored in state:', 'color: green; font-weight: bold;', fetchedListings);
-        console.log('%c[DIAGNOSTIC LOG] Number of listings:', 'color: green; font-weight: bold;', fetchedListings.length);
+        console.log('%c[DIAGNOSTIC LOG] Show cancelled:', 'color: green; font-weight: bold;', showCancelled);
+        console.log('%c[DIAGNOSTIC LOG] Fetched listings:', 'color: green; font-weight: bold;', fetchedListings.length);
+        console.log('%c[DIAGNOSTIC LOG] Filtered listings:', 'color: green; font-weight: bold;', filteredListings.length);
         
-        if (fetchedListings.length > 0) {
-          console.log('%c[DIAGNOSTIC LOG] Sample listing structure:', 'color: green; font-weight: bold;', fetchedListings[0]);
+        // Log status distribution
+        const statusCount = fetchedListings.reduce((acc, listing) => {
+          acc[listing.status] = (acc[listing.status] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        console.log('%c[DIAGNOSTIC LOG] Status distribution:', 'color: orange; font-weight: bold;', statusCount);
+        
+        if (filteredListings.length > 0) {
+          console.log('%c[DIAGNOSTIC LOG] Sample listing structure:', 'color: green; font-weight: bold;', filteredListings[0]);
         }
       } else {
         throw new Error('Failed to fetch listings');
@@ -62,14 +82,14 @@ const ListingsPage: React.FC = () => {
     }
   };
 
-  // Load listings on component mount
+  // Load listings on component mount and when showCancelled changes
   useEffect(() => {
     loadListings();
-  }, []);
+  }, [showCancelled]);
 
   // Handle card click - navigate to listing detail
   const handleCardClick = (listingId: string) => {
-    navigate(`/listings/${listingId}`);
+    navigate(`/listings/${listingId}`, { state: { from: '/listings' } });
   };
 
   // Handle retry
@@ -78,20 +98,46 @@ const ListingsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        {/* Post Villa Button */}
-        <Button
-          className="h-[98px] w-full border-2 border-[#B7AC93] text-[#B7AC93] rounded-3xl flex flex-col items-center justify-center gap-2 bg-transparent hover:bg-[#B7AC93]/10 active:bg-[#B7AC93]/20 mb-6 post-listing-btn"
-          asChild
-        >
-          <Link to="/create-listing">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#B7AC93]">
-              <Plus className="h-5 w-5 text-white" />
+    <div className="min-h-screen bg-background-creamy">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 pb-20">
+        {/* Header with Post Villa Button and Archive Toggle */}
+        <div className="flex gap-3 mb-6">
+          {/* Post Villa Button */}
+          <Button
+            className="h-[98px] flex-1 border-2 border-[#B7AC93] text-[#B7AC93] rounded-3xl flex flex-col items-center justify-center gap-2 bg-transparent hover:bg-[#B7AC93]/10 active:bg-[#B7AC93]/20 post-listing-btn"
+            asChild
+          >
+            <Link to="/create-listing">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#B7AC93]">
+                <Plus className="h-5 w-5 text-white" />
+              </span>
+              <span className="text-base font-medium">Post villas & Find roommates</span>
+            </Link>
+          </Button>
+          
+          {/* Archive Toggle Button */}
+          <Button
+            onClick={toggleShowCancelled}
+            className={`h-[98px] w-20 border-2 rounded-3xl flex flex-col items-center justify-center gap-2 bg-transparent transition-all duration-200 ${
+              showCancelled 
+                ? 'border-red-400 text-red-600 hover:bg-red-50 active:bg-red-100' 
+                : 'border-gray-300 text-gray-500 hover:bg-gray-50 active:bg-gray-100'
+            }`}
+          >
+            <span className={`flex h-10 w-10 items-center justify-center rounded-full ${
+              showCancelled ? 'bg-red-500' : 'bg-gray-400'
+            }`}>
+              {showCancelled ? (
+                <ArchiveX className="h-5 w-5 text-white" />
+              ) : (
+                <Archive className="h-5 w-5 text-white" />
+              )}
             </span>
-            <span className="text-sm font-medium">Post villas & Find roommates</span>
-        </Link>
-        </Button>
+            <span className="text-sm font-medium text-center">
+              {showCancelled ? 'Hide\nArchived' : 'Show\nArchived'}
+            </span>
+          </Button>
+        </div>
 
         {/* Loading State */}
         {isLoading && (
@@ -111,9 +157,9 @@ const ListingsPage: React.FC = () => {
             <div className="bg-black/40 backdrop-blur-sm rounded-xl p-6 shadow-md">
               <div className="flex items-center text-red-400 mb-4">
                 <AlertCircle className="h-5 w-5 mr-2" />
-                <span className="text-white/90 font-medium">Something went wrong</span>
+                <span className="text-white/100 font-medium">Something went wrong</span>
               </div>
-              <p className="text-white/70 mb-4">{error}</p>
+              <p className="text-white/80 mb-4">{error}</p>
               <Button 
                 onClick={handleRetry}
                 className="bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-2"
@@ -129,12 +175,13 @@ const ListingsPage: React.FC = () => {
         {!isLoading && !error && (
           <>
             {listings.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-12">
                 {listings.map((listing) => (
                   <ListingCard 
                     key={listing.listingId} 
                     listing={listing}
                     onCardClick={handleCardClick}
+                    isArchived={listing.status === 'paused'}
                   />
                 ))}
               </div>
@@ -143,8 +190,8 @@ const ListingsPage: React.FC = () => {
                 <div className="bg-black/40 backdrop-blur-sm rounded-xl p-8 text-center shadow-md">
                   <div className="text-white/60 mb-4">
                     <Plus className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <h3 className="text-lg font-semibold mb-2 text-white">No listings available</h3>
-                    <p className="text-white/70">Be the first to post a villa and find roommates!</p>
+                    <h3 className="text-xl font-semibold mb-2 text-white">No listings available</h3>
+                    <p className="text-white/80">Be the first to post a villa and find roommates!</p>
                   </div>
                   <Link to="/create-listing">
                     <Button className="bg-white/20 hover:bg-white/30 text-white rounded-full px-6 py-2">

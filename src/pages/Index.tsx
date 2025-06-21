@@ -51,9 +51,10 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
   // State for category selection - initialize from URL parameter
-  const initialCategoryFromURL = searchParams.get('type') as 'cafe' | 'bar' | null;
-  const initialSelectedCategoryValue = initialCategoryFromURL === 'bar' ? 'bar' : 'cafe';
-  const [selectedCategory, setSelectedCategory] = useState<'cafe' | 'bar'>(
+  const initialCategoryFromURL = searchParams.get('type') as 'cafe' | 'bar' | 'cowork' | null;
+  const initialSelectedCategoryValue = initialCategoryFromURL === 'bar' ? 'bar' : 
+                                     initialCategoryFromURL === 'cowork' ? 'cowork' : 'cafe';
+  const [selectedCategory, setSelectedCategory] = useState<'cafe' | 'bar' | 'cowork'>(
     initialSelectedCategoryValue
   );
   
@@ -99,24 +100,25 @@ const Index = () => {
   
   const { data: cafes, isLoading, error, refetch, isRefetching } = useQuery<Cafe[], Error>({
     queryKey: ['cafes', selectedCategory],
-    queryFn: () => fetchCafes(selectedCategory as 'cafe' | 'bar'),
+    queryFn: () => fetchCafes(selectedCategory),
     enabled: !!selectedCategory,
   });
   
 
   
   // Handle category change - update both state and URL
-  const handleCategoryChange = (newCategory: 'cafe' | 'bar') => {
+  const handleCategoryChange = (newCategory: 'cafe' | 'bar' | 'cowork') => {
     setSelectedCategory(newCategory); // 1. 更新 React state
     setSearchParams({ type: newCategory }, { replace: true }); // 2. 更新 URL search param (使用 replace 避免不必要的历史记录)
   };
   
   // Effect to update selectedCategory when URL parameter changes (for external URL changes like browser back/forward)
   useEffect(() => {
-    const categoryFromUrl = searchParams.get('type') as 'cafe' | 'bar' | null;
+    const categoryFromUrl = searchParams.get('type') as 'cafe' | 'bar' | 'cowork' | null;
 
-    // 将URL参数规范化为 'cafe' 或 'bar'，如果参数不存在或无效，则默认为 'cafe'
-    const newCategoryToSet = (categoryFromUrl === 'bar') ? 'bar' : 'cafe';
+    // 将URL参数规范化为 'cafe'、'bar' 或 'cowork'，如果参数不存在或无效，则默认为 'cafe'
+    const newCategoryToSet = categoryFromUrl === 'bar' ? 'bar' : 
+                             categoryFromUrl === 'cowork' ? 'cowork' : 'cafe';
 
     // 只有当URL导出的分类与当前React state中的分类不一致时，才更新state
     // 这避免了在按钮点击（已同时更新state和URL）后不必要的state重设
@@ -381,6 +383,8 @@ const Index = () => {
       shareUrl = window.location.origin + '/?type=bar';
     } else if (currentCategoryType === 'cafe') {
       shareUrl = window.location.origin + '/?type=cafe';
+    } else if (currentCategoryType === 'cowork') {
+      shareUrl = window.location.origin + '/?type=cowork';
     }
     
     const shareData = {
@@ -423,7 +427,7 @@ const Index = () => {
   }, [searchParams, setSearchParams]);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="pb-20">
       {/* The sticky header and category buttons have been removed from here. */}
       {/* They are now handled globally by GlobalHeader.tsx in App.tsx. */}
       
@@ -433,7 +437,7 @@ const Index = () => {
           <div className="bg-white p-6 rounded-lg shadow-xl w-[398px]">
             <div className="flex items-center mb-4">
               <h2 className="flex-1 text-xl font-semibold text-center">
-                Search {selectedCategory === 'cafe' ? 'Cafes' : 'Bars'}
+                Search {selectedCategory === 'cafe' ? 'Cafes' : selectedCategory === 'bar' ? 'Bars' : 'Cowork Spaces'}
               </h2>
               <Button 
                 variant="ghost" 
@@ -454,7 +458,7 @@ const Index = () => {
             {/* Search Results */}
             <div className="mt-4 max-h-60 overflow-y-auto">
               {searchTerm.trim() && modalFilteredCafes.length === 0 && (
-                <p className="text-gray-500">No {selectedCategory === 'cafe' ? 'cafes' : 'bars'} found matching "{searchTerm}".</p>
+                <p className="text-gray-500">No {selectedCategory === 'cafe' ? 'cafes' : selectedCategory === 'bar' ? 'bars' : 'cowork spaces'} found matching "{searchTerm}".</p>
               )}
               {modalFilteredCafes.map(cafe => (
                 <div
@@ -476,14 +480,14 @@ const Index = () => {
       {/* Conditional Rendering for Loading and Content */}
       {isLoading ? (
         <div className="pt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12 px-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-12 px-4 sm:px-6 lg:px-8">
             {Array.from({ length: 6 }).map((_, i) => <CafeCardSkeleton key={i} />)}
           </div>
         </div>
       ) : (
         <div className="pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12 px-4">
-            {cafes?.map((cafe) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-12 px-4 sm:px-6 lg:px-8">
+            {sortedCafes?.map((cafe) => (
               <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
                 <CafeCard cafe={cafe} />
               </div>

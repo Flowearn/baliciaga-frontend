@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { MyListing } from '@/services/listingService';
+import { MyListing, fetchListingById } from '@/services/listingService';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
@@ -12,45 +12,69 @@ import EditListingForm from '../components/EditListingForm';
 const EditListingPage: React.FC = () => {
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [listing, setListing] = useState<MyListing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // 简化：从localStorage或parent状态获取listing数据
-    // 或者实现一个简单的查找逻辑
-    const findListingFromCache = () => {
-      try {
-        const cachedListings = localStorage.getItem('my-listings-cache');
-        if (cachedListings && listingId) {
-          const listings: MyListing[] = JSON.parse(cachedListings);
-          const found = listings.find(l => l.listingId === listingId);
-          if (found) {
-            setListing(found);
-            setIsLoading(false);
-            return;
-          }
-        }
-        
-        // 如果缓存中没有找到，返回错误
-        setError('Listing not found in cache. Please return to My Listings page.');
+    const loadListing = async () => {
+      if (!listingId) {
+        setError('No listing ID provided');
         setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        // Fetch the listing directly from the API
+        const response = await fetchListingById(listingId);
+        
+        if (response.success && response.data) {
+          // Convert the Listing to MyListing format
+          const fetchedListing = response.data;
+          const myListing: MyListing = {
+            listingId: fetchedListing.listingId,
+            title: fetchedListing.title,
+            description: fetchedListing.description || '',
+            initiatorId: fetchedListing.initiatorId,
+            pricing: fetchedListing.pricing,
+            details: fetchedListing.details,
+            location: fetchedListing.location,
+            availability: fetchedListing.availability,
+            photos: fetchedListing.photos || [],
+            amenities: fetchedListing.amenities || [],
+            status: fetchedListing.status,
+            createdAt: fetchedListing.createdAt,
+            updatedAt: fetchedListing.updatedAt,
+            applicationsCount: 0, // These fields are not available in the regular listing API
+            viewsCount: 0
+          };
+          setListing(myListing);
+        } else {
+          setError('Failed to load listing details');
+        }
       } catch (error) {
-        console.error('Error loading listing from cache:', error);
-        setError('Failed to load listing data');
+        console.error('Error loading listing:', error);
+        setError('Failed to load listing. Please try again.');
+      } finally {
         setIsLoading(false);
       }
     };
 
-    findListingFromCache();
+    loadListing();
   }, [listingId]);
 
   const handleBack = () => {
-    navigate('/my-listings');
+    // Navigate back to where user came from, or default to my-listings
+    const from = location.state?.from || '/my-listings';
+    navigate(from);
   };
 
   const handleUpdateSuccess = () => {
-    navigate('/my-listings');
+    // Navigate back to where user came from after successful update
+    const from = location.state?.from || '/my-listings';
+    navigate(from);
   };
 
   if (isLoading) {
@@ -67,7 +91,7 @@ const EditListingPage: React.FC = () => {
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back
             </Button>
-            <h1 className="text-white font-semibold text-xl">Edit Listing</h1>
+            <h1 className="text-white font-semibold text-xl text-center">Edit Listing</h1>
             <div className="w-16"></div>
           </div>
         </div>
@@ -96,7 +120,7 @@ const EditListingPage: React.FC = () => {
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back
             </Button>
-            <h1 className="text-white font-semibold text-xl">Edit Listing</h1>
+            <h1 className="text-white font-semibold text-xl text-center">Edit Listing</h1>
             <div className="w-16"></div>
           </div>
         </div>
@@ -116,7 +140,7 @@ const EditListingPage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed="edit">
-      <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
+      <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-4 px-4 border-b border-white/10">
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
@@ -127,7 +151,7 @@ const EditListingPage: React.FC = () => {
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back
           </Button>
-          <h1 className="text-white font-semibold text-xl">Edit Listing</h1>
+          <h1 className="text-white font-semibold text-xl text-center">Edit Listing</h1>
           <div className="w-16"></div>
         </div>
       </div>

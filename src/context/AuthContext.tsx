@@ -79,6 +79,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await signOut();
       setIsAuthenticated(false);
       setUser(null);
+      
+      // 清除本地存储的认证信息
+      localStorage.removeItem('currentVerificationEmail');
+      
+      // 重定向到登录页
+      window.location.href = '/login';
     } catch (error) {
       console.error('Sign out error:', error);
     }

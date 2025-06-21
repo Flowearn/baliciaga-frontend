@@ -51,7 +51,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
   const hasPhotos = cafe.photos && Array.isArray(cafe.photos) && cafe.photos.length > 0;
 
   return (
-    <div className="w-full mb-5">
+    <div className="w-full">
       <div className="embla w-full rounded-xl relative overflow-hidden shadow-sm bg-gray-300 aspect-[4/3]">
         <div className="embla__viewport h-full" ref={emblaRef}>
           <div className="embla__container flex h-full">
@@ -68,28 +68,28 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
               ))
             ) : (
               <div className="embla__slide flex-[0_0_100%] min-w-0 relative flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-500">
-                <span className="text-white text-lg">{cafe.name} (No Image)</span>
+                <span className="text-white text-xl">{cafe.name} (No Image)</span>
               </div>
             )}
           </div>
         </div>
         
         {hasPhotos && (
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent z-[1] pointer-events-none"></div>
+            <div className="absolute inset-0 gradient-overlay-base z-[1] pointer-events-none"></div>
         )}
 
-        <div className="absolute bottom-0 left-0 right-0 pt-4 px-4 pb-3 z-[2] bg-gradient-to-t from-black/70 via-black/40 to-transparent pointer-events-none">
+        <div className="absolute bottom-0 left-0 right-0 pt-4 px-4 pb-3 gradient-overlay-strong z-[2] pointer-events-none">
           <h1 className="text-2xl font-bold text-white drop-shadow-md">{cafe.name}</h1>
         </div>
         
         <div className="absolute top-5 right-5 z-[2]">
           {typeof cafe.isOpenNow === 'boolean' ? (
             cafe.isOpenNow ? (
-              <div className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
+              <div className="bg-green-500 text-white text-sm px-2 py-0.5 rounded-full flex items-center">
                 <span>Open</span>
               </div>
             ) : (
-              <div className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center">
+              <div className="bg-red-500 text-white text-sm px-2 py-0.5 rounded-full flex items-center">
                 <span>Closed</span>
             </div>
             )
@@ -100,7 +100,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
       <div className="mt-2">
         <div className="flex justify-between items-start">
           {cafe.rating !== undefined && (
-            <div className="text-sm flex items-center text-gray-500 flex-shrink-0">
+            <div className="text-base flex items-center text-gray-500 flex-shrink-0">
               <span className="text-yellow-500 mr-1">⭐</span>
               <span className="font-medium">{cafe.rating.toFixed(1)}/5</span>
               <span className="ml-1">({cafe.userRatingsTotal || 0})</span>
@@ -108,14 +108,14 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
           )}
           
           <div className="flex flex-col items-end">
-            <span className="flex items-center text-gray-500 text-sm w-full truncate">
+            <span className="flex items-center text-gray-500 text-base w-full truncate">
               <Clock size={14} className="mr-1 text-gray-400 flex-shrink-0" />
               <span className="truncate">{todayOpeningHours}</span>
             </span>
             
             {/* Display distance if available */}
             {cafe.distanceInKm !== undefined && (
-              <span className="inline-flex items-center text-gray-500 text-sm mt-1">
+              <span className="inline-flex items-center text-gray-500 text-base mt-1">
                 <MapPin size={14} className="mr-1 text-gray-400" />
                 <span>{cafe.distanceInKm.toFixed(1)} km</span>
               </span>

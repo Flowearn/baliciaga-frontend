@@ -1,6 +1,7 @@
 import React from 'react';
-import { User, Calendar, MapPin, Briefcase } from 'lucide-react';
+import { User, Calendar, MapPin, Briefcase, Check, X } from 'lucide-react';
 import { ReceivedApplication } from '../../../services/applicationService';
+import { Button } from '@/components/ui/button';
 
 interface ReceivedApplicationCardProps {
   application: ReceivedApplication;
@@ -29,7 +30,7 @@ export const ReceivedApplicationCard: React.FC<ReceivedApplicationCardProps> = (
   };
 
   const getStatusBadge = () => {
-    const baseClasses = "px-3 py-1 rounded-full text-sm font-medium";
+    const baseClasses = "px-3 py-1 rounded-full text-base font-medium";
     switch (status) {
       case 'pending':
         return `${baseClasses} bg-yellow-100 text-yellow-800`;
@@ -48,8 +49,50 @@ export const ReceivedApplicationCard: React.FC<ReceivedApplicationCardProps> = (
     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow">
       {/* Header with Status */}
       <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+        <div className="flex items-start gap-3 flex-1">
+          <div className="flex-1 pr-2">
+            <div className="font-medium text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
+              {profile.name || applicant.email}
+            </div>
+            
+            {/* Age and Gender in same row */}
+            {(profile.age || profile.gender) && (
+              <div className="text-base text-gray-700 mt-1 whitespace-nowrap">
+                {[
+                  profile.age && `${profile.age} years old`,
+                  profile.gender && profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1)
+                ].filter(Boolean).join(' • ')}
+              </div>
+            )}
+            
+            {/* Nationality */}
+            {profile.nationality && (
+              <div className="text-base text-gray-700 whitespace-nowrap">
+                {profile.nationality}
+              </div>
+            )}
+            
+            {/* Occupation */}
+            {profile.occupation && (
+              <div className="text-base text-gray-700 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                {profile.occupation}
+              </div>
+            )}
+            
+            {/* Languages */}
+            {profile.languages && profile.languages.length > 0 && (
+              <div className="text-base text-gray-700 mt-1">
+                {profile.languages.join(', ')}
+              </div>
+            )}
+            
+            {/* Applied Date */}
+            <div className="text-sm text-gray-500 mt-2">
+              Applied on {formatDate(createdAt)}
+            </div>
+          </div>
+          
+          <div className="w-24 h-24 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
             {profile.profilePicture ? (
               <img 
                 src={profile.profilePicture} 
@@ -57,89 +100,55 @@ export const ReceivedApplicationCard: React.FC<ReceivedApplicationCardProps> = (
                 className="w-full h-full object-cover"
               />
             ) : (
-              <User className="w-6 h-6 text-gray-400" />
+              <User className="w-12 h-12 text-gray-400" />
             )}
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">{applicant.name}</h3>
-            <p className="text-sm text-gray-600">{applicant.email}</p>
-          </div>
         </div>
+        
         <span className={getStatusBadge()}>
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </span>
       </div>
 
-      {/* Applicant Details */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        {profile.age && (
-          <div className="flex items-center space-x-2">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-700">{profile.age} years old</span>
-          </div>
-        )}
-        {profile.nationality && (
-          <div className="flex items-center space-x-2">
-            <MapPin className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-700">{profile.nationality}</span>
-          </div>
-        )}
-        {profile.occupation && (
-          <div className="flex items-center space-x-2 col-span-2">
-            <Briefcase className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-700">{profile.occupation}</span>
-          </div>
-        )}
-      </div>
-
       {/* Bio */}
       {profile.bio && (
         <div className="mb-4">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">About</h4>
-          <p className="text-sm text-gray-700 bg-gray-50 rounded-md p-3">{profile.bio}</p>
+          <p className="text-base text-gray-700 bg-gray-50 rounded-md p-3">{profile.bio}</p>
         </div>
       )}
 
       {/* Application Message */}
-      <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-900 mb-2">Application Message</h4>
-        <p className="text-sm text-gray-700 bg-blue-50 rounded-md p-3 border-l-4 border-blue-200">
-          {message}
-        </p>
-      </div>
-
-      {/* Footer */}
-      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-        <span className="text-xs text-gray-500">
-          Applied on {formatDate(createdAt)}
-        </span>
-        
-        {/* Action Buttons */}
-        <div className="flex space-x-3">
-          <button
-            onClick={() => onIgnore(application.applicationId)}
-            disabled={!isPending || isLoading}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              !isPending || isLoading
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            {isLoading ? 'Processing...' : 'Ignore'}
-          </button>
-          <button
-            onClick={() => onAccept(application.applicationId)}
-            disabled={!isPending || isLoading}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              !isPending || isLoading
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {isLoading ? 'Processing...' : 'Accept'}
-          </button>
+      {message && (
+        <div className="mb-6">
+          <p className="text-base text-gray-700 bg-blue-50 rounded-md p-3 border-l-4 border-blue-200">
+            {message}
+          </p>
         </div>
-      </div>
+      )}
+
+      {/* Action Buttons */}
+      {isPending && (
+        <div className="flex gap-3 pt-4 border-t border-gray-100">
+            <Button
+              onClick={() => onIgnore(application.applicationId)}
+              disabled={isLoading}
+              className="bg-red-500/20 hover:bg-red-500/30 text-red-700 border-0 rounded-full px-6"
+              variant="outline"
+            >
+              <X className="w-4 h-4 mr-1" />
+              {isLoading ? 'Processing...' : 'Ignore'}
+            </Button>
+            <Button
+              onClick={() => onAccept(application.applicationId)}
+              disabled={isLoading}
+              className="bg-green-500/20 hover:bg-green-500/30 text-green-700 border-0 rounded-full px-6"
+              variant="outline"
+            >
+              <Check className="w-4 h-4 mr-1" />
+              {isLoading ? 'Processing...' : 'Accept'}
+            </Button>
+        </div>
+      )}
     </div>
   );
-}; 
+};

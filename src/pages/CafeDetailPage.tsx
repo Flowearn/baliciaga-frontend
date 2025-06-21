@@ -11,7 +11,7 @@ import { ArrowLeft } from "lucide-react";
 const CafeDetailPage: React.FC = () => {
   const { placeId } = useParams<{ placeId: string }>();
   const [searchParams] = useSearchParams();
-  const categoryType = searchParams.get('type') as 'cafe' | 'bar' || 'cafe';
+  const categoryType = searchParams.get('type') as 'cafe' | 'bar' | 'cowork' || 'cafe';
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -114,7 +114,8 @@ const CafeDetailPage: React.FC = () => {
 
   const handleGoBack = () => {
     const typeFromUrl = searchParams.get('type');
-    const categoryTypeForNav = typeFromUrl === 'bar' ? 'bar' : 'cafe';
+    const categoryTypeForNav = typeFromUrl === 'bar' ? 'bar' : 
+                               typeFromUrl === 'cowork' ? 'cowork' : 'cafe';
     const targetNavUrl = `/?type=${categoryTypeForNav}`;
 
     navigate(targetNavUrl);
@@ -145,19 +146,25 @@ const CafeDetailPage: React.FC = () => {
 
   // Display place detail (back button removed)
   return (
-    <div 
-      className="relative w-full pb-8"
-      style={{ backgroundColor: bgColor }}
-    >
-      <div className="absolute inset-0 bg-black bg-opacity-40 z-1 pointer-events-none"></div>
+    <>
+      {/* Background layer that starts from the very top */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{ backgroundColor: bgColor }}
+      >
+        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+      </div>
       
-      <CafeDetail 
-        cafe={cafe} 
-        onClose={handleGoBack}
-        pageBgColor={bgColor}
-        userLocation={userLocation}
-      />
-    </div>
+      {/* Content layer */}
+      <div className="relative z-10 min-h-screen pb-8">
+        <CafeDetail 
+          cafe={cafe} 
+          onClose={handleGoBack}
+          pageBgColor={bgColor}
+          userLocation={userLocation}
+        />
+      </div>
+    </>
   );
 };
 

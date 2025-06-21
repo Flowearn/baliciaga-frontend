@@ -3,13 +3,16 @@ import { useParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { User, Mail, Clock, CheckCircle } from 'lucide-react';
+import apiClient from '@/services/apiClient';
 
 interface Application {
   id: string;
   applicantId: string;
   applicantName: string;
   applicantEmail: string;
+  applicantLanguages?: string[];
   status: 'pending' | 'accepted' | 'ignored';
   message: string;
   appliedAt: string;
@@ -21,6 +24,8 @@ const ManageListingApplications: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [applicationToAccept, setApplicationToAccept] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -28,15 +33,27 @@ const ManageListingApplications: React.FC = () => {
       
       try {
         console.log('🔍 Fetching applications for listing:', listingId);
-        const response = await fetch(`/api/listings/${listingId}/applications`);
+        const response = await apiClient.get(`/listings/${listingId}/applications`);
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch applications');
+        console.log('📋 Received applications:', response.data);
+        
+        if (response.data.success && response.data.data) {
+          // Transform the API response to match the component's interface
+          const transformedApplications = response.data.data.applications.map((app: any) => ({
+            id: app.applicationId,
+            applicantId: app.applicantId,
+            applicantName: app.applicant?.profile?.name || 'Anonymous',
+            applicantEmail: app.applicant?.email || '',
+            applicantLanguages: app.applicant?.profile?.languages || [],
+            status: app.status,
+            message: app.message || '',
+            appliedAt: app.createdAt,
+            listingId: app.listingId
+          }));
+          setApplications(transformedApplications);
+        } else {
+          throw new Error('Invalid response format');
         }
-        
-        const data = await response.json();
-        console.log('📋 Received applications:', data);
-        setApplications(data);
       } catch (err) {
         console.error('Error fetching applications:', err);
         setError('Failed to load applications');
@@ -51,19 +68,9 @@ const ManageListingApplications: React.FC = () => {
   const handleAcceptApplication = async (applicationId: string) => {
     try {
       console.log('✅ Accepting application:', applicationId);
-      const response = await fetch(`/api/applications/${applicationId}/accept`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to accept application');
-      }
-
-      const result = await response.json();
-      console.log('✅ Application accepted:', result);
+      const response = await apiClient.post(`/applications/${applicationId}/accept`);
+      
+      console.log('✅ Application accepted:', response.data);
 
       // Update the local state
       setApplications(prev => 
@@ -73,10 +80,33 @@ const ManageListingApplications: React.FC = () => {
             : app
         )
       );
+      
+      // Close the dialog and reset state
+      setShowConfirmDialog(false);
+      setApplicationToAccept(null);
     } catch (err) {
       console.error('Error accepting application:', err);
       setError('Failed to accept application');
+      // Close the dialog on error too
+      setShowConfirmDialog(false);
+      setApplicationToAccept(null);
     }
+  };
+
+  const handleAcceptClick = (applicationId: string) => {
+    setApplicationToAccept(applicationId);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmAccept = () => {
+    if (applicationToAccept) {
+      handleAcceptApplication(applicationToAccept);
+    }
+  };
+
+  const handleCancelAccept = () => {
+    setShowConfirmDialog(false);
+    setApplicationToAccept(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -125,7 +155,7 @@ const ManageListingApplications: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6 pb-20">
-      <h1 className="text-2xl font-bold mb-6">Manage Listing Applications</h1>
+      <h1 className="text-xl font-bold mb-6 text-center">Manage Listing Applications</h1>
       <p className="text-gray-600 mb-6">Listing ID: {listingId}</p>
       
       {applications.length === 0 ? (
@@ -149,25 +179,38 @@ const ManageListingApplications: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-base text-gray-600">
                     <Mail className="w-4 h-4" />
                     {application.applicantEmail}
                   </div>
                   
-                  <div className="text-sm text-gray-600">
+                  <div className="text-base text-gray-600">
                     Applied: {new Date(application.appliedAt).toLocaleDateString()}
                   </div>
                   
+                  {application.applicantLanguages && application.applicantLanguages.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {application.applicantLanguages.map((language, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                        >
+                          {language}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
                   {application.message && (
                     <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-sm">{application.message}</p>
+                      <p className="text-base">{application.message}</p>
                     </div>
                   )}
                   
                   {application.status === 'pending' && (
                     <div className="flex gap-2 pt-3">
                       <Button 
-                        onClick={() => handleAcceptApplication(application.id)}
+                        onClick={() => handleAcceptClick(application.id)}
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
                         Accept Application
@@ -181,7 +224,7 @@ const ManageListingApplications: React.FC = () => {
                   {application.status === 'accepted' && (
                     <div className="pt-3">
                       <div className="bg-green-50 border border-green-200 rounded-md p-3">
-                        <p className="text-sm text-green-800">
+                        <p className="text-base text-green-800">
                           ✅ This application has been accepted! The applicant will be notified.
                         </p>
                       </div>
@@ -193,6 +236,29 @@ const ManageListingApplications: React.FC = () => {
           ))}
         </div>
       )}
+      
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Acceptance?</DialogTitle>
+            <DialogDescription>
+              This action is final and cannot be undone. The applicant will be notified.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelAccept}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmAccept}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

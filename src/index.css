@@ -1,7 +1,13 @@
+/* Import Amplify styles into the 'amplify' layer */
+@import '@aws-amplify/ui-react/styles.css' layer(amplify);
 
+/* Tailwind directives - must be outside of @layer blocks */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Define the order of our CSS layers. `base` should come first. */
+@layer base, amplify, components, utilities;
 
 @layer base {
   :root {
@@ -82,9 +88,7 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
@@ -94,41 +98,63 @@
   }
 }
 
-/* Custom styles for the cafe app */
-.event-gradient-1 {
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 100%), url('/placeholder.svg');
-  background-size: cover;
-  background-position: center;
-}
+@layer components {
+  /* Our custom component styles */
+  .event-gradient-1 {
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 100%), url('/placeholder.svg');
+    background-size: cover;
+    background-position: center;
+  }
 
-.event-gradient-2 {
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 100%), url('/placeholder.svg');
-  background-size: cover;
-  background-position: center;
-}
+  .event-gradient-2 {
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 100%), url('/placeholder.svg');
+    background-size: cover;
+    background-position: center;
+  }
 
-.event-gradient-3 {
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 100%), url('/placeholder.svg');
-  background-size: cover;
-  background-position: center;
-}
+  .event-gradient-3 {
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 100%), url('/placeholder.svg');
+    background-size: cover;
+    background-position: center;
+  }
 
-.status-badge {
-  background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 999px;
-  padding: 4px 12px;
-  font-size: 14px;
-  color: #22c55e;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
+  .status-badge {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 14px;
+    color: #22c55e;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
 
-.rating-badge {
-  background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 14px;
-  display: inline-flex;
-  align-items: center;
+  .rating-badge {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Custom gradient overlay classes */
+  .gradient-overlay-base {
+    background-image: linear-gradient(to top, rgba(0, 0, 0, 0.4), transparent);
+  }
+
+  .gradient-overlay-strong {
+    background-image: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  }
+
+  /* Pricing details grid layout - now using clean CSS without !important */
+  .pricing-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem 2rem;
+  }
+
+  .pricing-details-grid .col-span-2-sm {
+    grid-column: span 2 / span 2;
+  }
 }

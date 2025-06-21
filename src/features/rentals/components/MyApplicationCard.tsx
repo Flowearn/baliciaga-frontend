@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   MapPin,
   Calendar,
-  DollarSign,
+  Banknote,
   Users,
   MessageSquare,
   Trash2,
-  Loader2
+  Loader2,
+  Bed,
+  ChevronDown
 } from 'lucide-react';
 import { MyApplication, cancelApplication } from '@/services/applicationService';
-import { formatPrice } from '@/utils/currencyUtils';
+import { formatPrice } from '@/lib/utils';
 import { formatNoYear, formatDate } from '@/utils/formatDate';
 import { toast } from 'sonner';
 
@@ -24,26 +27,35 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
   application, 
   onApplicationCanceled 
 }) => {
+  const navigate = useNavigate();
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isRoommatesVisible, setIsRoommatesVisible] = useState(false);
 
-  // Calculate price per room
-  const pricePerRoom = application.listing.details.bedrooms 
-    ? Math.round(application.listing.pricing.monthlyRent / application.listing.details.bedrooms) 
-    : application.listing.pricing.monthlyRent;
+  // Calculate monthly price per room (convert yearly to monthly if needed)
+  let monthlyPrice = 0;
+  if (application.listing.pricing.monthlyRent && application.listing.pricing.monthlyRent > 0) {
+    monthlyPrice = application.listing.pricing.monthlyRent;
+  } else if (application.listing.pricing.yearlyRent && application.listing.pricing.yearlyRent > 0) {
+    monthlyPrice = Math.round(application.listing.pricing.yearlyRent / 12);
+  }
+  
+  const pricePerRoom = application.listing.details.bedrooms && monthlyPrice > 0
+    ? Math.round(monthlyPrice / application.listing.details.bedrooms) 
+    : monthlyPrice;
 
-  // Get status badge color
+  // Get status badge color - using 80% transparent color backgrounds with white text
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-yellow-500/80 text-white';
       case 'accepted':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-500/80 text-white';
       case 'rejected':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-500/80 text-white';
       case 'signed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-500/80 text-white';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-500/80 text-white';
     }
   };
 
@@ -90,129 +102,223 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
   // Check if application can be cancelled
   const canCancel = application.status === 'pending';
 
+  // Handle listing click
+  const handleListingClick = () => {
+    navigate(`/listings/${application.listingId}`, { state: { from: '/my-applications' } });
+  };
+
   return (
-    <Card className="mb-4 bg-white/80 backdrop-blur-sm border-white/20 shadow-lg hover:shadow-xl transition-all duration-200">
+    <div className="mb-4">
+    <Card className="bg-black/40 backdrop-blur-sm border-white/20 shadow-lg hover:shadow-xl transition-all duration-200">
       <CardContent className="p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Left: Property Image */}
-          <div className="w-full sm:w-32 aspect-video rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-            {application.listing.photos?.[0] ? (
-              <img 
-                src={application.listing.photos[0]} 
-                alt={application.listing.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                <MapPin className="w-6 h-6 text-gray-500" />
+        {/* Property Image - Full width, clickable */}
+        <div 
+          className="w-full aspect-video rounded-lg overflow-hidden bg-gray-200 cursor-pointer mb-4 relative"
+          onClick={handleListingClick}
+        >
+          {application.listing.photos?.[0] ? (
+            <img 
+              src={application.listing.photos[0]} 
+              alt={application.listing.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+              <MapPin className="w-6 h-6 text-gray-500" />
+            </div>
+          )}
+          
+          {/* Status Badge - positioned at top-right */}
+          <span className={`absolute top-5 right-5 z-[2] px-3 py-0.5 rounded-full text-sm font-semibold text-white shadow-md shadow-black/20 ${getStatusColor(application.status)}`}>
+            {getStatusLabel(application.status)}
+          </span>
+        </div>
+
+        {/* Application Details */}
+        <div>
+          {/* Header */}
+          <div className="mb-3">
+            <h3 
+              className="font-semibold text-white/100 text-base truncate cursor-pointer hover:text-blue-400 transition-colors"
+              onClick={handleListingClick}
+            >
+              {application.listing.title}
+            </h3>
+            {/* Location */}
+            <div className="flex items-center text-base text-white/80 mt-1">
+              <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+              <span className="truncate">
+                {application.listing.location.address}
+              </span>
+            </div>
+          </div>
+
+          {/* Price Row with Cancel Button */}
+          <div className="flex items-end justify-between mb-3">
+            <div className="flex items-center text-base text-white/100">
+              <Banknote className="w-4 h-4 mr-2 text-green-400" />
+              <div className="flex items-baseline gap-1">
+                {monthlyPrice > 0 ? (
+                  <>
+                    <span className="text-xl">{formatPrice(pricePerRoom, application.listing.pricing.currency)}</span>
+                    <span className="text-white/60 text-sm">/ room monthly</span>
+                  </>
+                ) : (
+                  <span className="text-white/60 text-sm">Price N/A</span>
+                )}
               </div>
+            </div>
+            
+            {/* Cancel Button */}
+            {canCancel && (
+              <Button
+                size="sm"
+                onClick={handleCancelApplication}
+                disabled={isCancelling}
+                className="bg-red-500/20 hover:bg-red-500/30 text-white border-red-500/20 rounded-full"
+              >
+                {isCancelling ? (
+                  <>
+                    <Loader2 className="w-3 h-3 mr-0.5 animate-spin" />
+                    Cancelling...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3 h-3 mr-0.5" />
+                    Cancel
+                  </>
+                )}
+              </Button>
             )}
           </div>
 
-          {/* Right: Application Details */}
-          <div className="flex-1 min-w-0">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 text-lg truncate">
-                  {application.listing.title}
-                </h3>
-                <div className="flex items-center text-sm text-gray-600 mt-1">
-                  <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-                  <span className="truncate">
-                    {application.listing.location.address}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(application.status)}`}>
-                  {getStatusLabel(application.status)}
-                </span>
-              </div>
-            </div>
-
-            {/* Property Details */}
-            <div className="grid grid-cols-2 gap-3 text-sm text-gray-700 mb-3">
-              <div className="flex items-center">
-                <DollarSign className="w-4 h-4 mr-2 text-green-600" />
-                <div className="flex items-baseline gap-1">
-                  <span>{formatPrice(pricePerRoom, application.listing.pricing.currency)}</span>
-                  <span className="text-gray-500 text-xs">/ Room</span>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <Users className="w-4 h-4 mr-2 text-blue-600" />
+          {/* Property Details - 2 Column Grid */}
+          <div className="grid grid-cols-2 gap-3 mb-3 text-base">
+            {/* Left Column */}
+            <div>
+              {/* Beds/Baths - First row */}
+              <div className="flex items-center text-white/100">
+                <Bed className="w-4 h-4 mr-2 text-blue-400" />
                 <span>{application.listing.details.bedrooms} bed{application.listing.details.bedrooms !== 1 ? 's' : ''} {application.listing.details.bathrooms} bath{application.listing.details.bathrooms !== 1 ? 's' : ''}</span>
               </div>
             </div>
 
-            {/* Application Message */}
-            {application.message && (
-              <div className="mb-3">
-                <div className="flex items-start">
-                  <MessageSquare className="w-4 h-4 mr-2 mt-0.5 text-gray-500 flex-shrink-0" />
-                  <p className="text-sm text-gray-700 break-words">
-                    {application.message}
-                  </p>
-                </div>
+            {/* Right Column */}
+            <div className="space-y-2">
+              {/* Applied Date */}
+              <div className="flex items-center text-sm text-white/60">
+                <Calendar className="w-3 h-3 mr-1" />
+                <span>Applied on {formatNoYear(application.createdAt)}</span>
               </div>
-            )}
-
-            {/* Footer */}
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center text-xs text-gray-500">
-                  <Calendar className="w-3 h-3 mr-1" />
-                  <span>Applied on {formatNoYear(application.createdAt)}</span>
-                </div>
-                <div className="flex items-center text-xs text-gray-500">
-                  <Calendar className="w-3 h-3 mr-1" />
-                  <span>Available from {formatDate(application.listing.availability.availableFrom)}</span>
-                </div>
+              {/* Available Date */}
+              <div className="flex items-center text-sm text-white/60">
+                <Calendar className="w-3 h-3 mr-1" />
+                <span>Available from {formatNoYear(application.listing.availability.availableFrom)}</span>
               </div>
-              
-              {canCancel && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCancelApplication}
-                  disabled={isCancelling}
-                  className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
-                >
-                  {isCancelling ? (
-                    <>
-                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                      Cancelling...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="w-4 h-4" />
-                      Cancel
-                    </>
-                  )}
-                </Button>
-              )}
             </div>
-
-            {/* Accepted Roommates (if applicable) */}
-            {application.acceptedRoommates && application.acceptedRoommates.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Accepted Roommates</h4>
-                <div className="space-y-1">
-                  {application.acceptedRoommates.map((roommate, index) => (
-                    <div key={index} className="text-sm text-gray-600">
-                      <span className="font-medium">{roommate.profile.name || roommate.email}</span>
-                      {roommate.profile.age && <span className="ml-2">({roommate.profile.age} years old)</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Application Message */}
+          {application.message && (
+            <div className="mb-3">
+              <div className="flex items-start">
+                <MessageSquare className="w-4 h-4 mr-2 mt-0.5 text-white/60 flex-shrink-0" />
+                <p className="text-base text-white/80 break-words">
+                  {application.message}
+                </p>
+              </div>
+            </div>
+          )}
+
+
+
+          {/* Accepted Roommates Toggle Button */}
+          {application.acceptedRoommates && application.acceptedRoommates.length > 0 && (
+            <div
+              className="mt-4 flex items-center justify-between p-3 bg-white/10 hover:bg-white/20 cursor-pointer rounded-md border border-white/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsRoommatesVisible(!isRoommatesVisible);
+              }}
+            >
+              <span className="font-semibold text-base text-white/100">
+                Accepted Candidates ({application.acceptedRoommates.length})
+              </span>
+              <ChevronDown
+                className={`w-5 h-5 text-white/60 transform transition-transform duration-200 ${
+                  isRoommatesVisible ? 'rotate-180' : ''
+                }`}
+              />
+            </div>
+          )}
+
+          {/* Accepted Roommates List (Conditionally Rendered) */}
+          {isRoommatesVisible && application.acceptedRoommates && application.acceptedRoommates.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {application.acceptedRoommates.map((roommate, index) => (
+                <div key={index} className="flex items-start gap-3 p-3 bg-white/10 rounded-lg">
+                  <div className="flex-1 pr-2">
+                    <div className="font-medium text-white/100 whitespace-nowrap overflow-hidden text-ellipsis">
+                      {roommate.profile.name || roommate.email}
+                    </div>
+                    
+                    {/* Age and Gender in same row */}
+                    {(roommate.profile.age || roommate.profile.gender) && (
+                      <div className="text-base text-white/80 mt-1 whitespace-nowrap">
+                        {[
+                          roommate.profile.age && `${roommate.profile.age} years old`,
+                          roommate.profile.gender && roommate.profile.gender.charAt(0).toUpperCase() + roommate.profile.gender.slice(1)
+                        ].filter(Boolean).join(' • ')}
+                      </div>
+                    )}
+                    
+                    {/* Nationality */}
+                    {roommate.profile.nationality && (
+                      <div className="text-base text-white/80 whitespace-nowrap">
+                        {roommate.profile.nationality}
+                      </div>
+                    )}
+                    
+                    {/* Occupation */}
+                    {roommate.profile.occupation && (
+                      <div className="text-base text-white/80 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                        {roommate.profile.occupation}
+                      </div>
+                    )}
+                    
+                    {/* Languages */}
+                    {roommate.profile.languages && roommate.profile.languages.length > 0 && (
+                      <div className="text-base text-white/80 mt-1">
+                        {roommate.profile.languages.join(', ')}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="w-24 h-24 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {roommate.profile.profilePictureUrl ? (
+                      <img 
+                        src={roommate.profile.profilePictureUrl} 
+                        alt={roommate.profile.name || roommate.email}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Users className="w-12 h-12 text-white/80" />
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              {/* Privacy notice */}
+              <div className="text-sm text-white/60 text-center mt-4">
+                Only accepted candidates can see this
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
+  </div>
   );
 };
 
-export default MyApplicationCard; 
+export default MyApplicationCard;

@@ -64,3 +64,17 @@ bun.lockb
 .eslintcache
 .stylelintcache
 *.tsbuildinfo
+
+# Test results
+test-results/
+playwright-report/
+
+# Temporary diagnostic files
+diagnostic-script*.js
+check-*.js
+inspect-*.js
+
+# Documentation generated files
+*.md
+!README.md
+!CONTRIBUTING.md

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { MyListing, updateListing } from '@/services/listingService';
 import { uploadListingPhotos } from '@/services/uploadService';
+import { formatPrice } from '@/lib/utils';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
 import { 
@@ -17,6 +18,7 @@ interface EditListingFormProps {
 interface EditFormData {
   title: string;
   monthlyRent: number | string;
+  yearlyRent: number | string | null;
   currency: string;
   deposit: number | string;
   utilities: number | string;
@@ -29,7 +31,6 @@ interface EditFormData {
   address: string;
   availableFrom: string;
   minimumStay: number | string;
-  description: string;
   amenities: string[];
   photos: string[]; // URL strings of uploaded photos
 }
@@ -49,6 +50,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
   const [formData, setFormData] = useState<EditFormData>({
     title: listing.title,
     monthlyRent: listing.pricing.monthlyRent,
+    yearlyRent: listing.pricing.yearlyRent || null,
     currency: listing.pricing.currency,
     deposit: listing.pricing.deposit,
     utilities: listing.pricing.utilities,
@@ -61,7 +63,6 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
     address: listing.location.address,
     availableFrom: listing.availability.availableFrom,
     minimumStay: listing.availability.minimumStay,
-    description: listing.description,
     amenities: safeAmenities,
     photos: listing.photos || [] // 现有照片URL
   });
@@ -79,9 +80,13 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
       return;
     }
 
+    console.log('Uploading files:', newFiles.map(f => ({ name: f.name, size: f.size, type: f.type })));
+
     try {
       setIsUploading(true);
       const newPhotoUrls = await uploadListingPhotos(newFiles);
+      
+      console.log('Upload successful, new URLs:', newPhotoUrls);
       
       setFormData(prev => ({
         ...prev,
@@ -89,9 +94,10 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
       }));
       
       toast.success(`Uploaded ${newPhotoUrls.length} photo(s) successfully!`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Photo upload error:', error);
-      toast.error('Failed to upload photos');
+      const errorMessage = error?.response?.data?.error?.message || error?.message || 'Failed to upload photos';
+      toast.error(errorMessage);
     } finally {
       setIsUploading(false);
     }
@@ -141,6 +147,13 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Photo validation: at least one photo is required
+    if (!formData.photos || formData.photos.length === 0) {
+      toast.error('At least one photo is required');
+      return;
+    }
+    
     setIsUpdating(true);
 
     try {
@@ -149,6 +162,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
         ...formData,
         // Convert string/number fields to numbers for API
         monthlyRent: typeof formData.monthlyRent === 'string' ? Number(formData.monthlyRent) || 0 : formData.monthlyRent,
+        yearlyRent: formData.yearlyRent === null || formData.yearlyRent === '' ? null : (typeof formData.yearlyRent === 'string' ? Number(formData.yearlyRent) : formData.yearlyRent),
         deposit: typeof formData.deposit === 'string' ? Number(formData.deposit) || 0 : formData.deposit,
         utilities: typeof formData.utilities === 'string' ? Number(formData.utilities) || 0 : formData.utilities,
         bedrooms: typeof formData.bedrooms === 'string' ? Number(formData.bedrooms) || 0 : formData.bedrooms,
@@ -180,11 +194,11 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6 pb-24">
       
       {/* Property Photos Section */}
       <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90">
-        <h2 className="text-xl font-bold text-white mb-4">Property Photos</h2>
+        <h2 className="text-xl font-bold text-white mb-4">Property Photos <span className="text-red-500">*</span></h2>
         
         {/* Upload Area */}
         <div
@@ -209,7 +223,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
                   : `Drag & drop photos here, or click to select (${formData.photos.length}/10)`
                 }
               </p>
-              <p className="text-white/50 text-sm mt-1">
+              <p className="text-white/50 text-base mt-1">
                 Supports JPEG, PNG, WebP
               </p>
             </div>
@@ -222,7 +236,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
         {/* Photo Previews */}
         {formData.photos.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-lg font-semibold text-white mb-4">
+            <h3 className="text-xl font-semibold text-white mb-4">
               Current Photos ({formData.photos.length}/10)
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -246,21 +260,26 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
             </div>
           </div>
         )}
+        
+        {/* Photo validation error message */}
+        {formData.photos.length === 0 && (
+          <p className="text-red-400 text-base mt-2">At least one photo is required.</p>
+        )}
       </div>
 
       {/* Property Details Section */}
       <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90 mb-6">
-        <h2 className="text-2xl font-bold text-white mb-6">Property Details</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">Property Details</h2>
         
         {/* Property Title */}
         <div className="mb-4">
-          <label htmlFor="title" className="block text-sm font-medium text-white/90 mb-2">
+          <label htmlFor="title" className="block text-base font-medium text-white/90 mb-2">
             Property Title
           </label>
           <input
             id="title"
             type="text"
-            className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+            className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
             value={formData.title}
             onChange={(e) => handleInputChange('title', e.target.value)}
             placeholder="e.g., Beautiful Villa in Canggu"
@@ -269,13 +288,13 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
 
         {/* Address */}
         <div className="mb-4">
-          <label htmlFor="address" className="block text-sm font-medium text-white/90 mb-2">
+          <label htmlFor="address" className="block text-base font-medium text-white/90 mb-2">
             Address
           </label>
           <input
             id="address"
             type="text"
-            className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+            className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
             value={formData.address}
             onChange={(e) => handleInputChange('address', e.target.value)}
             placeholder="Property address"
@@ -285,27 +304,27 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
         {/* Bedrooms / Bathrooms */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label htmlFor="bedrooms" className="block text-sm font-medium text-white/90 mb-2">
+            <label htmlFor="bedrooms" className="block text-base font-medium text-white/90 mb-2">
               Bedrooms
             </label>
             <input
               id="bedrooms"
               type="number"
               min="0"
-              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+              className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
               value={formData.bedrooms || ''}
               onChange={(e) => handleInputChange('bedrooms', e.target.value === '' ? '' : parseInt(e.target.value) || 0)}
             />
           </div>
           <div>
-            <label htmlFor="bathrooms" className="block text-sm font-medium text-white/90 mb-2">
+            <label htmlFor="bathrooms" className="block text-base font-medium text-white/90 mb-2">
               Bathrooms
             </label>
             <input
               id="bathrooms"
               type="number"
               min="0"
-              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+              className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
               value={formData.bathrooms || ''}
               onChange={(e) => handleInputChange('bathrooms', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
             />
@@ -315,28 +334,28 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
         {/* Square Feet / Min Stay */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label htmlFor="squareFootage" className="block text-sm font-medium text-white/90 mb-2">
+            <label htmlFor="squareFootage" className="block text-base font-medium text-white/90 mb-2">
               Square Feet
             </label>
             <input
               id="squareFootage"
               type="number"
               min="0"
-              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+              className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
               value={formData.squareFootage || ''}
               onChange={(e) => handleInputChange('squareFootage', e.target.value ? parseInt(e.target.value) : null)}
               placeholder="Square footage"
             />
           </div>
           <div>
-            <label htmlFor="minimumStay" className="block text-sm font-medium text-white/90 mb-2">
+            <label htmlFor="minimumStay" className="block text-base font-medium text-white/90 mb-2">
               Min Stay (months)
             </label>
             <input
               id="minimumStay"
               type="number"
               min="1"
-              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+              className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
               value={formData.minimumStay || ''}
               onChange={(e) => handleInputChange('minimumStay', e.target.value === '' ? '' : parseInt(e.target.value) || 1)}
             />
@@ -344,8 +363,8 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
         </div>
 
         {/* Monthly Rent with Currency */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-white/90 mb-2">
+        <div className="mb-4">
+          <label className="block text-base font-medium text-white/90 mb-2">
             Monthly Rent
           </label>
           <div className="grid grid-cols-3 gap-4">
@@ -354,7 +373,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
                 id="monthlyRent"
                 type="number"
                 min="0"
-                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
                 value={formData.monthlyRent || ''}
                 onChange={(e) => handleInputChange('monthlyRent', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
                 placeholder="Monthly rent amount"
@@ -364,7 +383,12 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
               <select
                 value={formData.currency}
                 onChange={(e) => handleInputChange('currency', e.target.value)}
-                className="block w-full rounded-lg bg-white/10 px-3 py-2 text-white/90 placeholder-white/20 focus:outline-none"
+                className="block w-full h-10 rounded-lg bg-white/10 pl-3 pr-3 py-2 text-white/90 text-base placeholder-white/20 focus:outline-none appearance-none bg-no-repeat bg-right"
+                style={{ 
+                  backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")",
+                  backgroundPosition: "right 8px center",
+                  backgroundSize: "16px 16px"
+                }}
               >
                 <option value="IDR">IDR</option>
                 <option value="USD">USD</option>
@@ -373,114 +397,82 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
           </div>
         </div>
 
-        {/* Property Description */}
+        {/* Yearly Rent */}
         <div className="mb-6">
-          <label htmlFor="description" className="block text-sm font-medium text-white/90 mb-2">
-            Property Description
+          <label className="block text-base font-medium text-white/90 mb-2">
+            Yearly Rent (Optional)
           </label>
-          <textarea
-            id="description"
-            rows={4}
-            className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none resize-none"
-            value={formData.description}
-            onChange={(e) => handleInputChange('description', e.target.value)}
-            placeholder="Describe your property, location highlights, nearby amenities..."
-          />
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2">
+              <input
+                id="yearlyRent"
+                type="number"
+                min="0"
+                className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                value={formData.yearlyRent || ''}
+                onChange={(e) => handleInputChange('yearlyRent', e.target.value === '' ? null : parseFloat(e.target.value) || null)}
+                placeholder="Yearly rent amount"
+              />
+            </div>
+            <div>
+              <select
+                value={formData.currency}
+                onChange={(e) => handleInputChange('currency', e.target.value)}
+                className="block w-full h-10 rounded-lg bg-white/10 pl-3 pr-3 py-2 text-white/90 text-base placeholder-white/20 focus:outline-none appearance-none bg-no-repeat bg-right"
+                style={{ 
+                  backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")",
+                  backgroundPosition: "right 8px center",
+                  backgroundSize: "16px 16px"
+                }}
+              >
+                <option value="IDR">IDR</option>
+                <option value="USD">USD</option>
+              </select>
+            </div>
+          </div>
+          {/* Monthly Equivalent Display */}
+          {formData.yearlyRent && parseFloat(formData.yearlyRent.toString()) > 0 && (
+            <p className="text-sm text-white/60 mt-1">
+              (equivalent monthly = {formatPrice(
+                Math.round(parseFloat(formData.yearlyRent.toString()) / 12),
+                formData.currency
+              )})
+            </p>
+          )}
         </div>
-      </div>
 
-      {/* Availability Section */}
-      <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90 mb-6">
-        <h3 className="text-xl font-semibold text-white mb-4">Availability</h3>
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => handleInputChange('furnished', !formData.furnished)}
-            className={`px-4 py-2 rounded-full border transition-colors ${
-              formData.furnished 
-                ? 'bg-white/40 text-white border-white/60' 
-                : 'bg-white/20 text-white border-white/30 hover:border-white/50'
-            }`}
-          >
-            Furnished
-          </button>
-          <button
-            type="button"
-            onClick={() => handleInputChange('petFriendly', !formData.petFriendly)}
-            className={`px-4 py-2 rounded-full border transition-colors ${
-              formData.petFriendly 
-                ? 'bg-white/40 text-white border-white/60' 
-                : 'bg-white/20 text-white border-white/30 hover:border-white/50'
-            }`}
-          >
-            Pet Friendly
-          </button>
-          <button
-            type="button"
-            onClick={() => handleInputChange('smokingAllowed', !formData.smokingAllowed)}
-            className={`px-4 py-2 rounded-full border transition-colors ${
-              formData.smokingAllowed 
-                ? 'bg-white/40 text-white border-white/60' 
-                : 'bg-white/20 text-white border-white/30 hover:border-white/50'
-            }`}
-          >
-            Smoking Allow
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const hasWifi = formData.amenities.includes('WiFi');
-              if (hasWifi) {
-                handleInputChange('amenities', formData.amenities.filter(a => a !== 'WiFi'));
-              } else {
-                handleInputChange('amenities', [...formData.amenities, 'WiFi']);
-              }
-            }}
-            className={`px-4 py-2 rounded-full border transition-colors ${
-              formData.amenities.includes('WiFi') 
-                ? 'bg-white/40 text-white border-white/60' 
-                : 'bg-white/20 text-white border-white/30 hover:border-white/50'
-            }`}
-          >
-            WiFi
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const hasPool = formData.amenities.includes('Pool');
-              if (hasPool) {
-                handleInputChange('amenities', formData.amenities.filter(a => a !== 'Pool'));
-              } else {
-                handleInputChange('amenities', [...formData.amenities, 'Pool']);
-              }
-            }}
-            className={`px-4 py-2 rounded-full border transition-colors ${
-              formData.amenities.includes('Pool') 
-                ? 'bg-white/40 text-white border-white/60' 
-                : 'bg-white/20 text-white border-white/30 hover:border-white/50'
-            }`}
-          >
-            Pool
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const hasParking = formData.amenities.includes('Parking');
-              if (hasParking) {
-                handleInputChange('amenities', formData.amenities.filter(a => a !== 'Parking'));
-              } else {
-                handleInputChange('amenities', [...formData.amenities, 'Parking']);
-              }
-            }}
-            className={`px-4 py-2 rounded-full border transition-colors ${
-              formData.amenities.includes('Parking') 
-                ? 'bg-white/40 text-white border-white/60' 
-                : 'bg-white/20 text-white border-white/30 hover:border-white/50'
-            }`}
-          >
-            Parking
-          </button>
+        {/* Deposit and Utilities */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label htmlFor="deposit" className="block text-base font-medium text-white/90 mb-2">
+              Deposit
+            </label>
+            <input
+              id="deposit"
+              type="number"
+              min="0"
+              className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+              value={formData.deposit || ''}
+              onChange={(e) => handleInputChange('deposit', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
+              placeholder="Deposit amount"
+            />
+          </div>
+          <div>
+            <label htmlFor="utilities" className="block text-base font-medium text-white/90 mb-2">
+              Utilities
+            </label>
+            <input
+              id="utilities"
+              type="number"
+              min="0"
+              className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+              value={formData.utilities || ''}
+              onChange={(e) => handleInputChange('utilities', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
+              placeholder="Utilities cost"
+            />
+          </div>
         </div>
+
       </div>
 
       {/* Amenities Display Section */}
@@ -489,7 +481,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
         {formData.amenities.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {formData.amenities.map((amenity, index) => (
-              <div key={index} className="px-3 py-1 bg-white/20 text-white rounded-full text-sm flex items-center gap-2">
+              <div key={index} className="px-3 py-1 bg-white/20 text-white rounded-full text-base flex items-center gap-2">
                 {amenity}
                 <button
                   type="button"
@@ -502,7 +494,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
             ))}
           </div>
         ) : (
-          <p className="text-white/70 text-sm">No amenities selected yet. Use the buttons above to add amenities.</p>
+          <p className="text-white/70 text-base">No amenities selected yet. Use the buttons above to add amenities.</p>
         )}
       </div>
 
@@ -510,7 +502,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
       <button
         type="submit"
         disabled={isUpdating}
-        className="w-full bg-[#2563eb] text-white font-semibold rounded-xl py-3 mt-6 sticky bottom-4 shadow-lg transition-colors"
+        className="w-full bg-[#2563eb] text-white font-semibold rounded-xl py-3 mt-6 sticky bottom-20 shadow-lg transition-colors"
       >
         {isUpdating ? 'Updating...' : 'Update Listing'}
       </button>

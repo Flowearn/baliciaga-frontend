@@ -46,6 +46,7 @@ export interface MyApplication {
       languages?: string[];
       occupation?: string;
       nationality?: string;
+      profilePictureUrl?: string | null;
     };
   }>;
   listing: {
@@ -151,6 +152,7 @@ export interface ReceivedApplication {
       occupation?: string;
       bio?: string;
       profilePicture?: string;
+      languages?: string[];
     };
   };
 }

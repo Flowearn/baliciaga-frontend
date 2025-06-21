@@ -7,7 +7,8 @@ import {
   Globe,
   Briefcase,
   Phone,
-  Check
+  Check,
+  X
 } from 'lucide-react';
 import { ReceivedApplication, updateApplicationStatus } from '@/services/applicationService';
 import { formatNoYear } from '@/utils/formatDate';
@@ -21,6 +22,7 @@ interface ApplicationCardProps {
 
 const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingId }) => {
   const queryClient = useQueryClient();
+  const profile = application.applicant?.profile;
 
   // Handle application status update
   const handleStatusUpdate = async (newStatus: 'accepted' | 'ignored' | 'pending') => {
@@ -44,58 +46,61 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingI
     switch (application.status) {
       case 'pending':
         return (
-          <div className="flex space-x-2">
+          <>
             <Button 
-              variant="outline" 
+              variant="outline"
               onClick={() => handleStatusUpdate('ignored')}
-              className="flex-1"
+              className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 rounded-full"
             >
+              <X className="h-4 w-4 mr-1" />
               Ignore
             </Button>
             <Button 
               onClick={() => handleStatusUpdate('accepted')}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="flex-1 bg-green-500/20 hover:bg-green-500/30 text-white border-0 rounded-full"
             >
+              <Check className="h-4 w-4 mr-1" />
               Accept
             </Button>
-          </div>
+          </>
         );
       case 'accepted':
         return (
-          <div className="flex space-x-2">
+          <>
             <Button
               variant="outline"
               onClick={() => handleStatusUpdate('ignored')}
-              className="flex-1"
+              className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 rounded-full"
             >
+              <X className="h-4 w-4 mr-1" />
               Ignore
             </Button>
             <Button
-              className="flex-1 bg-green-600 hover:bg-green-600 cursor-default"
+              className="flex-1 bg-green-500/20 hover:bg-green-500/20 cursor-default text-white border-0 rounded-full"
               disabled
             >
               <Check className="h-4 w-4 mr-1" />
               Accepted
             </Button>
-          </div>
+          </>
         );
       case 'ignored':
         return (
-          <div className="flex space-x-2">
+          <>
             <Button
               variant="outline"
               onClick={() => handleStatusUpdate('pending')}
-              className="flex-1"
+              className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-white border-0 rounded-full"
             >
               Withdraw
             </Button>
             <Button
-              className="flex-1 bg-yellow-500 hover:bg-yellow-500 cursor-default"
+              className="flex-1 bg-yellow-500/20 hover:bg-yellow-500/20 cursor-default text-white border-0 rounded-full"
               disabled
             >
               Ignored
             </Button>
-          </div>
+          </>
         );
       default:
         return null;
@@ -103,65 +108,87 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingI
   };
 
   return (
-    <Card className="border-t">
-      <CardContent className="p-4">
-        <div className="flex items-start space-x-4">
-          {/* Left: Profile Avatar */}
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={application.applicant?.profile?.profilePicture} />
-            <AvatarFallback className="bg-gray-200 text-gray-600">
-              {application.applicant?.profile?.name?.charAt(0)?.toUpperCase() ?? 'U'}
-            </AvatarFallback>
-          </Avatar>
-
-          {/* Right: Information and Actions */}
-          <div className="flex-grow">
-            {/* First Row - Name and Application Date */}
-            <div className="flex justify-between items-start mb-2">
-              <h4 className="font-semibold text-gray-900">
-                {application.applicant?.profile?.name ?? 'Anonymous'}
-              </h4>
-              <div className="text-xs text-gray-500">
-                Applied {formatNoYear(application.createdAt)}
-              </div>
-            </div>
-
-            {/* Information Grid - grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-700 with icons */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-700 mb-3">
-              {/* Age and Nationality with User icon */}
-              <div className="flex items-center">
-                <User className="h-4 w-4 mr-2" />
-                <span>{application.applicant?.profile?.age || 'N/A'} years, {application.applicant?.profile?.nationality || 'Not specified'}</span>
-              </div>
-
-              {/* Email with Globe icon */}
-              <div className="flex items-center">
-                <Globe className="h-4 w-4 mr-2" />
-                <span>{application.applicant?.email || 'Not specified'}</span>
-              </div>
-
-              {/* Occupation with Briefcase icon */}
-              <div className="flex items-center">
-                <Briefcase className="h-4 w-4 mr-2" />
-                <span>{application.applicant?.profile?.occupation || 'Not specified'}</span>
-              </div>
-
-              {/* WhatsApp with Phone icon */}
-              <div className="flex items-center">
-                <Phone className="h-4 w-4 mr-2" />
-                <span>{application.applicant?.profile?.whatsApp || 'Not provided'}</span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="mt-3">
-              {renderActionButtons()}
-            </div>
+    <div className="p-4 bg-white/10 rounded-lg border-none">
+      {/* Main content layout */}
+      <div className="flex gap-3 items-start">
+        {/* Left side: Information */}
+        <div className="flex-1 pr-2">
+          {/* Name */}
+          <h4 className="font-semibold text-white whitespace-nowrap overflow-hidden text-ellipsis mb-1">
+            {profile?.name || application.applicant?.email || 'Anonymous'}
+          </h4>
+          
+          {/* Applied Date */}
+          <div className="text-sm text-white/60 mb-2">
+            Applied {formatNoYear(application.createdAt)}
           </div>
+          
+          {/* Email */}
+          {application.applicant?.email && (
+            <div className="text-base text-white/80 whitespace-nowrap overflow-hidden text-ellipsis">
+              {application.applicant.email}
+            </div>
+          )}
+          
+          {/* Age and Gender in same row */}
+          {(profile?.age || profile?.gender) && (
+            <div className="text-base text-white/80 mt-1 whitespace-nowrap">
+              {[
+                profile.age && `${profile.age} years old`,
+                profile.gender && profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1)
+              ].filter(Boolean).join(' • ')}
+            </div>
+          )}
+          
+          {/* Nationality */}
+          {profile?.nationality && (
+            <div className="text-base text-white/80 whitespace-nowrap">
+              {profile.nationality}
+            </div>
+          )}
+          
+          {/* Occupation */}
+          {profile?.occupation && (
+            <div className="text-base text-white/80 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+              {profile.occupation}
+            </div>
+          )}
+          
+          {/* Languages */}
+          {profile?.languages && profile.languages.length > 0 && (
+            <div className="text-base text-white/80 mt-1">
+              {profile.languages.join(', ')}
+            </div>
+          )}
+          
+          {/* Application Message */}
+          {application.message && (
+            <div className="mt-3 p-3 bg-white/10 rounded-lg">
+              <p className="text-sm text-white/90">{application.message}</p>
+            </div>
+          )}
         </div>
-      </CardContent>
-    </Card>
+        
+        {/* Right side: Avatar */}
+        <div className="w-24 h-24 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {profile?.profilePicture || profile?.profilePictureUrl ? (
+            <img 
+              src={profile.profilePicture || profile.profilePictureUrl} 
+              alt={profile?.name || 'Anonymous'}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <User className="w-12 h-12 text-white/80" />
+          )}
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex gap-3 w-full mt-4">
+        {renderActionButtons()}
+      </div>
+    </div>
   );
 };
 
-export default ApplicationCard; 
+export default ApplicationCard;

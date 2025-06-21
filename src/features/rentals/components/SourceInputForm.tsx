@@ -60,7 +60,7 @@ Located at 123 Orchard Road, Singapore. Walking distance to shopping malls and r
           <Sparkles className="w-6 h-6 text-purple-600" />
           AI-Powered Listing Creator
         </CardTitle>
-        <CardDescription className="text-lg">
+        <CardDescription className="text-xl">
           Paste your rental property description and let AI extract structured information for you
         </CardDescription>
       </CardHeader>
@@ -68,7 +68,7 @@ Located at 123 Orchard Road, Singapore. Walking distance to shopping malls and r
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <label htmlFor="sourceText" className="text-sm font-medium text-gray-700">
+              <label htmlFor="sourceText" className="text-base font-medium text-gray-700">
                 Property Description
               </label>
               <Button
@@ -76,7 +76,7 @@ Located at 123 Orchard Road, Singapore. Walking distance to shopping malls and r
                 variant="outline"
                 size="sm"
                 onClick={handlePasteExample}
-                className="text-xs"
+                className="text-sm"
                 disabled={isLoading}
               >
                 <Copy className="w-3 h-3 mr-1" />
@@ -104,7 +104,7 @@ The more details you provide, the better our AI can extract accurate information
               disabled={isLoading}
             />
             
-            <div className="flex justify-between items-center text-xs text-gray-500">
+            <div className="flex justify-between items-center text-sm text-gray-500">
               <span>
                 Minimum {minLength} characters required
               </span>
@@ -114,13 +114,13 @@ The more details you provide, the better our AI can extract accurate information
             </div>
             
             {charCount > 0 && charCount < minLength && (
-              <p className="text-sm text-orange-600">
+              <p className="text-base text-orange-600">
                 Please provide more details ({minLength - charCount} more characters needed)
               </p>
             )}
             
             {charCount > maxLength && (
-              <p className="text-sm text-red-600">
+              <p className="text-base text-red-600">
                 Text is too long. Please reduce by {charCount - maxLength} characters.
               </p>
             )}
@@ -128,7 +128,7 @@ The more details you provide, the better our AI can extract accurate information
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 className="font-semibold text-blue-900 mb-2">💡 Tips for better results:</h4>
-            <ul className="text-sm text-blue-800 space-y-1">
+            <ul className="text-base text-blue-800 space-y-1">
               <li>• Include rent amount and currency (e.g., "$2,500/month" or "S$3,200/month")</li>
               <li>• Mention number of bedrooms and bathrooms</li>
               <li>• Add location details and address</li>
@@ -163,7 +163,7 @@ The more details you provide, the better our AI can extract accurate information
               <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
               <div>
                 <p className="font-medium text-purple-900">AI is analyzing your listing...</p>
-                <p className="text-sm text-purple-700">This usually takes 5-15 seconds</p>
+                <p className="text-base text-purple-700">This usually takes 5-15 seconds</p>
               </div>
             </div>
           </div>

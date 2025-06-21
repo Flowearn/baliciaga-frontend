@@ -1,10 +1,10 @@
 import React from "react";
 import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
-import { ScrollRestoration } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as UIToaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import StagewiseWrapper from '@/components/StagewiseWrapper';
 import { useAuth } from "./context/AuthContext";
 
 import Index from "./pages/Index";
@@ -16,14 +16,18 @@ import EditListingPage from "./features/rentals/pages/EditListingPage";
 import MyApplicationsPage from "./features/rentals/pages/MyApplicationsPage";
 import MyListingsPage from "./features/rentals/pages/MyListingsPage";
 import ManageListingApplications from "./features/rentals/pages/ManageListingApplications";
+import LoginPage from "./pages/LoginPage";
+import SignUpPage from "./pages/SignUpPage";
 import UserProfilePage from "./features/profile/pages/UserProfilePage";
 import NotFound from "./pages/NotFound";
 import AccountPage from "./pages/AccountPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import CreateProfilePage from "./pages/CreateProfilePage";
+import StagewiseTest from "./pages/StagewiseTest";
 
 import GlobalHeader from "./components/GlobalHeader";
 import { BottomNavBar } from "./components/BottomNavBar";
+import ScrollToTop from "./components/ScrollToTop";
 import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
@@ -34,22 +38,24 @@ const MainLayout = () => {
   // 修复：确保底部导航栏在所有相关页面都显示，包括 /create-listing
   const showBottomNav = location.pathname.startsWith('/listings') || 
                        location.pathname.startsWith('/login') || 
+                       location.pathname.startsWith('/signup') ||
                        location.pathname === '/create-listing' ||
                        location.pathname.startsWith('/my-') ||
                        location.pathname.startsWith('/profile');
 
+  // Check if we're on a detail page that needs full background
+  const isDetailPage = location.pathname.startsWith('/places/');
+  
+  // Check if we're on AccountPage (which needs full viewport for centering)
+  const isAccountPage = location.pathname === '/account';
+
   return (
-    <>
-      <GlobalHeader />
+    <div className={isDetailPage ? '' : 'min-h-screen bg-background-creamy'}>
+      <ScrollToTop />
+      {!isAccountPage && <GlobalHeader />}
       <Outlet />
-      {showBottomNav && <BottomNavBar />}
-      <ScrollRestoration 
-        getKey={(location, matches) => {
-          // Scroll restoration based on pathname and search params to ensure independent scroll position memory for different URL states
-          return location.pathname + location.search;
-        }} 
-      />
-    </>
+      {showBottomNav && !isAccountPage && <BottomNavBar />}
+    </div>
   );
 };
 
@@ -104,12 +110,20 @@ const routeObjects = [
         element: <ProtectedRoute><UserProfilePage /></ProtectedRoute>,
       },
       {
-        path: "login", // Login page - handles login and registration
-        element: <AccountPage />,
+        path: "login", // Login page
+        element: <LoginPage />,
+      },
+      {
+        path: "signup", // Sign up page
+        element: <SignUpPage />,
       },
       {
         path: "create-profile", // Profile creation page for authenticated users without profile
         element: <CreateProfilePage />,
+      },
+      {
+        path: "stagewise-test", // Test page for Stagewise integration (development only)
+        element: <StagewiseTest />,
       },
       {
         path: "*", // Catch-all for 404 pages
@@ -133,8 +147,8 @@ function App() {
       <div className="flex h-screen w-full items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg font-semibold text-gray-700">Loading application...</p>
-          <p className="text-sm text-gray-500 mt-2">Please wait while we initialize your session</p>
+          <p className="text-xl font-semibold text-gray-700">Loading application...</p>
+          <p className="text-base text-gray-500 mt-2">Please wait while we initialize your session</p>
         </div>
       </div>
     );
@@ -147,6 +161,7 @@ function App() {
         <UIToaster />
         <Sonner />
         <RouterProvider router={router} />
+        <StagewiseWrapper />
       </TooltipProvider>
     </QueryClientProvider>
   );

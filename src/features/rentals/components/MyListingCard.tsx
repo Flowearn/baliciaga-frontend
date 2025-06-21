@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MyListing } from '@/services/listingService';
@@ -10,14 +10,19 @@ import {
 import { finalizeListing, cancelListing } from '@/services/listingService';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { formatPrice } from '@/utils/currencyUtils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+// 移除Accordion imports - 使用新的独立按钮机制
+import { formatPrice, cn } from '@/lib/utils';
 import { formatNoYear } from '@/utils/formatDate';
 import { pricePerRoom } from '@/utils/pricePerRoom';
 import { 
@@ -28,10 +33,15 @@ import {
   Edit, 
   X,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  ChevronDown,
+  XCircle,
+  CheckCircle,
+  Banknote
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ApplicationCard from './ApplicationCard';
+import { useAuth } from '@/context/AuthContext';
 
 interface MyListingCardProps {
   listing: MyListing;
@@ -43,7 +53,7 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
   const queryClient = useQueryClient();
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const [isApplicantsVisible, setIsApplicantsVisible] = useState(false);
   
   const {
     listingId,
@@ -57,13 +67,29 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
     availability
   } = listing;
 
+  const { user: authUser } = useAuth();
+  const isOwner = authUser?.userId === listing.initiatorId;
+
   // Get applications for this listing when accordion is opened
   const { data: applicationsData, isLoading: isLoadingApplications, error: applicationsError } = useQuery({
     queryKey: ['listing-applications', listingId],
     queryFn: () => fetchApplicationsForListing(listingId, { limit: 50 }),
-    enabled: false, // Will be enabled when accordion opens
+    enabled: isApplicantsVisible, // 只在申请人列表可见时加载数据
     refetchOnWindowFocus: false
   });
+
+  // 添加诊断日志
+  useEffect(() => {
+    if (applicationsData) {
+      console.log(`[DIAGNOSIS] Successfully fetched data for listing ${listingId}:`, applicationsData);
+    }
+  }, [applicationsData, listingId]);
+
+  useEffect(() => {
+    if (applicationsError) {
+      console.error(`[DIAGNOSIS] Error fetching applications for listing ${listingId}:`, applicationsError);
+    }
+  }, [applicationsError, listingId]);
 
   // Get the first photo or use a placeholder
   const mainPhoto = photos && photos.length > 0 ? photos[0] : null;
@@ -117,21 +143,16 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
   const totalSlots = listing.details.bedrooms || 1;
   const filledSlots = calculateFilledSlots();
 
-  // Fetch applications when accordion opens
-  const handleAccordionChange = (value: string) => {
-    const isOpening = value === listingId;
-    setIsAccordionOpen(isOpening);
-    
-    if (isOpening) {
-      // Enable the query when accordion opens
-      queryClient.invalidateQueries({ queryKey: ['listing-applications', listingId] });
-    }
-  };
+  // 移除旧的accordion处理函数，现在使用独立的按钮控制
 
   const applications = applicationsData?.data?.applications || [];
 
   const handleFinalize = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!listing.listingId) {
+      toast.error('Cannot finalize: Listing ID is missing.');
+      return;
+    }
     
     if (filledSlots < totalSlots) {
       toast.error('Cannot finalize listing', {
@@ -180,6 +201,10 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
 
   const handleCancel = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!listing.listingId) {
+      toast.error('Cannot cancel: Listing ID is missing.');
+      return;
+    }
     
     try {
       setIsCancelling(true);
@@ -220,212 +245,290 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
   };
 
   return (
-    <Accordion type="single" collapsible onValueChange={handleAccordionChange}>
-      <AccordionItem value={listingId} className="border-white/10 rounded-xl">
-        {/* Main Card UI (The Trigger) */}
-        <AccordionTrigger className="hover:no-underline p-0 [&>svg]:hidden">
-          <Card className="w-full hover:shadow-lg transition-shadow duration-200 border-0 bg-black/40 backdrop-blur-sm text-white/90">
-            <CardContent className="p-4">
-              {/* 卡片采用上下布局：图片信息左右排列 + 按钮区独占底部 */}
-              <article 
-                className="w-full flex flex-col cursor-pointer" 
-                data-testid="listing-card"
-                onClick={() => onCardClick?.(listing.listingId)}
-              >
-                {/* 上半部：左右布局（图片 + 信息） */}
-                <div className="flex flex-row gap-2 w-full">
-                  {/* 左侧：图片区域 (50%宽度) */}
-                  <div className="w-1/2 relative">
-                  {mainPhoto ? (
-                    <img
-                      src={mainPhoto}
-                      alt={title}
-                        className="w-full h-auto aspect-square object-cover rounded-lg"
-                    />
-                  ) : (
-                      <div className="w-full h-auto aspect-square flex items-center justify-center bg-black/20 rounded-lg">
-                      <div className="text-sm text-white/40 text-center px-2">
-                        No Image
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* X/Y Filled Badge - positioned at top-left */}
-                    <div className="absolute top-2 left-2">
-                      <Badge variant="secondary" className="bg-teal-500/80 backdrop-blur-sm text-white text-xs">
-                      {filledSlots}/{totalSlots} Filled
-                    </Badge>
-                  </div>
-                </div>
-
-                  {/* 右侧：信息区域 (50%宽度，左边距) */}
-                  <div className="w-1/2 flex flex-col gap-2 text-left pl-2">
-                    {/* 标题左对齐 */}
-                    <h3 className="text-lg font-bold text-white text-left">{title}</h3>
-
-                    {/* 位置区域 */}
-                    <div className="flex items-center text-white/70">
-                    <MapPin className="h-3 w-3 mr-2 text-red-400" />
-                      <span className="text-sm">{getLocationDisplay()}</span>
-                  </div>
-
-                    {/* 每房间价格 */}
-                    <div className="flex items-center">
-                    <span className="text-lg font-bold text-green-400">
-                        {(() => {
-                          const perRoom = pricePerRoom(pricing.monthlyRent, details.bedrooms);
-                          return perRoom 
-                            ? formatPrice(perRoom, pricing.currency)
-                            : 'N/A';
-                        })()}
-                    </span>
-                      <span className="text-sm text-white/70 ml-1">/room</span>
-                  </div>
-
-                    {/* 卧室和浴室 */}
-                    <div className="flex items-center gap-2 text-white/70 text-sm">
-                      <Bed className="h-3 w-3" />
-                      <span>{details.bedrooms}</span>
-                      <span>Beds</span>
-                      <Bath className="h-3 w-3 ml-2" />
-                      <span className="ml-1">{details.bathrooms}</span>
-                      <span>Baths</span>
-                  </div>
-
-                    {/* 发布日期 - 不显示年份 */}
-                    <div className="flex items-center text-white/70">
-                    <Calendar className="h-3 w-3 mr-2 text-red-400" />
-                      <span className="text-sm">Listed {formatNoYear(listing.createdAt)}</span>
-                  </div>
-
-                    {/* 可用日期 - 不显示年份 */}
-                    <div className="flex items-center text-white/70">
-                      <Calendar className="h-3 w-3 mr-2 text-blue-400" />
-                      <span className="text-sm">Available {formatNoYear(availability.availableFrom)}</span>
-                  </div>
-                </div>
-              </div>
-
-                {/* 下半部：操作按钮独占整行 - 24px垂直间距 */}
-                {status === 'active' && (
-                  <div className="flex w-full gap-2 mt-6" data-testid="action-buttons">
-                    {/* Cancel Button */}
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCancel(e);
-                      }}
-                      className="flex-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/50 text-xs px-2 py-1 h-7 rounded-md cursor-pointer flex items-center justify-center transition-colors"
-                    >
-                      {isCancelling ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <>
-                          <X className="h-3 w-3 mr-1" />
-                          Cancel
-                        </>
-                      )}
-                    </div>
-                    
-                    {/* Edit Button */}
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        
-                        try {
-                          // 保存当前listing到localStorage缓存
-                          const cachedListings = localStorage.getItem('my-listings-cache') || '[]';
-                          let existingListings: MyListing[] = [];
-                          
-                          try {
-                            existingListings = JSON.parse(cachedListings);
-                          } catch {
-                            existingListings = [];
-                          }
-                          
-                          const updatedListings = existingListings.filter((l: MyListing) => l.listingId !== listing.listingId);
-                          updatedListings.push(listing);
-                          localStorage.setItem('my-listings-cache', JSON.stringify(updatedListings));
-                          
-                          console.log('缓存listing数据成功，准备导航到编辑页面');
-                          
-                          // 使用React Router的navigate
-                          navigate(`/listings/${listingId}/edit`);
-                          
-                        } catch (error) {
-                          console.error('导航到编辑页面失败:', error);
-                          toast.error('无法打开编辑页面', {
-                            description: '请稍后重试'
-                          });
-                        }
-                      }}
-                      className="flex-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/50 text-xs px-2 py-1 h-7 rounded-md cursor-pointer flex items-center justify-center transition-colors"
-                    >
-                      <Edit className="h-3 w-3 mr-1" />
-                      Edit
-                    </div>
-                    
-                    {/* Finalize Button */}
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleFinalize(e);
-                      }}
-                      className={`flex-1 ${
-                        filledSlots < totalSlots
-                          ? 'bg-gray-600/20 text-gray-500 border-gray-600/50 cursor-not-allowed'
-                          : 'bg-green-600/20 hover:bg-green-600/30 text-green-400 border-green-600/50 cursor-pointer'
-                      } border text-xs px-2 py-1 h-7 rounded-md flex items-center justify-center transition-colors`}
-                    >
-                      {isFinalizing ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <>
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Finalize
-                        </>
-                      )}
-                  </div>
-                </div>
-              )}
-              </article>
-            </CardContent>
-          </Card>
-        </AccordionTrigger>
-        
-        {/* Applications List (The Content) */}
-        <AccordionContent>
-          <div className="bg-black/20 backdrop-blur-sm rounded-b-xl">
-            {isLoadingApplications ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin mr-2 text-white/70" />
-                <span className="text-sm text-white/70">Loading applications...</span>
-              </div>
-            ) : applicationsError ? (
-              <div className="py-8 text-center text-red-400">
-                <p>Error loading applications</p>
-              </div>
-            ) : applications.length === 0 ? (
-              <div className="py-8 text-center text-white/60">
-                <p>No applications found</p>
-              </div>
+    <div>
+      {/* Main Card UI */}
+      <Card className="bg-black/40 backdrop-blur-sm border-white/20 shadow-lg hover:shadow-xl transition-all duration-200">
+        <CardContent className="p-4 sm:p-6">
+          {/* Property Image - Full width, clickable */}
+          <div 
+            className="w-full aspect-video rounded-lg overflow-hidden bg-gray-200 cursor-pointer relative mb-4"
+            onClick={() => onCardClick?.(listing.listingId)}
+          >
+            {mainPhoto ? (
+              <img 
+                src={mainPhoto} 
+                alt={title}
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <div>
-                {applications.map((application: ReceivedApplication) => (
-                  <ApplicationCard 
-                    key={application.applicationId} 
-                    application={application} 
-                    listingId={listingId}
-                  />
-                ))}
+              <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                <MapPin className="w-6 h-6 text-gray-500" />
               </div>
             )}
+            
+            {/* Status Badges - positioned at top-right */}
+            <div className="absolute top-5 right-5 z-[2] flex gap-2">
+              {/* Filled Badge */}
+              <span className="px-3 py-0.5 rounded-full text-sm font-semibold text-white shadow-md shadow-black/20 bg-teal-500/80">
+                {filledSlots}/{totalSlots} Filled
+              </span>
+              
+              {/* Cancelled/Filled Status Badge */}
+              {status === 'paused' && (
+                <span className="px-3 py-0.5 rounded-full text-sm font-semibold text-white shadow-md shadow-black/20 bg-red-500/80">
+                  Cancelled
+                </span>
+              )}
+              {status === 'filled' && (
+                <span className="px-3 py-0.5 rounded-full text-sm font-semibold text-white shadow-md shadow-black/20 bg-green-500/80">
+                  Filled
+                </span>
+              )}
+            </div>
           </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+
+          {/* Listing Details */}
+          <div>
+            {/* Header */}
+            <div className="mb-3">
+              <h3 
+                className="font-semibold text-white/100 text-base truncate cursor-pointer hover:text-blue-400 transition-colors"
+                onClick={() => onCardClick?.(listing.listingId)}
+              >
+                {title}
+              </h3>
+              {/* Location */}
+              <div className="flex items-center text-base text-white/80 mt-1">
+                <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                <span className="truncate">
+                  {getLocationDisplay()}
+                </span>
+              </div>
+            </div>
+
+            {/* Price - Full Width */}
+            <div className="flex items-center text-base text-white/100 mb-3">
+              <Banknote className="w-4 h-4 mr-2 text-green-400" />
+              <div className="flex items-baseline gap-1">
+                {(() => {
+                  // Calculate monthly price (convert yearly to monthly if needed)
+                  let monthlyPrice = 0;
+                  if (pricing.monthlyRent && pricing.monthlyRent > 0) {
+                    monthlyPrice = pricing.monthlyRent;
+                  } else if (pricing.yearlyRent && pricing.yearlyRent > 0) {
+                    monthlyPrice = Math.round(pricing.yearlyRent / 12);
+                  }
+                  
+                  if (monthlyPrice > 0) {
+                    const perRoom = details.bedrooms ? Math.round(monthlyPrice / details.bedrooms) : monthlyPrice;
+                    return (
+                      <>
+                        <span className="text-xl">{formatPrice(perRoom, pricing.currency)}</span>
+                        <span className="text-white/60 text-sm">/ room monthly</span>
+                      </>
+                    );
+                  }
+                  return <span className="text-white/60 text-sm">Price N/A</span>;
+                })()}
+              </div>
+            </div>
+
+            {/* Property Details - 2 Column Grid */}
+            <div className="grid grid-cols-2 gap-3 mb-3 text-base">
+              {/* Left Column */}
+              <div>
+                {/* Beds/Baths - First row */}
+                <div className="flex items-center text-white/100">
+                  <Bed className="w-4 h-4 mr-2 text-blue-400" />
+                  <span>{details.bedrooms} bed{details.bedrooms !== 1 ? 's' : ''} {details.bathrooms} bath{details.bathrooms !== 1 ? 's' : ''}</span>
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-2">
+                {/* Listed Date */}
+                <div className="flex items-center text-sm text-white/60">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  <span>Listed on {formatNoYear(listing.createdAt)}</span>
+                </div>
+                {/* Available Date */}
+                <div className="flex items-center text-sm text-white/60">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  <span>Available from {formatNoYear(availability.availableFrom)}</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Action Buttons - Always visible at bottom for active listings owned by user */}
+          {status === 'active' && isOwner && (
+            <div className="flex gap-2 mt-4 pt-4 border-t border-white/20">
+              {/* Cancel Button */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    disabled={isCancelling}
+                    className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-red-500/20 rounded-full"
+                  >
+                    {isCancelling ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-0.5 animate-spin" />
+                        Cancelling...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-3 h-3 mr-0.5" />
+                        Cancel
+                      </>
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently cancel your listing and all associated applications.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Go Back</AlertDialogCancel>
+                    <AlertDialogAction onClick={(e) => handleCancel(e)}>Yes, Cancel Listing</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              {/* Finalize Button - Always visible */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    disabled={isFinalizing || filledSlots < totalSlots}
+                    className={`flex-1 rounded-full ${
+                      filledSlots < totalSlots 
+                        ? 'bg-gray-500/10 text-gray-400 border-gray-500/10 cursor-not-allowed' 
+                        : 'bg-green-500/20 hover:bg-green-500/30 text-white border-green-500/20'
+                    }`}
+                  >
+                    {isFinalizing ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-0.5 animate-spin" />
+                        Finalizing...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-3 h-3 mr-0.5" />
+                        Finalize
+                      </>
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Finalize this deal?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will mark the listing as 'closed' and confirm all accepted applicants. This action is irreversible.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Not yet</AlertDialogCancel>
+                    <AlertDialogAction onClick={(e) => handleFinalize(e)}>Confirm and Finalize</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              {/* Edit Button */}
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  
+                  try {
+                    // Save current listing to localStorage cache
+                    const cachedListings = localStorage.getItem('my-listings-cache') || '[]';
+                    let existingListings: MyListing[] = [];
+                    
+                    try {
+                      existingListings = JSON.parse(cachedListings);
+                    } catch {
+                      existingListings = [];
+                    }
+                    
+                    const updatedListings = existingListings.filter((l: MyListing) => l.listingId !== listing.listingId);
+                    updatedListings.push(listing);
+                    localStorage.setItem('my-listings-cache', JSON.stringify(updatedListings));
+                    
+                    console.log('Cached listing data successfully, navigating to edit page');
+                    
+                    // Use React Router navigate with 'from' state
+                    navigate(`/listings/${listingId}/edit`, { state: { from: '/my-listings' } });
+                    
+                  } catch (error) {
+                    console.error('Failed to navigate to edit page:', error);
+                    toast.error('Unable to open edit page', {
+                      description: 'Please try again later'
+                    });
+                  }
+                }}
+                className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-white border-blue-500/20 rounded-full"
+              >
+                <Edit className="w-3 h-3 mr-0.5" />
+                Edit
+              </Button>
+            </div>
+          )}
+
+          {/* Applications Toggle Button */}
+          <div
+            className="mt-4 flex items-center justify-between p-3 bg-white/10 hover:bg-white/20 cursor-pointer rounded-md border border-white/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsApplicantsVisible(!isApplicantsVisible);
+            }}
+          >
+            <span className="font-semibold text-base text-white/100">Applications</span>
+            <ChevronDown
+              className={`w-5 h-5 text-white/60 transform transition-transform duration-200 ${
+                isApplicantsVisible ? 'rotate-180' : ''
+              }`}
+            />
+          </div>
+
+          {/* Applications List (Conditionally Rendered) */}
+          {isApplicantsVisible && (
+            <div className="mt-4">
+              {isLoadingApplications ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2 text-white/60" />
+                  <span className="text-base text-white/80">Loading applications...</span>
+                </div>
+              ) : applicationsError ? (
+                <div className="py-8 text-center text-red-400">
+                  <p>Error loading applications</p>
+                </div>
+              ) : applications.length === 0 ? (
+                <div className="py-8 text-center text-white/60">
+                  <p>No applications found</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {applications.map((application: ReceivedApplication) => (
+                    <ApplicationCard 
+                      key={application.applicationId} 
+                      application={application} 
+                      listingId={listingId}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
-export default MyListingCard; 
+export default MyListingCard;

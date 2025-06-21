@@ -43,6 +43,11 @@ apiClient.interceptors.request.use(
             // ------------------------------------
             config.headers['x-test-user-sub'] = userSub;
             config.headers['x-test-user-email'] = userEmail || '';
+            // For testing, check if user has InternalStaff group
+            const isStaff = await import('@/utils/authUtils').then(m => m.isInternalStaff());
+            if (isStaff) {
+              config.headers['x-test-user-groups'] = 'InternalStaff';
+            }
           }
         } catch (e) {
           // User might not be logged in, that's okay.

@@ -36,11 +36,13 @@ export interface AnalyzeSourceResponse {
 export interface FetchListingsParams {
   pageParam?: string;
   limit?: number;
+  includeStatus?: string[];
 }
 
 export const fetchListings = async ({ 
   pageParam, 
-  limit = 10 
+  limit = 10,
+  includeStatus = ['active']
 }: FetchListingsParams = {}): Promise<ListingsApiResponse> => {
   const params = new URLSearchParams();
   
@@ -49,7 +51,11 @@ export const fetchListings = async ({
   }
   
   params.append('limit', limit.toString());
-  params.append('status', 'active'); // Only fetch active listings
+  
+  // Add status filters - default to active only
+  includeStatus.forEach(status => {
+    params.append('status', status);
+  });
   
   const response = await apiClient.get(`/listings?${params.toString()}`);
   return response.data;
@@ -60,17 +66,29 @@ export const fetchListingById = async (listingId: string): Promise<{ success: bo
   return response.data;
 };
 
-export const analyzeListingSource = async (sourceText: string): Promise<AnalyzeSourceResponse> => {
-  const response = await apiClient.post('/listings/analyze-source', {
-    sourceText
-  });
-  return response.data;
+export const analyzeListingSource = async (input: string | FormData): Promise<AnalyzeSourceResponse> => {
+  if (input instanceof FormData) {
+    // 处理FormData（图片）
+    const response = await apiClient.post('/listings/analyze-source', input, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } else {
+    // 处理文本
+    const response = await apiClient.post('/listings/analyze-source', {
+      sourceText: input
+    });
+    return response.data;
+  }
 };
 
 export interface CreateListingPayload {
   title: string;
-  posterRole: 'tenant' | 'landlord';
+  posterRole: 'tenant' | 'landlord' | 'platform';
   monthlyRent: number;
+  yearlyRent?: number | null;
   currency: string;
   deposit: number;
   utilities: number;
@@ -111,8 +129,10 @@ export interface MyListing {
   listingId: string;
   title: string;
   description: string;
+  initiatorId: string;
   pricing: {
     monthlyRent: number;
+    yearlyRent?: number | null;
     currency: string;
     deposit: number;
     utilities: number;

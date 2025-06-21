@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 // 假设 AmplifyAuthenticator 和其他UI组件从这里导入
 import { Authenticator } from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css'; 
+// Amplify styles now imported via CSS Layers in index.css 
 
 export function AccountPage() {
   const { isAuthenticated, isAuthLoading } = useAuth();
@@ -27,8 +27,8 @@ export function AccountPage() {
 
   if (isAuthLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>Loading...</div>
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
       </div>
     );
   }
@@ -39,8 +39,10 @@ export function AccountPage() {
 
   // 仅在未登录时渲染 Amplify 的登录/注册UI
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <Authenticator />
+    <div className="min-h-screen w-full flex items-center justify-center p-4" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="w-full max-w-md">
+        <Authenticator />
+      </div>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { updateUserProfile } from '../../../services/userService';
+import { updateUserProfile, UpdateUserProfileData } from '../../../services/userService';
 import { uploadAvatarPhoto } from '../../../services/uploadService';
 import { toast } from 'sonner';
 import { LANGUAGES } from '../../../constants/languages';
@@ -17,7 +17,6 @@ import apiClient from '../../../services/apiClient';
 import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { 
-  ArrowLeft, 
   Settings, 
   Edit3, 
   Mail, 
@@ -56,6 +55,12 @@ const UserProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { user, setUser } = useAuth();
   const queryClient = useQueryClient();
+  
+  // 转换语言数组为选项格式
+  const languageOptions = LANGUAGES.map(lang => ({
+    value: lang.toLowerCase().replace(/\s+/g, '-').replace(/[()]/g, ''),
+    label: lang,
+  }));
   
   // 核心编辑状态管理已移除 - 现在使用内联编辑
   
@@ -222,11 +227,15 @@ const UserProfilePage: React.FC = () => {
         // 使用上传服务上传头像
         const profilePictureUrl = await uploadAvatarPhoto(croppedFile);
 
-        // 更新用户资料 - 包含必填字段
-        const updatedProfile = await updateUserProfile({ 
-          name: user.profile?.name || '',
-          whatsApp: user.profile?.whatsApp || '',
-          profilePictureUrl 
+        // 更新用户资料 - 包含完整的字段，防止数据丢失
+        const updatedProfile = await updateUserProfile({
+          name: profileForm.name,
+          whatsApp: profileForm.whatsApp,
+          age: profileForm.age,
+          gender: profileForm.gender,
+          languages: profileForm.languages,
+          occupation: profileForm.occupation,
+          profilePictureUrl // <-- 这是刚上传成功的新头像URL
         });
         
         // 更新用户状态
@@ -301,32 +310,31 @@ const UserProfilePage: React.FC = () => {
   };
 
   // 个别字段保存函数
-  const saveField = async (field: keyof ProfileFormData, value: string) => {
+  const saveField = async (field: keyof ProfileFormData, value: string | string[]) => {
     if (!user || !setUser) throw new Error('User not authenticated');
 
-    // 创建完整的profile数据，包含所有必填字段
-    const updatedProfileData: Record<string, string | number | string[] | undefined> = {
-      name: user.profile?.name || '',
-      whatsApp: user.profile?.whatsApp || '',
+    // 步骤1：基于当前的表单状态，创建一个更新后的状态副本
+    const updatedForm = { ...profileForm, [field]: value };
+    
+    // 步骤2：乐观更新UI，让用户立即看到变化
+    setProfileForm(updatedForm);
+
+    // 步骤3：创建一个只包含我们数据模型中定义的字段的、干净的payload
+    // 这能防止任何多余的临时状态字段被发送到后端
+    const payloadToSave: UpdateUserProfileData = {
+      name: updatedForm.name,
+      whatsApp: updatedForm.whatsApp,
+      age: updatedForm.age,
+      gender: updatedForm.gender,
+      languages: updatedForm.languages,
+      occupation: updatedForm.occupation,
+      profilePictureUrl: updatedForm.profilePictureUrl, // <-- 新增的关键行：保存文字时记住头像
     };
 
-    // 添加可选字段
-    if (user.profile?.gender) updatedProfileData.gender = user.profile.gender;
-    if (user.profile?.age) updatedProfileData.age = user.profile.age;
-    if (user.profile?.languages) updatedProfileData.languages = user.profile.languages;
-    if (user.profile?.occupation) updatedProfileData.occupation = user.profile.occupation;
-    if (user.profile?.profilePictureUrl) updatedProfileData.profilePictureUrl = user.profile.profilePictureUrl;
-
-    // 更新特定字段
-    if (field === 'age') {
-      updatedProfileData[field] = value ? parseInt(value) : undefined;
-    } else {
-      updatedProfileData[field] = value;
-    }
-
     try {
-      // 调用API更新后端
-      const updatedProfile = await updateUserProfile(updatedProfileData);
+      // 步骤4：将这个完整的、更新后的profile对象发送到后端
+      // 后端将用这个对象完整覆盖数据库记录，因为payload是完整的，所以不会再丢失字段
+      const updatedProfile = await updateUserProfile(payloadToSave);
       
       // 更新用户状态
       setUser({
@@ -339,24 +347,13 @@ const UserProfilePage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       
-      // 同步更新本地表单状态
-      const newFormData = {
-        name: updatedProfile.profile.name || '',
-        whatsApp: updatedProfile.profile.whatsApp || '',
-        age: updatedProfile.profile.age,
-        gender: updatedProfile.profile.gender,
-        languages: updatedProfile.profile.languages || [],
-        occupation: updatedProfile.profile.occupation || '',
-        profilePictureUrl: updatedProfile.profile.profilePictureUrl
-      };
-      
-      setProfileForm(newFormData);
-      
-      // 显示成功提示
-      toast.success('Profile saved successfully ✓');
+      toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully!`);
     } catch (error) {
-      console.error('Error saving profile:', error);
-      toast.error('Failed to save profile');
+      console.error(`Error updating ${field}:`, error);
+      toast.error(`Failed to update ${field}.`);
+      
+      // 如果保存失败，回滚UI状态到保存前的状态
+      setProfileForm(profileForm);
       throw error;
     }
   };
@@ -365,11 +362,7 @@ const UserProfilePage: React.FC = () => {
     <ColoredPageWrapper seed="profile">
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
-        <div className="flex items-center justify-between">
-          <ArrowLeft className="w-6 h-6 text-white/70" />
-          <h1 className="text-white font-semibold text-xl">Profile</h1>
-          <Settings className="w-6 h-6 text-white/70" />
-        </div>
+        <h1 className="text-white font-semibold text-xl text-center">Profile</h1>
       </div>
 
       <div className="relative z-10 max-w-md mx-auto">
@@ -388,7 +381,7 @@ const UserProfilePage: React.FC = () => {
             
             {/* 头像上传按钮 - 始终显示 */}
             <button
-              className="absolute -bottom-1 -right-1 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              className="absolute -bottom-1 -right-1 w-9 h-9 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
               disabled={isUploadingAvatar}
             >
               {isUploadingAvatar ? (
@@ -435,15 +428,20 @@ const UserProfilePage: React.FC = () => {
               />
             </div>
 
-            {/* Gender Field - Read-only */}
-            <div className="bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-3">
-              <User className="w-5 h-5 text-white/60" />
-              <span className="text-white/90">
-                {profileForm.gender ? 
-                  profileForm.gender.charAt(0).toUpperCase() + profileForm.gender.slice(1) : 
-                  'Not set'
-                }
-              </span>
+            {/* Gender Field */}
+            <div className="bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2">
+              <EditableField
+                label="Gender"
+                value={profileForm.gender}
+                onSave={(value) => saveField('gender', value)}
+                type="select"
+                options={[
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' },
+                  { value: 'other', label: 'Other' },
+                ]}
+                icon={<User className="w-5 h-5 text-white/60" />}
+              />
             </div>
 
             {/* WhatsApp Field */}
@@ -470,126 +468,116 @@ const UserProfilePage: React.FC = () => {
               />
             </div>
 
-            {/* Languages Section - Read-only */}
-            <div className="bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2 flex flex-col items-start">
-              <div className="flex items-center gap-3 w-full">
-                <MessageSquare className="w-5 h-5 text-white/60" />
-                <span className="text-white/90 text-base">Languages</span>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                {profileForm.languages?.map((language) => (
-                  <Badge 
-                    key={language} 
-                    variant="secondary" 
-                    className="text-xs bg-white/20 text-white/80 hover:bg-white/30"
-                  >
-                    <span>{language}</span>
-                  </Badge>
-                ))}
-                {!profileForm.languages?.length && (
-                  <span className="text-white/60 text-sm">No languages selected</span>
-                )}
-              </div>
+            {/* Languages Field */}
+            <div className="bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2">
+              <EditableField
+                label="Languages"
+                value={profileForm.languages || []}
+                onSave={(newLanguages) => saveField('languages', newLanguages)}
+                type="multi-select"
+                options={languageOptions}
+                icon={<MessageSquare className="w-5 h-5 text-white/60" />}
+                placeholder="Select languages..."
+              />
             </div>
 
             {/* Email (Non-editable) */}
             <div className="bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-3">
               <Mail className="w-5 h-5 text-white/60" />
-              <span className="text-white/90">{user?.email || 'No email'}</span>
+              <span className="text-white/100">{user?.email || 'No email'}</span>
+            </div>
+
+            {/* Change Password */}
+            <div>
+              <div className="bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-3">
+                <div 
+                  className="flex items-center justify-between cursor-pointer hover:bg-black/20 transition-colors rounded-lg p-1 -m-1 w-full"
+                  onClick={() => setIsChangingPassword(prev => !prev)}
+                >
+                  <div className="flex items-center gap-3">
+                    <HelpCircle className="w-5 h-5 text-white/60" />
+                    <span className="text-white/100">Change Password</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Password Input Area */}
+              {isChangingPassword && (
+                <div className="mt-4 p-4 bg-black/20 backdrop-blur-sm rounded-lg space-y-4 transition-all duration-300 ease-in-out">
+                  {/* Current Password */}
+                  <div className="space-y-2">
+                    <label className="text-base font-medium text-white/80">Current Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
+                      <Input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder="Enter current password"
+                        className="pl-10 pr-10 bg-black/20 border-white/20 text-white placeholder:text-white/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* New Password */}
+                  <div className="space-y-2">
+                    <label className="text-base font-medium text-white/80">New Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
+                      <Input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder="Enter new password"
+                        className="pl-10 pr-10 bg-black/20 border-white/20 text-white placeholder:text-white/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm New Password */}
+                  <div className="space-y-2">
+                    <label className="text-base font-medium text-white/80">Confirm New Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
+                      <Input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder="Confirm new password"
+                        className="pl-10 pr-10 bg-black/20 border-white/20 text-white placeholder:text-white/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Update Password Button */}
+                  <Button className="w-full mt-4 bg-white/20 hover:bg-white/30 text-white border-white/20">
+                    Update Password
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
-
-        {/* Change Password */}
-        <div className="mb-8 mx-8">
-          <div className="bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2 flex items-center gap-3">
-            <div 
-              className="flex items-center justify-between cursor-pointer hover:bg-black/20 transition-colors rounded-lg p-1 -m-1 w-full"
-              onClick={() => setIsChangingPassword(prev => !prev)}
-            >
-              <div className="flex items-center gap-3">
-                <HelpCircle className="w-5 h-5 text-white/60" />
-                <span className="text-white/90">Change Password</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Password Input Area */}
-          {isChangingPassword && (
-            <div className="mt-4 p-4 bg-black/20 backdrop-blur-sm rounded-lg space-y-4 transition-all duration-300 ease-in-out">
-              {/* Current Password */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/70">Current Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
-                  <Input 
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="Enter current password"
-                    className="pl-10 pr-10 bg-black/20 border-white/20 text-white placeholder:text-white/50"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* New Password */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/70">New Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
-                  <Input 
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="Enter new password"
-                    className="pl-10 pr-10 bg-black/20 border-white/20 text-white placeholder:text-white/50"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Confirm New Password */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/70">Confirm New Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
-                  <Input 
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="Confirm new password"
-                    className="pl-10 pr-10 bg-black/20 border-white/20 text-white placeholder:text-white/50"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Update Password Button */}
-              <Button className="w-full mt-4 bg-white/20 hover:bg-white/30 text-white border-white/20">
-                Update Password
-              </Button>
-            </div>
-          )}
-        </div>
 
         {/* Sign Out */}
-        <div className="mx-8 mb-8">
+        <div className="mx-8 mb-4">
           <Button 
             onClick={handleSignOut}
-            variant="destructive"
-            className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 border-red-500/20"
+            className="w-full bg-red-500/20 hover:bg-red-500/30 text-white border-red-500/20 rounded-full"
           >
             Sign Out
           </Button>

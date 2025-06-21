@@ -10,14 +10,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { X, Upload, Sparkles, Plus, UploadCloud, User, Building, Home as HomeIcon, Menu as MenuIcon } from 'lucide-react';
+import { X, Upload, Sparkles, Plus, UploadCloud, User, Building, Home as HomeIcon, Menu as MenuIcon, ImagePlus } from 'lucide-react';
 import { analyzeListingSource, AnalyzeSourceResponse, createListing } from '@/services/listingService';
 import { uploadListingPhotos } from '@/services/uploadService';
-import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
+import { isInternalStaff } from '@/utils/authUtils';
+
+// Extended type for AI extracted data with additional fields
+interface ExtractedListingWithAI {
+  title: string;
+  monthlyRent: number;
+  currency: string;
+  deposit: number;
+  utilities: number;
+  bedrooms: number;
+  bathrooms: number;
+  squareFootage: number | null;
+  furnished: boolean;
+  petFriendly: boolean;
+  smokingAllowed: boolean;
+  address: string;
+  locationArea?: string;
+  availableFrom: string;
+  minimumStay: number;
+  description: string;
+  amenities: string[];
+  aiExtractedData?: {
+    monthlyRent?: number;
+    yearlyRent?: number;
+    price_yearly_idr?: number;
+    price_yearly_usd?: number;
+    landSize?: number;
+    buildingSize?: number;
+  };
+}
 
 interface ListingFormData {
   title: string;
   monthlyRent: number | string;
+  yearlyRent: number | string | null;
   currency: string;
   deposit: number;
   utilities: number;
@@ -53,8 +83,37 @@ const useAutoResizeTextarea = (value: string) => {
 const CreateListingPage: React.FC = () => {
   const navigate = useNavigate();
   
+  // State for random background color
+  const [bgColor, setBgColor] = useState<string>('');
+  
   // Poster role state
-  const [posterRole, setPosterRole] = useState<'tenant' | 'landlord' | null>(null);
+  const [posterRole, setPosterRole] = useState<'tenant' | 'landlord' | 'platform' | null>(null);
+  const [showPlatformOption, setShowPlatformOption] = useState(false);
+
+  // Random background color effect
+  useEffect(() => {
+    const pantoneBackgroundColors = [
+      '#F0F1E3', // PANTONE 11-4302 Cannoli Cream
+      '#DFC9B8', // PANTONE 13-1108 Cream Tan
+      '#B7AC93', // PANTONE 15-1116 Safari
+      '#BDA08A', // PANTONE 15-1317 Sirocco
+      '#9E7B66', // PANTONE 17-1230 Mocha Mousse
+      '#9E8977', // PANTONE 16-1414 Chanterelle
+      '#86675B', // PANTONE 18-1421 Baltic Amber
+      '#534540'  // PANTONE 19-1216 Chocolate Martini
+    ];
+    const randomIndex = Math.floor(Math.random() * pantoneBackgroundColors.length);
+    setBgColor(pantoneBackgroundColors[randomIndex]);
+  }, []); // Empty dependency array ensures this runs only once on mount
+  
+  // Check if user is InternalStaff
+  useEffect(() => {
+    const checkInternalStaff = async () => {
+      const isStaff = await isInternalStaff();
+      setShowPlatformOption(isStaff);
+    };
+    checkInternalStaff();
+  }, []);
 
   // Handle back navigation
   const handleBack = () => {
@@ -65,6 +124,7 @@ const CreateListingPage: React.FC = () => {
   const [formData, setFormData] = useState<ListingFormData>({
     title: '',
     monthlyRent: 0,
+    yearlyRent: null,
     currency: 'IDR',
     deposit: 0,
     utilities: 0,
@@ -88,12 +148,16 @@ const CreateListingPage: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [newAmenity, setNewAmenity] = useState('');
+  const [selectedScreenshot, setSelectedScreenshot] = useState<File | null>(null);
 
   // Photo preview state
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
 
   // Auto-resize textarea ref
   const textareaRef = useAutoResizeTextarea(aiInput);
+  
+  // File input ref for screenshot upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle photo upload with dropzone
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -131,54 +195,140 @@ const CreateListingPage: React.FC = () => {
     setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Handle file selection for screenshot upload
+  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      console.log('Screenshot for AI selected:', file.name);
+      setSelectedScreenshot(file);
+      toast.success('截图已选择', {
+        description: `已选择文件: ${file.name}`
+      });
+    }
+  };
+
   // Handle AI analysis
   const handleAnalyzeSource = async () => {
-    if (!aiInput.trim()) {
-      toast.error('Please enter some text to analyze');
-      return;
-    }
+    // 如果有文件被选中，则优先处理文件
+    if (selectedScreenshot) {
+      const formData = new FormData();
+      formData.append('sourceImage', selectedScreenshot); // 'sourceImage'是后端期望的字段名
 
-    try {
-      setIsAnalyzing(true);
-      
-      const response = await analyzeListingSource(aiInput);
-      
-      if (response.success && response.data) {
-        const extracted = response.data.extractedListing;
-        setFormData(prev => ({
-          ...prev,
-          title: extracted.title || prev.title,
-          monthlyRent: extracted.monthlyRent || prev.monthlyRent,
-          currency: extracted.currency || prev.currency,
-          deposit: extracted.deposit || prev.deposit,
-          utilities: extracted.utilities || prev.utilities,
-          bedrooms: extracted.bedrooms || prev.bedrooms,
-          bathrooms: extracted.bathrooms || prev.bathrooms,
-          squareFootage: extracted.squareFootage || prev.squareFootage,
-          furnished: extracted.furnished,
-          petFriendly: extracted.petFriendly,
-          smokingAllowed: extracted.smokingAllowed,
-          address: extracted.address || prev.address,
-          locationArea: extracted.locationArea || prev.locationArea,
-          availableFrom: extracted.availableFrom || prev.availableFrom,
-          minimumStay: extracted.minimumStay || prev.minimumStay,
-          description: extracted.description || prev.description,
-          amenities: extracted.amenities.length > 0 ? extracted.amenities : prev.amenities,
-        }));
+      try {
+        setIsAnalyzing(true);
         
-        toast.success('AI analysis completed!', {
-          description: 'Form fields have been filled automatically. You can review and modify them.'
+        // 调用API，将formData发送到后端
+        const response = await analyzeListingSource(formData); 
+        
+        if (response.success && response.data) {
+          const extracted = response.data.extractedListing as ExtractedListingWithAI;
+          const aiData = extracted.aiExtractedData;
+          setFormData(prev => ({
+            ...prev,
+            title: extracted.title || prev.title,
+            monthlyRent: extracted.monthlyRent || aiData?.monthlyRent || prev.monthlyRent,
+            yearlyRent: aiData?.yearlyRent || aiData?.price_yearly_idr || aiData?.price_yearly_usd || prev.yearlyRent,
+            bedrooms: extracted.bedrooms || prev.bedrooms,
+            bathrooms: extracted.bathrooms || prev.bathrooms,
+            squareFootage: extracted.squareFootage || aiData?.landSize || aiData?.buildingSize || prev.squareFootage,
+            address: extracted.address || prev.address,
+            minimumStay: extracted.minimumStay ? parseMinimumStay(extracted.minimumStay) : prev.minimumStay,
+            amenities: (extracted.amenities && extracted.amenities.length > 0) ? extracted.amenities : prev.amenities,
+          }));
+          
+          toast.success('AI analysis completed!', {
+            description: 'Form fields have been filled automatically. You can review and modify them.'
+          });
+        } else {
+          throw new Error(response.error?.message || 'Analysis failed');
+        }
+      } catch (error: unknown) {
+        console.error('AI image analysis error:', error);
+        toast.error('AI image analysis failed', {
+          description: 'Please try again with a different image or use text input.'
         });
-      } else {
-        throw new Error(response.error?.message || 'Analysis failed');
+      } finally {
+        setIsAnalyzing(false);
       }
-    } catch (error: unknown) {
-      console.error('AI analysis error:', error);
-      toast.error('AI analysis failed', {
-        description: 'Please fill out the form manually or try again with different text.'
-      });
-    } finally {
-      setIsAnalyzing(false);
+
+    } else if (aiInput.trim()) { // 如果没有文件，再处理文本
+      try {
+        setIsAnalyzing(true);
+        
+        const response = await analyzeListingSource(aiInput);
+        
+        if (response.success && response.data) {
+          const extracted = response.data.extractedListing as ExtractedListingWithAI;
+          const aiData = extracted.aiExtractedData;
+          setFormData(prev => ({
+            ...prev,
+            title: extracted.title || prev.title,
+            monthlyRent: extracted.monthlyRent || aiData?.monthlyRent || prev.monthlyRent,
+            yearlyRent: aiData?.yearlyRent || aiData?.price_yearly_idr || aiData?.price_yearly_usd || prev.yearlyRent,
+            bedrooms: extracted.bedrooms || prev.bedrooms,
+            bathrooms: extracted.bathrooms || prev.bathrooms,
+            squareFootage: extracted.squareFootage || aiData?.landSize || aiData?.buildingSize || prev.squareFootage,
+            address: extracted.address || prev.address,
+            minimumStay: extracted.minimumStay ? parseMinimumStay(extracted.minimumStay) : prev.minimumStay,
+            amenities: (extracted.amenities && extracted.amenities.length > 0) ? extracted.amenities : prev.amenities,
+          }));
+          
+          toast.success('AI analysis completed!', {
+            description: 'Form fields have been filled automatically. You can review and modify them.'
+          });
+        } else {
+          throw new Error(response.error?.message || 'Analysis failed');
+        }
+      } catch (error: unknown) {
+        console.error('AI analysis error:', error);
+        toast.error('AI analysis failed', {
+          description: 'Please fill out the form manually or try again with different text.'
+        });
+      } finally {
+        setIsAnalyzing(false);
+      }
+    } else {
+      toast.error("Please provide a screenshot or text to analyze.");
+    }
+  };
+
+  // Helper function to parse minimum stay string (e.g., "6 months" -> 6)
+  const parseMinimumStay = (stayInput: string | number | null): number => {
+    // Handle null or undefined
+    if (!stayInput && stayInput !== 0) {
+      return 1;
+    }
+    
+    // If it's already a number, return it
+    if (typeof stayInput === 'number') {
+      return Math.max(1, stayInput);
+    }
+    
+    // If it's a string, try to extract number
+    if (typeof stayInput === 'string') {
+      const match = stayInput.match(/(\d+)/);
+      return match ? parseInt(match[1]) : 1;
+    }
+    
+    // Fallback
+    return 1;
+  };
+
+  // Helper function to format price for display
+  const formatPrice = (amount: number | string | null, currency: string): string => {
+    if (!amount || amount === 0) return '';
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    
+    if (currency === 'IDR') {
+      // Format IDR in millions (e.g., 25000000 -> "Rp 25M")
+      if (numAmount >= 1000000) {
+        return `Rp ${(numAmount / 1000000).toFixed(1)}M`;
+      } else {
+        return `Rp ${numAmount.toLocaleString()}`;
+      }
+    } else {
+      // Format USD with thousands separator
+      return `$${numAmount.toLocaleString()}`;
     }
   };
 
@@ -219,21 +369,42 @@ const CreateListingPage: React.FC = () => {
   // Handle form submission
   const handleSubmit = async () => {
     // Convert string values to numbers for validation and submission
-    const monthlyRent = typeof formData.monthlyRent === 'string' ? Number(formData.monthlyRent) || 0 : formData.monthlyRent;
+    let monthlyRent = typeof formData.monthlyRent === 'string' ? Number(formData.monthlyRent) || 0 : formData.monthlyRent;
+    let yearlyRent = typeof formData.yearlyRent === 'string' ? (formData.yearlyRent === '' ? null : Number(formData.yearlyRent)) : formData.yearlyRent;
     const bedrooms = typeof formData.bedrooms === 'string' ? Number(formData.bedrooms) || 0 : formData.bedrooms;
     const bathrooms = typeof formData.bathrooms === 'string' ? Number(formData.bathrooms) || 0 : formData.bathrooms;
     const minimumStay = typeof formData.minimumStay === 'string' ? Number(formData.minimumStay) || 1 : formData.minimumStay;
     const squareFootage = typeof formData.squareFootage === 'string' ? (formData.squareFootage === '' ? null : Number(formData.squareFootage)) : formData.squareFootage;
 
-    // Basic validation
-    if (!formData.title || !formData.address || monthlyRent <= 0) {
+    // 将值为0的租金字段转换为null
+    if (monthlyRent === 0) {
+      monthlyRent = null;
+    }
+    if (yearlyRent === 0) {
+      yearlyRent = null;
+    }
+
+    // Enhanced validation: at least one price field must be filled
+    if (!formData.title || !formData.address) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Photo validation: at least one photo is required
+    if (!formData.photos || formData.photos.length === 0) {
+      toast.error('At least one photo is required');
+      return;
+    }
+
+    // Price validation: at least one of monthlyRent or yearlyRent must be provided (and not 0)
+    if (!monthlyRent && !yearlyRent) {
+      toast.error('Please provide either Monthly Rent or Yearly Rent');
       return;
     }
 
     // Poster role validation
     if (!posterRole) {
-      toast.error('Please select whether you are a tenant or landlord');
+      toast.error('Please select your role');
       return;
     }
 
@@ -247,6 +418,7 @@ const CreateListingPage: React.FC = () => {
         title: formData.title,
         posterRole: posterRole,
         monthlyRent: monthlyRent,
+        yearlyRent: yearlyRent,
         currency: formData.currency,
         deposit: formData.deposit,
         utilities: formData.utilities,
@@ -282,9 +454,14 @@ const CreateListingPage: React.FC = () => {
   };
 
   return (
-    <ColoredPageWrapper seed="create-listing">
-      {/* Sticky Header */}
-      <header className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+    <div style={{ backgroundColor: bgColor || '#534540' }} className="relative min-h-screen">
+      {/* 半透明蒙版 */}
+      <div className="absolute inset-0 bg-black/40 z-10" />
+      
+      {/* 内容层 */}
+      <div className="relative z-20">
+        {/* Sticky Header */}
+        <header className="sticky top-0 z-40 px-4 py-4 flex items-center justify-between backdrop-blur-sm border-b border-white/10" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
         <Button variant="ghost" size="icon" onClick={handleBack} className="text-white hover:bg-white/20">
           <HomeIcon className="w-5 h-5" />
         </Button>
@@ -294,19 +471,79 @@ const CreateListingPage: React.FC = () => {
 
       <div className="max-w-2xl mx-auto space-y-6 px-4 py-6">
         
-        {/* Image Upload Section */}
+        {/* A. AI 提取区域 - 移动到顶部 */}
         <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90">
-                      <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">Property Photos</h2>
+          <div className="space-y-4">
+              <Textarea
+                ref={textareaRef}
+                className="w-full min-h-[80px] resize-none bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white border-white/20 focus:border-white/40"
+                placeholder="Paste the property description here, e.g. URL or details..."
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+              />
+              
+              {/* 显示选中的截图 */}
+              {selectedScreenshot && (
+                <div className="bg-white/10 rounded-lg p-3 flex items-center gap-3">
+                  <Upload className="h-4 w-4 text-green-400" />
+                  <span className="text-base text-white/90">已选择截图: {selectedScreenshot.name}</span>
+                  <button
+                    onClick={() => setSelectedScreenshot(null)}
+                    className="ml-auto text-white/60 hover:text-red-400"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="bg-white/20 text-white hover:bg-white/30 rounded-full px-4 h-9 text-base"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {selectedScreenshot ? 'Change Screenshot' : 'Upload Screenshot'}
+                </Button>
+                <Button
+                  onClick={handleAnalyzeSource}
+                  disabled={isAnalyzing || (!aiInput.trim() && !selectedScreenshot)}
+                  className="bg-white/20 text-white hover:bg-white/30 rounded-full px-4 h-9 text-base"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {isAnalyzing ? 'Analyzing...' : 'Extract with AI'}
+                </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelected}
+                  style={{ display: 'none' }}
+                  accept="image/png, image/jpeg, application/pdf"
+                />
+              </div>
+            </div>
+        </div>
+
+        {/* Image Upload Section - 移动到AI区域之后 */}
+        <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90">
+          {/* 双列布局 */}
+          <div className="flex items-center gap-4">
+            {/* 左侧图标容器 */}
+            <div className="w-20 h-20 flex items-center justify-center bg-black/20 rounded-xl border border-white/10 flex-shrink-0">
+              <ImagePlus className="w-10 h-10 text-white/60" />
+            </div>
+
+            {/* 右侧内容块 */}
+            <div className="flex-1 flex flex-col items-end gap-2">
+              <h3 className="text-xl font-bold text-white/90">Property Photos <span className="text-red-500">*</span></h3>
               <div className="flex items-center gap-3">
                 {formData.photos.length > 0 && (
-                  <span className="text-sm text-white/70">
+                  <span className="text-base text-white/70">
                     {formData.photos.length}/10 photos
                   </span>
                 )}
                 <Button
                   {...getRootProps()}
-                  className={`bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-8 text-sm ${
+                  className={`bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-9 text-base ${
                     formData.photos.length >= 10 ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   disabled={formData.photos.length >= 10}
@@ -317,11 +554,12 @@ const CreateListingPage: React.FC = () => {
                 </Button>
               </div>
             </div>
+          </div>
 
                       {/* Photo Previews */}
             {photoPreviews.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4">
+                <h3 className="text-xl font-semibold text-white mb-4">
                   Uploaded Photos ({photoPreviews.length}/10)
                 </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -343,72 +581,74 @@ const CreateListingPage: React.FC = () => {
               </div>
             </div>
           )}
+          
+          {/* Photo validation error message */}
+          {formData.photos.length === 0 && (
+            <p className="text-red-400 text-base mt-2">At least one photo is required.</p>
+          )}
         </div>
         
-        {/* A. AI 提取区域 */}
-        <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90">
-                      <div className="space-y-4">
-              <Textarea
-                ref={textareaRef}
-                className="w-full min-h-[80px] resize-none bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white border-white/20 focus:border-white/40"
-                placeholder="Paste the property description here, e.g. URL or details..."
-                value={aiInput}
-                onChange={(e) => setAiInput(e.target.value)}
-              />
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleAnalyzeSource}
-                  disabled={isAnalyzing || !aiInput.trim()}
-                  className="bg-white/20 text-white hover:bg-white/30 rounded-full px-4 h-8 text-sm"
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  {isAnalyzing ? 'Analyzing...' : 'Extract with AI'}
-                </Button>
-              </div>
-            </div>
-        </div>
-
-        {/* B. "Property Details" 表单区域 */}
+        {/* Poster Role Selection Container */}
         <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90 mb-6">
-          <h2 className="text-2xl font-bold text-white mb-6">Property Details</h2>
-          
-          {/* Poster Role Selection */}
-          <div className="mb-6">
-            <div className="grid grid-cols-2 gap-4">
+          <p className="text-xl text-center text-white/90 mb-4">I am ...</p>
+          <div className={`grid ${showPlatformOption ? 'grid-cols-3' : 'grid-cols-2'} gap-4`}>
+            <div className="flex flex-col items-center gap-2">
+              <User className="h-8 w-8 text-white/60" />
               <button
                 onClick={() => setPosterRole('tenant')}
-                className={`p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-3 ${
+                className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-base ${
                   posterRole === 'tenant'
-                    ? 'border-white/60 bg-white/20 text-white'
-                    : 'border-white/20 bg-white/10 text-white/70 hover:border-white/40'
+                    ? 'bg-white text-gray-800'
+                    : 'bg-white/10 text-white/70 hover:bg-white/15'
                 }`}
               >
-                <User className="h-8 w-8" />
-                <span className="font-medium">Tenant</span>
-              </button>
-              <button
-                onClick={() => setPosterRole('landlord')}
-                className={`p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-3 ${
-                  posterRole === 'landlord'
-                    ? 'border-white/60 bg-white/20 text-white'
-                    : 'border-white/20 bg-white/10 text-white/70 hover:border-white/40'
-                }`}
-              >
-                <Building className="h-8 w-8" />
-                <span className="font-medium">Landlord/Agent</span>
+                Tenant
               </button>
             </div>
+            <div className="flex flex-col items-center gap-2">
+              <Building className="h-8 w-8 text-white/60" />
+              <button
+                onClick={() => setPosterRole('landlord')}
+                className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-base ${
+                  posterRole === 'landlord'
+                    ? 'bg-white text-gray-800'
+                    : 'bg-white/10 text-white/70 hover:bg-white/15'
+                }`}
+              >
+                Landlord/Agent
+              </button>
+            </div>
+            {showPlatformOption && (
+              <div className="flex flex-col items-center gap-2">
+                <MenuIcon className="h-8 w-8 text-white/60" />
+                <button
+                  onClick={() => setPosterRole('platform')}
+                  className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-base ${
+                    posterRole === 'platform'
+                      ? 'bg-white text-gray-800'
+                      : 'bg-white/10 text-white/70 hover:bg-white/15'
+                  }`}
+                >
+                  Platform
+                </button>
+              </div>
+            )}
           </div>
+        </div>
+        
+        {/* B. "Property Details" 表单区域 */}
+        <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90 mb-6">
+          <h2 className="text-xl font-bold text-white mb-6">Property Details</h2>
           
           {/* Property Title */}
           <div className="mb-4">
-            <label htmlFor="title" className="block text-sm font-medium text-white/90 mb-2">
+            <label htmlFor="title" className="block text-base font-medium text-white/90 mb-2">
               Property Title
             </label>
             <input
               id="title"
               type="text"
-              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+              className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
               value={formData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
               placeholder="e.g., Beautiful Villa in Canggu"
@@ -417,13 +657,13 @@ const CreateListingPage: React.FC = () => {
 
           {/* Address */}
           <div className="mb-4">
-            <label htmlFor="address" className="block text-sm font-medium text-white/90 mb-2">
+            <label htmlFor="address" className="block text-base font-medium text-white/90 mb-2">
               Address
             </label>
             <input
               id="address"
               type="text"
-              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+              className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
               value={formData.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
               placeholder="Property address"
@@ -432,13 +672,13 @@ const CreateListingPage: React.FC = () => {
 
           {/* Location Area */}
           <div className="mb-4">
-            <label htmlFor="locationArea" className="block text-sm font-medium text-white/90 mb-2">
+            <label htmlFor="locationArea" className="block text-base font-medium text-white/90 mb-2">
               Location Area
             </label>
             <input
               id="locationArea"
               type="text"
-              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+              className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
               value={formData.locationArea}
               onChange={(e) => handleInputChange('locationArea', e.target.value)}
               placeholder="e.g., Canggu, Ubud, Seminyak"
@@ -448,27 +688,27 @@ const CreateListingPage: React.FC = () => {
           {/* Bedrooms / Bathrooms */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label htmlFor="bedrooms" className="block text-sm font-medium text-white/90 mb-2">
+              <label htmlFor="bedrooms" className="block text-base font-medium text-white/90 mb-2">
                 Bedrooms
               </label>
               <input
                 id="bedrooms"
                 type="number"
                 min="0"
-                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
                 value={formData.bedrooms || ''}
                 onChange={(e) => handleNumberInputChange('bedrooms', e)}
               />
             </div>
             <div>
-              <label htmlFor="bathrooms" className="block text-sm font-medium text-white/90 mb-2">
+              <label htmlFor="bathrooms" className="block text-base font-medium text-white/90 mb-2">
                 Bathrooms
               </label>
               <input
                 id="bathrooms"
                 type="number"
                 min="0"
-                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
                 value={formData.bathrooms || ''}
                 onChange={(e) => handleNumberInputChange('bathrooms', e)}
               />
@@ -478,170 +718,119 @@ const CreateListingPage: React.FC = () => {
           {/* Square Feet / Min Stay */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label htmlFor="squareFootage" className="block text-sm font-medium text-white/90 mb-2">
+              <label htmlFor="squareFootage" className="block text-base font-medium text-white/90 mb-2">
                 Square Feet
               </label>
               <input
                 id="squareFootage"
                 type="number"
                 min="0"
-                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
                 value={formData.squareFootage || ''}
                 onChange={(e) => handleNumberInputChange('squareFootage', e)}
                 placeholder="Square footage"
               />
             </div>
             <div>
-              <label htmlFor="minimumStay" className="block text-sm font-medium text-white/90 mb-2">
+              <label htmlFor="minimumStay" className="block text-base font-medium text-white/90 mb-2">
                 Min Stay (months)
               </label>
               <input
                 id="minimumStay"
                 type="number"
                 min="1"
-                className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
                 value={formData.minimumStay || ''}
                 onChange={(e) => handleNumberInputChange('minimumStay', e)}
               />
             </div>
           </div>
 
-          {/* Monthly Rent with Currency */}
+          {/* Price Section - Smart Display Logic */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-white/90 mb-2">
-              Monthly Rent
-            </label>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2">
-                <input
-                  id="monthlyRent"
-                  type="number"
-                  min="0"
-                  className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
-                  value={formData.monthlyRent || ''}
-                  onChange={(e) => handleNumberInputChange('monthlyRent', e)}
-                  placeholder="Monthly rent amount"
-                />
-              </div>
-              <div>
-                <select
-                  value={formData.currency}
-                  onChange={(e) => handleInputChange('currency', e.target.value)}
-                  className="block w-full rounded-lg bg-white/10 px-3 py-2 text-white/90 placeholder-white/20 focus:outline-none"
-                >
-                  <option value="IDR">IDR</option>
-                  <option value="USD">USD</option>
-                </select>
+            {/* Monthly Rent */}
+            <div className="mb-4">
+              <label className="block text-base font-medium text-white/90 mb-2">
+                Monthly Rent
+              </label>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2">
+                  <input
+                    id="monthlyRent"
+                    type="number"
+                    min="0"
+                    className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                    value={formData.monthlyRent || ''}
+                    onChange={(e) => handleNumberInputChange('monthlyRent', e)}
+                    placeholder="Monthly rent amount"
+                  />
+                </div>
+                <div>
+                  <select
+                    value={formData.currency}
+                    onChange={(e) => handleInputChange('currency', e.target.value)}
+                    className="block w-full h-10 rounded-lg bg-white/10 pl-3 pr-3 py-2 text-white/90 text-base placeholder-white/20 focus:outline-none appearance-none bg-no-repeat bg-right"
+                    style={{ 
+                      backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")",
+                      backgroundPosition: "right 8px center",
+                      backgroundSize: "16px 16px"
+                    }}
+                  >
+                    <option value="IDR">IDR</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Property Description */}
-          <div className="mb-6">
-            <label htmlFor="description" className="block text-sm font-medium text-white/90 mb-2">
-              Property Description
-            </label>
-            <textarea
-              id="description"
-              rows={4}
-              className="w-full p-3 bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white border border-white/20 focus:border-white/40 rounded-lg focus:outline-none resize-none"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Describe your property, location highlights, nearby amenities..."
-            />
-          </div>
-        </div>
-
-        {/* C. "Availability" 标签区域 */}
-        <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90 mb-6">
-          <h3 className="text-xl font-semibold text-white mb-4">Availability</h3>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => handleInputChange('furnished', !formData.furnished)}
-              className={`px-4 py-2 rounded-full border transition-colors ${
-                formData.furnished 
-                  ? 'bg-white/40 text-white border-white/60' 
-                  : 'bg-white/20 text-white border-white/30 hover:border-white/50'
-              }`}
-            >
-              Furnished
-            </button>
-            <button
-              onClick={() => handleInputChange('petFriendly', !formData.petFriendly)}
-              className={`px-4 py-2 rounded-full border transition-colors ${
-                formData.petFriendly 
-                  ? 'bg-white/40 text-white border-white/60' 
-                  : 'bg-white/20 text-white border-white/30 hover:border-white/50'
-              }`}
-            >
-              Pet Friendly
-            </button>
-            <button
-              onClick={() => handleInputChange('smokingAllowed', !formData.smokingAllowed)}
-              className={`px-4 py-2 rounded-full border transition-colors ${
-                formData.smokingAllowed 
-                  ? 'bg-white/40 text-white border-white/60' 
-                  : 'bg-white/20 text-white border-white/30 hover:border-white/50'
-              }`}
-            >
-              Smoking Allow
-            </button>
-            <button
-              onClick={() => {
-                const hasWifi = formData.amenities.includes('WiFi');
-                if (hasWifi) {
-                  handleInputChange('amenities', formData.amenities.filter(a => a !== 'WiFi'));
-                } else {
-                  handleInputChange('amenities', [...formData.amenities, 'WiFi']);
-                }
-              }}
-              className={`px-4 py-2 rounded-full border transition-colors ${
-                formData.amenities.includes('WiFi') 
-                  ? 'bg-white/40 text-white border-white/60' 
-                  : 'bg-white/20 text-white border-white/30 hover:border-white/50'
-              }`}
-            >
-              WiFi
-            </button>
-            <button
-              onClick={() => {
-                const hasPool = formData.amenities.includes('Pool');
-                if (hasPool) {
-                  handleInputChange('amenities', formData.amenities.filter(a => a !== 'Pool'));
-                } else {
-                  handleInputChange('amenities', [...formData.amenities, 'Pool']);
-                }
-              }}
-              className={`px-4 py-2 rounded-full border transition-colors ${
-                formData.amenities.includes('Pool') 
-                  ? 'bg-white/40 text-white border-white/60' 
-                  : 'bg-white/20 text-white border-white/30 hover:border-white/50'
-              }`}
-            >
-              Pool
-            </button>
-            <button
-              onClick={() => {
-                const hasParking = formData.amenities.includes('Parking');
-                if (hasParking) {
-                  handleInputChange('amenities', formData.amenities.filter(a => a !== 'Parking'));
-                } else {
-                  handleInputChange('amenities', [...formData.amenities, 'Parking']);
-                }
-              }}
-              className={`px-4 py-2 rounded-full border transition-colors ${
-                formData.amenities.includes('Parking') 
-                  ? 'bg-white/40 text-white border-white/60' 
-                  : 'bg-white/20 text-white border-white/30 hover:border-white/50'
-              }`}
-            >
-              Parking
-            </button>
+            {/* Yearly Rent */}
+            <div className="mt-4">
+              <label className="block text-base font-medium text-white/90 mb-2">
+                Yearly Rent (Optional)
+              </label>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2">
+                  <input
+                    id="yearlyRent"
+                    type="number"
+                    min="0"
+                    className="w-full h-10 py-2 px-3 bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none"
+                    value={formData.yearlyRent || ''}
+                    onChange={(e) => handleNumberInputChange('yearlyRent', e)}
+                    placeholder="Yearly rent amount"
+                  />
+                </div>
+                <div>
+                  <select
+                    value={formData.currency}
+                    onChange={(e) => handleInputChange('currency', e.target.value)}
+                    className="block w-full h-10 rounded-lg bg-white/10 pl-3 pr-3 py-2 text-white/90 text-base placeholder-white/20 focus:outline-none appearance-none bg-no-repeat bg-right"
+                    style={{ 
+                      backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")",
+                      backgroundPosition: "right 8px center",
+                      backgroundSize: "16px 16px"
+                    }}
+                  >
+                    <option value="IDR">IDR</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+              </div>
+              {/* Monthly Equivalent Display */}
+              {formData.yearlyRent && formData.yearlyRent !== '' && parseFloat(formData.yearlyRent.toString()) > 0 && (
+                <p className="text-sm text-white/60 mt-1">
+                  (equivalent monthly = {formatPrice(
+                    Math.round((typeof formData.yearlyRent === 'string' ? parseFloat(formData.yearlyRent) : formData.yearlyRent) / 12),
+                    formData.currency
+                  )})
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
         {/* D. "Amenities" 显示区域 */}
-        <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90 mb-6">
+        <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90 mb-0">
           <h3 className="text-xl font-semibold text-white mb-4">Amenities</h3>
           {formData.amenities.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -658,21 +847,24 @@ const CreateListingPage: React.FC = () => {
               ))}
             </div>
                       ) : (
-              <p className="text-white/70 text-sm">No amenities selected yet. Use the buttons above to add amenities.</p>
+              <p className="text-white/70 text-base">No amenities selected yet. AI will extract amenities automatically.</p>
             )}
         </div>
 
         {/* D. 发布按钮 */}
-        <button
-          onClick={handleSubmit}
-          disabled={isPublishing}
-          className="w-full bg-[#2563eb] text-white font-semibold rounded-xl py-3 mt-6 sticky bottom-4 shadow-lg transition-colors"
-        >
-          {isPublishing ? 'Publishing...' : 'Publish Listing'}
-        </button>
+        <div className="mt-6 pb-24 px-4">
+          <button
+            onClick={handleSubmit}
+            disabled={isPublishing}
+            className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-white font-semibold rounded-2xl py-3 transition-colors backdrop-blur-sm border border-blue-500/20"
+          >
+            {isPublishing ? 'Publishing...' : 'Publish Listing'}
+          </button>
+        </div>
 
+        </div>
       </div>
-    </ColoredPageWrapper>
+    </div>
   );
 };
 

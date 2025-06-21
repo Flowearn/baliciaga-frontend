@@ -65,6 +65,13 @@ export interface Listing {
   totalSpots: number;
   createdAt: string;
   updatedAt: string;
+  initiator: {
+    id: string;
+    name: string;
+    profilePictureUrl?: string | null;
+    role: 'tenant' | 'landlord' | 'platform';
+    whatsApp?: string | null;
+  };
 }
 
 export interface ListingsPagination {

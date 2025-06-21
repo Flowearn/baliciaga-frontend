@@ -60,21 +60,11 @@ const MyApplicationsPage: React.FC = () => {
       let pagination: { nextCursor?: string | null; hasMore?: boolean; total?: number } | null = null;
 
       if (response && typeof response === 'object') {
-        // 处理axios响应，后端直接返回数据结构
-        if (response.data) {
-          newApplications = response.data.applications || [];
-          pagination = response.data.pagination;
-        }
-        // 如果响应直接包含应用数据（后端的实际格式）
-        else if ('applications' in response) {
-          const directResponse = response as { applications?: MyApplication[]; pagination?: { nextCursor?: string | null; hasMore?: boolean; total?: number } };
-          newApplications = directResponse.applications || [];
-          pagination = directResponse.pagination || null;
-        }
-        // 如果响应有success字段，使用标准结构（备用格式）
-        else if ('success' in response && response.success) {
-          newApplications = response.data?.applications || [];
-          pagination = response.data?.pagination;
+        // Since apiClient returns response.data, the actual data is directly in response
+        if ('applications' in response) {
+          newApplications = response.applications || [];
+          pagination = response.pagination || null;
+          
         }
       }
 
@@ -150,8 +140,8 @@ const MyApplicationsPage: React.FC = () => {
   if (isLoading) {
     return (
       <ColoredPageWrapper seed="applications">
-        <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
-          <h1 className="text-white font-semibold text-xl">My Applications</h1>
+        <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-4 px-4 border-b border-white/10">
+          <h1 className="text-white font-semibold text-2xl text-center">My Applications</h1>
         </div>
         <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
           <div className="space-y-4">
@@ -186,14 +176,14 @@ const MyApplicationsPage: React.FC = () => {
   if (error) {
     return (
       <ColoredPageWrapper seed="applications">
-        <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
-          <h1 className="text-white font-semibold text-xl">My Applications</h1>
+        <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-4 px-4 border-b border-white/10">
+          <h1 className="text-white font-semibold text-2xl text-center">My Applications</h1>
         </div>
         <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
           <div className="bg-black/40 backdrop-blur-sm rounded-2xl flex flex-col items-center p-8 text-white/80">
             <AlertCircle className="h-12 w-12 stroke-red-400 mb-4" />
-            <h3 className="text-lg font-semibold mb-2 text-white">Something went wrong</h3>
-            <p className="text-white/70 mb-6 max-w-sm text-center">{error}</p>
+            <h3 className="text-base font-semibold mb-2 text-white">Something went wrong</h3>
+            <p className="text-white/80 mb-6 max-w-sm text-center">{error}</p>
             <Button 
               onClick={handleRefresh}
               className="bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-2"
@@ -211,19 +201,7 @@ const MyApplicationsPage: React.FC = () => {
     <ColoredPageWrapper seed="applications">
       {/* Sticky Header */}
       <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
-        <div className="flex items-center justify-between">
-          <h1 className="text-white font-semibold text-xl">My Applications</h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="bg-white/20 hover:bg-white/30 text-white rounded-full px-3 h-8"
-          >
-            <RefreshCw className={`w-4 h-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
+        <h1 className="text-white font-semibold text-xl text-center">My Applications</h1>
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 max-w-4xl">
@@ -264,7 +242,7 @@ const MyApplicationsPage: React.FC = () => {
             )}
 
             {/* Results Summary */}
-            <div className="text-center text-sm text-white/70 pt-4">
+            <div className="text-center text-base text-white/80 pt-4 pb-4">
               Showing {applications.length} of {totalCount} applications
             </div>
           </>
@@ -282,8 +260,8 @@ const EmptyState: React.FC = () => {
         <path d="M12 22a10 10 0 1 0-10-10h.01"/>
         <path d="M17 10a5 5 0 0 0-5-5h-1.5"/>
       </svg>
-      <h3 className="text-xl font-semibold text-white">No applications yet</h3>
-      <p className="mt-2 text-base text-white/70 text-center">You haven't submitted any rental applications. Start browsing properties to find your perfect home!</p>
+      <h3 className="text-base font-semibold text-white/100">No applications yet</h3>
+      <p className="mt-2 text-base text-white/80 text-center">You haven't submitted any rental applications. Start browsing properties to find your perfect home!</p>
       <Button className="mt-4 bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-2" onClick={() => window.location.href = '/listings'}>
         Browse Properties
       </Button>

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
   Calendar, 
-  DollarSign, 
+  Banknote, 
   Home, 
   MapPin, 
   Upload, 
@@ -267,7 +267,7 @@ const ListingReviewForm: React.FC<ListingReviewFormProps> = ({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5" />
+              <Banknote className="w-5 h-5" />
               Pricing Information
             </CardTitle>
           </CardHeader>
@@ -279,7 +279,7 @@ const ListingReviewForm: React.FC<ListingReviewFormProps> = ({
                   <select
                     value={formData.currency}
                     onChange={(e) => handleInputChange('currency', e.target.value)}
-                    className="px-3 py-2 border border-r-0 rounded-l-md bg-gray-50 text-sm"
+                    className="px-3 py-2 border border-r-0 rounded-l-md bg-gray-50 text-base"
                   >
                     <option value="SGD">SGD</option>
                     <option value="USD">USD</option>
@@ -471,8 +471,8 @@ const ListingReviewForm: React.FC<ListingReviewFormProps> = ({
               >
                 <div className="text-center">
                   <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm text-gray-600">Click to upload photos</p>
-                  <p className="text-xs text-gray-400">JPEG, PNG up to 10MB each</p>
+                  <p className="text-base text-gray-600">Click to upload photos</p>
+                  <p className="text-sm text-gray-400">JPEG, PNG up to 10MB each</p>
                 </div>
               </Label>
             </div>

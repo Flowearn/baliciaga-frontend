@@ -28,7 +28,8 @@ import {
   Bike,
   Dog,
   Wind,
-  Leaf
+  Leaf,
+  ArrowLeft
 } from "lucide-react";
 import { type Cafe } from '../types';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -90,7 +91,6 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
   // Embla carousel setup with autoplay
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { loop: true }, 
-    // @ts-expect-error - embla-carousel-autoplay 和 embla-carousel-react 版本不兼容导致的类型错误
     [Autoplay(autoplayOptions)]
   );
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -257,48 +257,16 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
 
   return (
     <div className="bg-transparent w-full rounded-lg relative z-5">
-      {/* Header Section */}
-      <div className="sticky top-0 z-40 px-4 py-3 relative" style={{ backgroundColor: pageBgColor || '#1E293B' }}>
-        {/* Internal Overlay */}
-        <div className="absolute inset-0 bg-black/40"></div>
-        
-        {/* Title Row */}
-        <div className="flex items-center justify-between w-full relative z-10">
-          {/* Home Icon (Left) */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white hover:bg-slate-700"
-            onClick={onClose}
-          >
-            <HomeIcon className="h-6 w-6" />
-          </Button>
-
-          {/* Title (Center) */}
-          <h1 
-            className="text-3xl font-bold text-white cursor-pointer"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          >
-            Baliciaga
-          </h1>
-
-          {/* Menu Icon (Right) */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-slate-700">
-                <MenuIcon className="h-6 w-6" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem 
-                className="flex justify-center" 
-                onSelect={() => { window.location.href = 'mailto:yo@baliciaga.com'; }}
-              >
-                Contact
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+      {/* 新的极简页眉 */}
+      <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onClose}
+          className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+        >
+          <ArrowLeft className="h-5 w-5 text-white/90" />
+        </Button>
       </div>
 
       {/* Content Container */}
@@ -349,15 +317,15 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
         
         {/* Name and rating in a single row - name on left, rating on right */}
         <div className="name-rating-line mt-4 z-30 relative flex justify-between items-start">
-          <h1 className="text-2xl font-bold text-white drop-shadow-sm pr-2">{cafe.name}</h1>
-          <div className="flex flex-col items-end pt-1">
-            <div className="flex items-center flex-shrink-0">
+          <h1 className="text-2xl font-bold text-white drop-shadow-sm pr-2 flex-1">{cafe.name}</h1>
+          <div className="flex flex-col items-end flex-shrink-0 pt-1">
+            <div className="flex items-center">
               <StarOutline size={18} className="text-yellow-500 mr-1" fill="currentColor" />
-              <span className="text-white/80 text-sm drop-shadow-sm">{cafe.rating?.toFixed(1) || "N/A"}/5</span>
-              <span className="text-white/60 text-sm ml-1 drop-shadow-sm">({cafe.userRatingsTotal || 0})</span>
+              <span className="text-white/80 text-base drop-shadow-sm">{cafe.rating?.toFixed(1) || "N/A"}/5</span>
+              <span className="text-white/60 text-base ml-1 drop-shadow-sm">({cafe.userRatingsTotal || 0})</span>
             </div>
             {distanceInKm !== null && typeof distanceInKm === 'number' && (
-              <div className="flex items-center text-white/80 text-sm mt-3 drop-shadow-sm">
+              <div className="flex items-center text-white/80 text-base drop-shadow-sm" style={{ marginTop: '10px' }}>
                 <MapPin size={14} className="mr-1 text-gray-300" />
                 <span>{distanceInKm.toFixed(1)} km</span>
               </div>
@@ -371,7 +339,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           {cafe.gofoodUrl && (
             <Button
               asChild
-              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-9 text-base font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
             >
               <a href={cafe.gofoodUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
                 <Bike size={16} />
@@ -384,7 +352,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           {cafe && cafe.tableUrl && typeof cafe.tableUrl === 'string' && cafe.tableUrl.trim() !== '' && (
             <Button
               asChild
-              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-9 text-base font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
             >
               <a href={cafe.tableUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
                 <BookOpen size={16} />
@@ -397,7 +365,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           {cafe && cafe.menuUrl && typeof cafe.menuUrl === 'string' && cafe.menuUrl.trim() !== '' && (
             <Button
               asChild
-              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-9 text-base font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
             >
               <a href={cafe.menuUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
                 <FileText size={16} />
@@ -408,7 +376,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           
           {/* Share button */}
           <Button 
-            className="bg-white text-gray-800 hover:bg-gray-100 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
+            className="bg-white text-gray-800 hover:bg-gray-100 rounded-full px-3 h-9 text-base font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
             onClick={handleShareClick}
           >
             <Share2 size={16} />
@@ -417,7 +385,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
         </div>
         
         {/* Unified Content Container with semi-transparent overlay */}
-        <div className="content-area-container mt-4 bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md z-30 relative text-white/90">
+        <div className="content-area-container mt-4 bg-black/40 rounded-xl p-4 shadow-md z-30 relative text-white/90">
           {/* Date/Hours/Weather Container */}
           <div className="datetime-weather-container relative z-30 mb-4">
             {/* Opening Hours with expand/collapse functionality and Open/Closed status */}
@@ -427,7 +395,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
                 className="flex items-center cursor-pointer" 
                 onClick={() => setIsOpeningHoursExpanded(!isOpeningHoursExpanded)}
               >
-                <p className="text-gray-200/90 text-sm">
+                <p className="text-gray-200/90 text-base">
                   {todayOpeningHours}
                 </p>
                 <div className="ml-2">
@@ -442,11 +410,11 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
               {/* Status Badge - positioned to the right of hours */}
               {typeof cafe.isOpenNow === 'boolean' ? (
                 cafe.isOpenNow ? (
-                  <div className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full ml-3">
+                  <div className="bg-green-500 text-white text-sm px-2 py-0.5 rounded-full ml-3">
                     Open
                   </div>
                 ) : (
-                  <div className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full ml-3">
+                  <div className="bg-red-500 text-white text-sm px-2 py-0.5 rounded-full ml-3">
                     Closed
                   </div>
                 )
@@ -457,7 +425,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
             {isOpeningHoursExpanded && cafe.openingHours && Array.isArray(cafe.openingHours) && cafe.openingHours.length > 0 && (
               <div className="mt-2 pl-1">
                 {cafe.openingHours.map((hours, index) => (
-                  <p key={index} className="text-gray-200/90 text-sm mb-1">
+                  <p key={index} className="text-gray-200/90 text-base mb-1">
                     {formatOpeningHours(hours || "")}
                   </p>
                 ))}
@@ -471,19 +439,19 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
               {cafe.servesVegetarianFood && (
                 <div className="flex flex-col items-center text-center">
                   <Leaf size={20} className="text-gray-300 mb-1" />
-                  <p className="text-xs text-gray-300">Serves Vegetarian</p>
+                  <p className="text-sm text-gray-300">Serves Vegetarian</p>
                 </div>
               )}
               {cafe.allowsDogs && (
                 <div className="flex flex-col items-center text-center">
                   <Dog size={20} className="text-gray-300 mb-1" />
-                  <p className="text-xs text-gray-300">Allows Dogs</p>
+                  <p className="text-sm text-gray-300">Allows Dogs</p>
                 </div>
               )}
               {cafe.outdoorSeating && (
                 <div className="flex flex-col items-center text-center">
                   <Wind size={20} className="text-gray-300 mb-1" />
-                  <p className="text-xs text-gray-300">Outdoor Seating</p>
+                  <p className="text-sm text-gray-300">Outdoor Seating</p>
                 </div>
               )}
             </div>
@@ -518,7 +486,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
               <Button
                 // variant="outline" // Variant removed
                 // size="sm" // Size prop removed
-                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center justify-center grow basis-0 gap-x-1.5"
+                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-9 text-base flex items-center justify-center grow basis-0 gap-x-1.5"
                 onClick={() => window.location.href = `tel:${cafe.phoneNumber}`}
               >
                 <Phone className="h-4 w-4" />
@@ -529,7 +497,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
               <Button
                 // variant="outline" // Variant removed
                 // size="sm" // Size prop removed
-                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center justify-center grow basis-0 gap-x-1.5"
+                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-9 text-base flex items-center justify-center grow basis-0 gap-x-1.5"
                 onClick={() => window.open(cafe.website, '_blank')}
               >
                 <Globe className="h-4 w-4" />
@@ -539,7 +507,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
             {cafe.instagram && (
               <Button
                 asChild
-                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-8 text-sm flex items-center justify-center grow basis-0 gap-x-1.5"
+                className="bg-white/20 text-white hover:bg-white/30 rounded-full px-5 h-9 text-base flex items-center justify-center grow basis-0 gap-x-1.5"
               >
                 <a href={cafe.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
                   <Instagram className="h-4 w-4" />
