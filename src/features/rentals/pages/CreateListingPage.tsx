@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { X, Upload, Sparkles, Plus, UploadCloud, User, Building, Home as HomeIcon, Menu as MenuIcon, ImagePlus } from 'lucide-react';
+import { X, Upload, Sparkles, Plus, UploadCloud, User, Building, Menu as MenuIcon, ImagePlus } from 'lucide-react';
 import { analyzeListingSource, AnalyzeSourceResponse, createListing } from '@/services/listingService';
 import { uploadListingPhotos } from '@/services/uploadService';
 import { isInternalStaff } from '@/utils/authUtils';
@@ -115,11 +115,6 @@ const CreateListingPage: React.FC = () => {
     checkInternalStaff();
   }, []);
 
-  // Handle back navigation
-  const handleBack = () => {
-    navigate('/');
-  };
-  
   // Form state
   const [formData, setFormData] = useState<ListingFormData>({
     title: '',
@@ -460,16 +455,7 @@ const CreateListingPage: React.FC = () => {
       
       {/* 内容层 */}
       <div className="relative z-20">
-        {/* Sticky Header */}
-        <header className="sticky top-0 z-40 px-4 py-4 flex items-center justify-between backdrop-blur-sm border-b border-white/10" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
-        <Button variant="ghost" size="icon" onClick={handleBack} className="text-white hover:bg-white/20">
-          <HomeIcon className="w-5 h-5" />
-        </Button>
-        <h1 className="text-xl font-bold text-white">Publish Listing</h1>
-        <div className="w-10" /> {/* Spacer for centering */}
-      </header>
-
-      <div className="max-w-2xl mx-auto space-y-6 px-4 py-6">
+        <div className="max-w-2xl mx-auto space-y-6 px-4 py-6">
         
         {/* A. AI 提取区域 - 移动到顶部 */}
         <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90">

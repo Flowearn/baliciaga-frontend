@@ -99,7 +99,7 @@ const GlobalHeader = () => {
   ];
 
   return (
-    <div className="bg-background-creamy/70 backdrop-blur-sm pt-1 pb-0 px-4">
+    <div className="bg-background-creamy/70 backdrop-blur-sm pt-1 pb-2 px-4">
       <div className="pt-0 pb-0">
         <div className="flex items-center justify-between w-full">
           <Button 

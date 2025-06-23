@@ -44,7 +44,8 @@ const MainLayout = () => {
   // Show TopNavBar only on Rental-related pages (Rule 2)
   const showTopNav = (location.pathname.startsWith('/listings') || 
                      location.pathname.startsWith('/my-listings') || 
-                     location.pathname.startsWith('/my-applications')) &&
+                     location.pathname.startsWith('/my-applications') ||
+                     location.pathname === '/create-listing') &&
                      !location.pathname.startsWith('/login') &&
                      !location.pathname.startsWith('/signup');
   

@@ -336,9 +336,13 @@ const Index = () => {
         totalItems: cafes.length,
         categories: cafes.map(c => c.category)
       });
-      filteredCafes = cafes.filter(cafe => 
-        cafe.category === selectedFoodSubCategory
-      );
+      filteredCafes = cafes.filter(cafe => {
+        // Handle places that are marked as 'both' (exist in both cafe and dining)
+        if (cafe.category === 'both') {
+          return true; // Show in both cafe and dining subcategories
+        }
+        return cafe.category === selectedFoodSubCategory;
+      });
       console.log('Filtered result:', filteredCafes.length);
     }
 
@@ -546,7 +550,7 @@ const Index = () => {
           </div>
         </div>
       ) : (
-        <div className="pt-4">
+        <div className="pt-1">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8">
             {sortedCafes?.map((cafe) => (
               <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
