@@ -407,6 +407,11 @@ const UserProfilePage: React.FC = () => {
           />
         </div>
 
+        {/* Profile completion guidance text */}
+        <p className="text-sm text-neutral-400 text-center my-4">
+          A complete profile helps your application get accepted faster.
+        </p>
+
         {/* Information List */}
         <div className="space-y-4 mb-8 mx-8">
             {/* Name Field */}

@@ -39,8 +39,8 @@ export function OptimizedImage({
         });
       },
       {
-        // 当图片距离视口边界200px时，开始加载
-        rootMargin: '200px',
+        // 当图片距离视口边界350px时，开始加载
+        rootMargin: '350px',
       }
     );
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Clock, MapPin } from "lucide-react";
 import { type Cafe } from '../types';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -15,6 +15,7 @@ type CafeCardProps = {
 
 const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // 获取当天营业时间
   const todayOpeningHours = useMemo(() => {
@@ -43,6 +44,34 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
     
     return "Hours unavailable";
   }, [cafe?.openingHours]);
+
+  // Track carousel slide changes
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const onSelect = () => {
+      setCurrentImageIndex(emblaApi.selectedScrollSnap());
+    };
+
+    emblaApi.on('select', onSelect);
+    onSelect();
+
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
+  }, [emblaApi]);
+
+  // Preload next image
+  useEffect(() => {
+    // Check if photos exist and there's a next image
+    if (cafe?.photos && cafe.photos.length > currentImageIndex + 1) {
+      const nextImageUrl = cafe.photos[currentImageIndex + 1];
+      
+      // Create a new Image object in memory to preload the next image
+      const img = new Image();
+      img.src = nextImageUrl;
+    }
+  }, [currentImageIndex, cafe?.photos]);
 
   if (!cafe || !cafe.placeId || !cafe.name) {
     console.warn("CafeCard received undefined or invalid cafe data");

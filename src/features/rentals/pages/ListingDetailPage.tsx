@@ -339,7 +339,7 @@ const ListingDetailPage: React.FC = () => {
   }
 
   return (
-    <ColoredPageWrapper seed={listingId || 'listing'}>
+    <ColoredPageWrapper seed={listingId || 'listing'} className="min-h-screen">
       {/* Sticky Header - Consistent with CafeDetail */}
       <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
         <Button 

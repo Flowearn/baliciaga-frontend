@@ -69,7 +69,7 @@ const MainLayout = () => {
                           location.pathname.match(/^\/my-listings\/[^\/]+$/);
 
   return (
-    <div className={isDetailPage ? '' : 'min-h-screen bg-background-creamy'}>
+    <div className={isDetailPage ? '' : 'min-h-screen bg-background-creamy flex flex-col gap-y-4'}>
       <ScrollToTop />
       {!isAccountPage && !hideGlobalHeader && <GlobalHeader />}
       {showRegionalFilter && <RegionalFilterBar />}
