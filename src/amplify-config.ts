@@ -32,4 +32,12 @@ const config = {
 // 4. 使用最终生成的配置初始化Amplify
 Amplify.configure(config);
 
+// 添加全局错误处理
+if (typeof window !== 'undefined') {
+  console.log('🔧 [Amplify] 配置已加载:', {
+    userPoolId: config.Auth.Cognito.userPoolId,
+    clientId: config.Auth.Cognito.userPoolClientId,
+  });
+}
+
 export default config; 

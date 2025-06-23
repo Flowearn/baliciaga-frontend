@@ -153,7 +153,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onCardClick, isArchi
                   {formatPrice(perRoomPrice, listing.pricing.currency)}
                 </span>
                 <span className="text-base text-gray-500">
-                  / room monthly
+                  / Room monthly
                 </span>
               </>
             ) : (

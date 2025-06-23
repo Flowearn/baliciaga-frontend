@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import EditableField from '../components/EditableField';
+import PhoneEditableField from '../components/PhoneEditableField';
 import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -313,6 +314,9 @@ const UserProfilePage: React.FC = () => {
   const saveField = async (field: keyof ProfileFormData, value: string | string[]) => {
     if (!user || !setUser) throw new Error('User not authenticated');
 
+    console.log(`📝 Saving field ${field} with value:`, value);
+    console.log('Current user:', user);
+
     // 步骤1：基于当前的表单状态，创建一个更新后的状态副本
     const updatedForm = { ...profileForm, [field]: value };
     
@@ -331,10 +335,14 @@ const UserProfilePage: React.FC = () => {
       profilePictureUrl: updatedForm.profilePictureUrl, // <-- 新增的关键行：保存文字时记住头像
     };
 
+    console.log('💾 Payload to save:', payloadToSave);
+
     try {
       // 步骤4：将这个完整的、更新后的profile对象发送到后端
       // 后端将用这个对象完整覆盖数据库记录，因为payload是完整的，所以不会再丢失字段
       const updatedProfile = await updateUserProfile(payloadToSave);
+      
+      console.log('✅ Profile updated successfully:', updatedProfile);
       
       // 更新用户状态
       setUser({
@@ -348,9 +356,10 @@ const UserProfilePage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       
       toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully!`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error updating ${field}:`, error);
-      toast.error(`Failed to update ${field}.`);
+      console.error('Error details:', error.response?.data || error.message);
+      toast.error(`Failed to update ${field}: ${error.response?.data?.error?.message || error.message}`);
       
       // 如果保存失败，回滚UI状态到保存前的状态
       setProfileForm(profileForm);
@@ -360,14 +369,9 @@ const UserProfilePage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed="profile">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
-        <h1 className="text-white font-semibold text-xl text-center">Profile</h1>
-      </div>
-
       <div className="relative z-10 max-w-md mx-auto">
         {/* Avatar Section */}
-        <div className="flex flex-col items-center mb-8 mt-4">
+        <div className="flex flex-col items-center mb-8 profile-avatar-section">
           <div className="relative mb-4 cursor-pointer group" onClick={triggerAvatarUpload}>
             <Avatar className="w-24 h-24 transition-opacity group-hover:opacity-80">
               <AvatarImage 
@@ -446,12 +450,11 @@ const UserProfilePage: React.FC = () => {
 
             {/* WhatsApp Field */}
             <div className="bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2">
-              <EditableField
+              <PhoneEditableField
                 label="WhatsApp"
                 value={profileForm.whatsApp}
                 onSave={(value) => saveField('whatsApp', value)}
-                placeholder="Enter WhatsApp number"
-                type="tel"
+                placeholder="Enter phone number"
                 icon={<MessageSquare className="w-5 h-5 text-white/60" />}
               />
             </div>

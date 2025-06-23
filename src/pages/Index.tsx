@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Menu as MenuIcon, Search as SearchIcon, X as XIcon, Coffee, Wine, Home } from "lucide-react";
+import FoodNavBar from '../components/FoodNavBar';
 
 // Constant for stale location threshold - moved to module level to avoid ReferenceError
 const STALE_LOCATION_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
@@ -51,11 +52,18 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
   // State for category selection - initialize from URL parameter
-  const initialCategoryFromURL = searchParams.get('type') as 'cafe' | 'bar' | 'cowork' | null;
+  const initialCategoryFromURL = searchParams.get('type') as 'cafe' | 'bar' | 'cowork' | 'food' | null;
   const initialSelectedCategoryValue = initialCategoryFromURL === 'bar' ? 'bar' : 
-                                     initialCategoryFromURL === 'cowork' ? 'cowork' : 'cafe';
-  const [selectedCategory, setSelectedCategory] = useState<'cafe' | 'bar' | 'cowork'>(
+                                     initialCategoryFromURL === 'cowork' ? 'cowork' : 
+                                     initialCategoryFromURL === 'cafe' ? 'cafe' : 'food'; // Default to 'food' instead of 'cafe'
+  const [selectedCategory, setSelectedCategory] = useState<'cafe' | 'bar' | 'cowork' | 'food'>(
     initialSelectedCategoryValue
+  );
+  
+  // State for food sub-category selection - initialize from URL parameter
+  const initialFoodSubCategory = searchParams.get('subCategory') as 'all' | 'cafe' | 'dining' | null;
+  const [selectedFoodSubCategory, setSelectedFoodSubCategory] = useState<'all' | 'cafe' | 'dining'>(
+    initialFoodSubCategory || 'all'
   );
   
   // State for preloading control
@@ -107,23 +115,38 @@ const Index = () => {
 
   
   // Handle category change - update both state and URL
-  const handleCategoryChange = (newCategory: 'cafe' | 'bar' | 'cowork') => {
+  const handleCategoryChange = (newCategory: 'cafe' | 'bar' | 'cowork' | 'food') => {
     setSelectedCategory(newCategory); // 1. 更新 React state
-    setSearchParams({ type: newCategory }, { replace: true }); // 2. 更新 URL search param (使用 replace 避免不必要的历史记录)
+    if (newCategory === 'food') {
+      // When switching to food, preserve existing subCategory or default to 'all'
+      const currentSubCategory = searchParams.get('subCategory') || 'all';
+      setSearchParams({ type: newCategory, subCategory: currentSubCategory }, { replace: true });
+      setSelectedFoodSubCategory(currentSubCategory as 'all' | 'cafe' | 'dining');
+    } else {
+      // For non-food categories, remove subCategory from URL
+      setSearchParams({ type: newCategory }, { replace: true });
+    }
   };
   
-  // Effect to update selectedCategory when URL parameter changes (for external URL changes like browser back/forward)
+  // Effect to update selectedCategory and selectedFoodSubCategory when URL parameters change
   useEffect(() => {
-    const categoryFromUrl = searchParams.get('type') as 'cafe' | 'bar' | 'cowork' | null;
+    const categoryFromUrl = searchParams.get('type') as 'cafe' | 'bar' | 'cowork' | 'food' | null;
+    const subCategoryFromUrl = searchParams.get('subCategory') as 'all' | 'cafe' | 'dining' | null;
 
-    // 将URL参数规范化为 'cafe'、'bar' 或 'cowork'，如果参数不存在或无效，则默认为 'cafe'
+    // 将URL参数规范化为 'cafe'、'bar'、'cowork' 或 'food'，如果参数不存在或无效，则默认为 'food'
     const newCategoryToSet = categoryFromUrl === 'bar' ? 'bar' : 
-                             categoryFromUrl === 'cowork' ? 'cowork' : 'cafe';
+                             categoryFromUrl === 'cowork' ? 'cowork' : 
+                             categoryFromUrl === 'cafe' ? 'cafe' : 'food'; // Default to 'food'
 
     // 只有当URL导出的分类与当前React state中的分类不一致时，才更新state
     // 这避免了在按钮点击（已同时更新state和URL）后不必要的state重设
     if (newCategoryToSet !== selectedCategory) {
       setSelectedCategory(newCategoryToSet);
+    }
+    
+    // Update food sub-category from URL if on food category
+    if (newCategoryToSet === 'food' && subCategoryFromUrl) {
+      setSelectedFoodSubCategory(subCategoryFromUrl);
     }
   }, [searchParams]); // 只依赖 searchParams，移除 selectedCategory 以避免循环更新
 
@@ -299,15 +322,29 @@ const Index = () => {
     }
   }, [error]);
   
-  // Sort cafes by distance if user location is available, otherwise sort by open status
+  // Filter and sort cafes
   const sortedCafes = useMemo<CafeWithDistance[]>(() => {
     if (!Array.isArray(cafes) || cafes.length === 0) {
       return [];
     }
 
+    // Filter cafes based on food sub-category if in food mode
+    let filteredCafes = cafes;
+    if (selectedCategory === 'food' && selectedFoodSubCategory !== 'all') {
+      console.log('Filtering food items:', { 
+        selectedFoodSubCategory, 
+        totalItems: cafes.length,
+        categories: cafes.map(c => c.category)
+      });
+      filteredCafes = cafes.filter(cafe => 
+        cafe.category === selectedFoodSubCategory
+      );
+      console.log('Filtered result:', filteredCafes.length);
+    }
+
     // If we have user location, calculate distances and sort by distance
     if (userLocation) {
-      const cafesWithDistance = cafes.map(cafe => {
+      const cafesWithDistance = filteredCafes.map(cafe => {
         const distanceInKm = getDistanceFromLatLonInKm(
           userLocation.latitude,
           userLocation.longitude,
@@ -334,14 +371,14 @@ const Index = () => {
     }
     
     // Default sorting by open status if no location
-    const sortedResult = [...cafes].sort((a, b) => {
+    const sortedResult = [...filteredCafes].sort((a, b) => {
       if (a.isOpenNow && !b.isOpenNow) return -1;
       if (!a.isOpenNow && b.isOpenNow) return 1;
       return 0;
     });
 
     return sortedResult;
-  }, [cafes, userLocation, selectedCategory]);
+  }, [cafes, userLocation, selectedCategory, selectedFoodSubCategory]);
 
   // Filter cafes for search modal based on searchTerm
   const modalFilteredCafes = useMemo(() => {
@@ -358,7 +395,13 @@ const Index = () => {
 
   const handleCafeCardClick = (cafe: Cafe) => {
     addCafeToCache(queryClient, cafe);
-    navigate(`/places/${cafe.placeId}?type=${selectedCategory}`, { state: { cafeData: cafe } });
+    // Preserve both type and subCategory parameters
+    const params = new URLSearchParams();
+    params.set('type', selectedCategory);
+    if (selectedCategory === 'food' && selectedFoodSubCategory !== 'all') {
+      params.set('subCategory', selectedFoodSubCategory);
+    }
+    navigate(`/places/${cafe.placeId}?${params.toString()}`, { state: { cafeData: cafe } });
   };
 
   // Helper function to copy link to clipboard (same as in CafeDetail.tsx)
@@ -431,6 +474,18 @@ const Index = () => {
       {/* The sticky header and category buttons have been removed from here. */}
       {/* They are now handled globally by GlobalHeader.tsx in App.tsx. */}
       
+      {/* Food Sub-category Navigation */}
+      {selectedCategory === 'food' && (
+        <FoodNavBar 
+          selectedSubCategory={selectedFoodSubCategory}
+          onSubCategoryChange={(subCategory) => {
+            setSelectedFoodSubCategory(subCategory);
+            // Update URL to preserve sub-category selection
+            setSearchParams({ type: 'food', subCategory }, { replace: true });
+          }}
+        />
+      )}
+      
       {/* Search Modal */}
       {isSearchModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-20"> 
@@ -466,7 +521,13 @@ const Index = () => {
                   className="p-2 hover:bg-gray-100 cursor-pointer rounded"
                   onClick={() => {
                     setIsSearchModalOpen(false); // Close modal on selection
-                    navigate(`/places/${cafe.placeId}?type=${selectedCategory}`); // Navigate to place detail page
+                    // Preserve both type and subCategory parameters
+                    const params = new URLSearchParams();
+                    params.set('type', selectedCategory);
+                    if (selectedCategory === 'food' && selectedFoodSubCategory !== 'all') {
+                      params.set('subCategory', selectedFoodSubCategory);
+                    }
+                    navigate(`/places/${cafe.placeId}?${params.toString()}`); // Navigate to place detail page
                   }}
                 >
                   {cafe.name}
@@ -480,13 +541,13 @@ const Index = () => {
       {/* Conditional Rendering for Loading and Content */}
       {isLoading ? (
         <div className="pt-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-12 px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8">
             {Array.from({ length: 6 }).map((_, i) => <CafeCardSkeleton key={i} />)}
           </div>
         </div>
       ) : (
         <div className="pt-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-12 px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8">
             {sortedCafes?.map((cafe) => (
               <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
                 <CafeCard cafe={cafe} />

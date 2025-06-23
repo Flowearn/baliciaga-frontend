@@ -37,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const checkCurrentUser = async () => {
     setIsAuthLoading(true);
     try {
+      console.log('🔍 [AuthContext] 开始检查当前用户...');
       const authenticatedUser = await getCurrentUser();
       
       // 尝试获取用户的完整业务资料
@@ -65,7 +66,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(true);
         setUser(basicUserObject);
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.log('🔍 [AuthContext] getCurrentUser错误:', error?.name, error?.message);
+      // 不要将这个错误视为严重错误，用户可能只是未登录
       setIsAuthenticated(false);
       setUser(null);
     } finally {

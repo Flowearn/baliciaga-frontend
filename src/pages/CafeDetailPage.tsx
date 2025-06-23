@@ -114,10 +114,21 @@ const CafeDetailPage: React.FC = () => {
 
   const handleGoBack = () => {
     const typeFromUrl = searchParams.get('type');
+    const subCategoryFromUrl = searchParams.get('subCategory');
+    
+    // Determine the category type, defaulting to 'food' if type is 'food'
     const categoryTypeForNav = typeFromUrl === 'bar' ? 'bar' : 
-                               typeFromUrl === 'cowork' ? 'cowork' : 'cafe';
-    const targetNavUrl = `/?type=${categoryTypeForNav}`;
-
+                               typeFromUrl === 'cowork' ? 'cowork' : 
+                               typeFromUrl === 'food' ? 'food' : 'cafe';
+    
+    // Build URL params preserving subCategory if present
+    const params = new URLSearchParams();
+    params.set('type', categoryTypeForNav);
+    if (categoryTypeForNav === 'food' && subCategoryFromUrl) {
+      params.set('subCategory', subCategoryFromUrl);
+    }
+    
+    const targetNavUrl = `/?${params.toString()}`;
     navigate(targetNavUrl);
   };
 

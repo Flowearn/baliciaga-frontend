@@ -60,10 +60,20 @@ const SignUpPage = () => {
 
     setIsLoading(true);
     try {
-      // TODO: Implement actual registration logic here
-      console.log('Registration attempt:', { email });
-      toast.success('Account created successfully!');
-      navigate('/login');
+      // Import the signUpWithPassword function
+      const { signUpWithPassword } = await import('@/services/authService');
+      
+      // Call the sign up function
+      const result = await signUpWithPassword(email, password);
+      
+      if (result.success) {
+        console.log('Registration successful, need email confirmation');
+        toast.success('Registration successful! Please check your email for verification code.');
+        // Navigate to confirmation page with email as state
+        navigate('/confirm-signup', { state: { email } });
+      } else {
+        toast.error(result.error || 'Registration failed. Please try again.');
+      }
     } catch (error) {
       console.error('Registration error:', error);
       toast.error('Registration failed. Please try again.');

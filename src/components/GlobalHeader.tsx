@@ -52,14 +52,15 @@ const GlobalHeader = () => {
   // Define navigation links with their properties
   const navLinks = [
     { 
-      to: "/?type=cafe", 
-      text: "Cafe", 
+      to: "/?type=food", 
+      text: "Food", 
       icon: Coffee,
-      // Custom match function for cafe link
+      // Custom match function for food link
       isActiveMatch: () => {
         const isHomePage = location.pathname === '/';
-        const selectedCategory = searchParams.get('type') || 'cafe';
-        return isHomePage && selectedCategory === 'cafe';
+        const selectedCategory = searchParams.get('type');
+        // Default to food when no type is specified
+        return isHomePage && (!selectedCategory || selectedCategory === 'food' || selectedCategory === 'cafe');
       }
     },
     { 
@@ -88,15 +89,17 @@ const GlobalHeader = () => {
       to: "/listings", 
       text: "Rental", 
       icon: Home,
-      // Custom match function for rental link
+      // Custom match function for rental link - highlight for all rental-related pages (Rule 4)
       isActiveMatch: () => {
-        return location.pathname.startsWith('/listings');
+        return location.pathname.startsWith('/listings') || 
+               location.pathname.startsWith('/my-listings') || 
+               location.pathname.startsWith('/my-applications');
       }
     }
   ];
 
   return (
-    <div className="sticky top-0 z-50 bg-background-creamy/70 backdrop-blur-sm py-3 px-4">
+    <div className="bg-background-creamy/70 backdrop-blur-sm pt-1 pb-0 px-4">
       <div className="pt-0 pb-0">
         <div className="flex items-center justify-between w-full">
           <Button 
@@ -109,7 +112,7 @@ const GlobalHeader = () => {
           </Button>
 
           <h1 
-            className="text-4xl font-bold text-black cursor-pointer"
+            className="text-[28px] font-bold text-black cursor-pointer"
             onClick={() => navigate('/')}
           >
             Baliciaga
@@ -148,22 +151,21 @@ const GlobalHeader = () => {
         </div>
         
         {/* 统一的导航按钮 - 使用NavLink和品牌色高亮 */}
-        <div className="mt-2">
-          <div className="flex gap-3">
+        <div className="mt-0">
+          <div className="flex gap-2">
             {navLinks.map(link => {
               const isActive = link.isActiveMatch();
               return (
-                <div key={link.text} className="flex-1 flex flex-col items-center gap-1">
-                  <link.icon className={`w-4 h-4 ${isActive ? 'text-brand' : 'text-gray-500'}`} />
+                <div key={link.text} className="flex-1">
                   <NavLink
                     to={link.to}
                     data-testid={`${link.text.toLowerCase()}-category-button`}
-                    className={`w-full flex items-center justify-center py-1.5 px-2 rounded-full text-base transition-colors duration-200 ease-in-out ${
+                    className={`w-full flex items-center justify-center py-1 px-2 rounded-full text-sm transition-colors duration-200 ease-in-out focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ${
                       isActive
-                        ? 'bg-brand/80 text-white shadow-lg border border-brand/80' // 激活状态: 使用品牌色
+                        ? 'bg-brand/80 text-white shadow-lg border border-brand/80 hover:bg-brand/70' // 激活状态: 使用品牌色
                         : 'bg-white/80 text-gray-500 border border-gray-400/50 hover:bg-white/90' // 非激活状态
                   }`}
-                  style={{ height: '32px' }}
+                  style={{ height: '28px' }}
                   >
                     <span>{link.text}</span>
                   </NavLink>

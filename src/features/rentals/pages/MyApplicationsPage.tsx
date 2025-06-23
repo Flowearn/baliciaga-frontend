@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthenticator } from '@aws-amplify/ui-react';
+import { useNavigate } from 'react-router-dom';
 import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
 
 import MyApplicationCard from '../components/MyApplicationCard';
@@ -21,6 +22,7 @@ import {
 } from '@/services/applicationService';
 
 const MyApplicationsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuthenticator((context) => [context.user]);
   const [applications, setApplications] = useState<MyApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -140,9 +142,6 @@ const MyApplicationsPage: React.FC = () => {
   if (isLoading) {
     return (
       <ColoredPageWrapper seed="applications">
-        <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-4 px-4 border-b border-white/10">
-          <h1 className="text-white font-semibold text-2xl text-center">My Applications</h1>
-        </div>
         <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
           <div className="space-y-4">
             {[...Array(3)].map((_, index) => (
@@ -176,9 +175,6 @@ const MyApplicationsPage: React.FC = () => {
   if (error) {
     return (
       <ColoredPageWrapper seed="applications">
-        <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-4 px-4 border-b border-white/10">
-          <h1 className="text-white font-semibold text-2xl text-center">My Applications</h1>
-        </div>
         <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
           <div className="bg-black/40 backdrop-blur-sm rounded-2xl flex flex-col items-center p-8 text-white/80">
             <AlertCircle className="h-12 w-12 stroke-red-400 mb-4" />
@@ -199,11 +195,6 @@ const MyApplicationsPage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed="applications">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
-        <h1 className="text-white font-semibold text-xl text-center">My Applications</h1>
-      </div>
-
       <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 max-w-4xl">
 
         {/* Applications List */}

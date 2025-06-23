@@ -852,7 +852,7 @@ const CreateListingPage: React.FC = () => {
         </div>
 
         {/* D. 发布按钮 */}
-        <div className="mt-6 pb-24 px-4">
+        <div className="mt-6 pb-8 px-4">
           <button
             onClick={handleSubmit}
             disabled={isPublishing}

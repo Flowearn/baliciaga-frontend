@@ -173,7 +173,7 @@ const ListingDetailPage: React.FC = () => {
         });
         
         // 更新本地状态
-        setListing(prev => prev ? { ...prev, status: 'closed' as const } : null);
+        setListing(prev => prev ? { ...prev, status: 'finalized' as const } : null);
       } else {
         throw new Error(response.error?.message || 'Failed to finalize listing');
       }
@@ -212,7 +212,7 @@ const ListingDetailPage: React.FC = () => {
         toast.success('房源已成功取消！');
         
         // 更新本地状态
-        setListing(prev => prev ? { ...prev, status: 'paused' as const } : null);
+        setListing(prev => prev ? { ...prev, status: 'cancelled' as const } : null);
       } else {
         throw new Error(response.error?.message || 'Failed to cancel listing');
       }
@@ -260,29 +260,27 @@ const ListingDetailPage: React.FC = () => {
   if (isLoading) {
     return (
       <ColoredPageWrapper seed={listingId || 'listing'}>
-        <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-4 px-4 border-b border-white/10">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const from = location.state?.from;
-                if (from) {
-                  navigate(from);
-                } else {
-                  // Fallback based on current route
-                  const defaultBack = location.pathname.startsWith('/my-listings') 
-                    ? '/my-listings' 
-                    : '/listings';
-                  navigate(defaultBack);
-                }
-              }}
-              className="mr-3 p-2 hover:bg-white/20 rounded-full"
-            >
-              <ArrowLeft className="w-5 h-5 text-white" />
-            </Button>
-            <Skeleton className="h-8 w-48 bg-white/20" />
-          </div>
+        {/* Sticky Header - Consistent with CafeDetail */}
+        <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => {
+              const from = location.state?.from;
+              if (from) {
+                navigate(from);
+              } else {
+                // Fallback based on current route
+                const defaultBack = location.pathname.startsWith('/my-listings') 
+                  ? '/my-listings' 
+                  : '/listings';
+                navigate(defaultBack);
+              }
+            }}
+            className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+          >
+            <ArrowLeft className="h-5 w-5 text-white/90" />
+          </Button>
         </div>
         <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
           <Skeleton className="w-full h-64 rounded-xl mb-6 bg-white/20" />
@@ -299,11 +297,11 @@ const ListingDetailPage: React.FC = () => {
   if (error || !listing) {
     return (
       <ColoredPageWrapper seed={listingId || 'listing'}>
-        <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
+        <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
           <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
+            <Button 
+              variant="ghost" 
+              size="icon" 
               onClick={() => {
                 const from = location.state?.from;
                 if (from) {
@@ -316,11 +314,10 @@ const ListingDetailPage: React.FC = () => {
                   navigate(defaultBack);
                 }
               }}
-              className="mr-3 p-2 hover:bg-white/20 rounded-full"
+              className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
             >
-              <ArrowLeft className="w-5 h-5 text-white" />
+              <ArrowLeft className="h-5 w-5 text-white/90" />
             </Button>
-            <h1 className="text-white font-semibold text-xl text-center">Listing Not Found</h1>
           </div>
         </div>
         <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
@@ -342,11 +339,11 @@ const ListingDetailPage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed={listingId || 'listing'}>
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-50 py-2 px-4">
-        <Button
-          variant="ghost"
-          size="sm"
+      {/* Sticky Header - Consistent with CafeDetail */}
+      <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
+        <Button 
+          variant="ghost" 
+          size="icon" 
           onClick={() => {
             const from = location.state?.from;
             if (from) {
@@ -359,9 +356,9 @@ const ListingDetailPage: React.FC = () => {
               navigate(defaultBack);
             }
           }}
-          className="px-4 py-2 bg-black/40 hover:bg-black/60 rounded-full"
+          className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
         >
-          <ArrowLeft className="w-5 h-5 text-white" />
+          <ArrowLeft className="h-5 w-5 text-white/90" />
         </Button>
       </div>
 
@@ -574,14 +571,14 @@ const ListingDetailPage: React.FC = () => {
                   </Button>
                 </>
               )}
-              {listing.status === 'closed' && (
+              {listing.status === 'finalized' && (
                 <div className="w-full text-center py-3">
                   <Badge className="bg-green-100 text-green-800 text-base px-3 py-1">
                     已完成组队
                   </Badge>
                 </div>
               )}
-              {listing.status === 'paused' && (
+              {listing.status === 'cancelled' && (
                 <div className="w-full text-center py-3">
                   <Badge className="bg-gray-100 text-gray-800 text-base px-3 py-1">
                     已取消
@@ -618,7 +615,7 @@ const ListingDetailPage: React.FC = () => {
                 </>
               ) : (
                 <span>
-                  {listing.status === 'closed' ? 'Listing Closed' : 'Listing Unavailable'}
+                  {listing.status === 'finalized' ? 'Listing Finalized' : 'Listing Unavailable'}
                 </span>
               )}
             </Button>

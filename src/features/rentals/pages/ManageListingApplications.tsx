@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { User, Mail, Clock, CheckCircle } from 'lucide-react';
+import { User, Mail, Clock, CheckCircle, ArrowLeft } from 'lucide-react';
 import apiClient from '@/services/apiClient';
+import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
 
 interface Application {
   id: string;
@@ -21,11 +22,16 @@ interface Application {
 
 const ManageListingApplications: React.FC = () => {
   const { listingId } = useParams<{ listingId: string }>();
+  const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [applicationToAccept, setApplicationToAccept] = useState<string | null>(null);
+
+  const handleBack = () => {
+    navigate(-1);
+  };
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -132,61 +138,97 @@ const ManageListingApplications: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6 pb-20">
-        <div className="flex items-center justify-center min-h-[200px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Loading applications...</p>
+      <ColoredPageWrapper seed={listingId || 'applications'}>
+        <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleBack}
+            className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+          >
+            <ArrowLeft className="h-5 w-5 text-white/90" />
+          </Button>
+        </div>
+        <div className="container mx-auto p-6 pb-8">
+          <div className="flex items-center justify-center min-h-[200px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/60 mx-auto"></div>
+              <p className="mt-2 text-white/70">Loading applications...</p>
+            </div>
           </div>
         </div>
-      </div>
+      </ColoredPageWrapper>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-6 pb-20">
-        <div className="text-center text-red-600">
-          <p>{error}</p>
+      <ColoredPageWrapper seed={listingId || 'applications'}>
+        <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleBack}
+            className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+          >
+            <ArrowLeft className="h-5 w-5 text-white/90" />
+          </Button>
         </div>
-      </div>
+        <div className="container mx-auto p-6 pb-8">
+          <div className="text-center text-red-400">
+            <p>{error}</p>
+          </div>
+        </div>
+      </ColoredPageWrapper>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 pb-20">
-      <h1 className="text-xl font-bold mb-6 text-center">Manage Listing Applications</h1>
-      <p className="text-gray-600 mb-6">Listing ID: {listingId}</p>
+    <ColoredPageWrapper seed={listingId || 'applications'}>
+      {/* Sticky Header - Consistent with CafeDetail */}
+      <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleBack}
+          className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+        >
+          <ArrowLeft className="h-5 w-5 text-white/90" />
+        </Button>
+      </div>
       
-      {applications.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-gray-500">No applications found for this listing.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {applications.map((application) => (
-            <Card key={application.id} className="w-full">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="w-5 h-5" />
-                    {application.applicantName}
-                  </CardTitle>
+      <div className="container mx-auto p-6 pb-8">
+        <p className="text-white/70 mb-6">Listing ID: {listingId}</p>
+      
+        {applications.length === 0 ? (
+          <Card className="bg-black/40 backdrop-blur-sm border-none">
+            <CardContent className="p-6 text-center">
+              <p className="text-white/70">No applications found for this listing.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {applications.map((application) => (
+              <Card key={application.id} className="w-full bg-black/40 backdrop-blur-sm border-none">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-white/90">
+                      <User className="w-5 h-5" />
+                      {application.applicantName}
+                    </CardTitle>
                   {getStatusBadge(application.status)}
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-base text-gray-600">
-                    <Mail className="w-4 h-4" />
-                    {application.applicantEmail}
-                  </div>
-                  
-                  <div className="text-base text-gray-600">
-                    Applied: {new Date(application.appliedAt).toLocaleDateString()}
-                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-base text-white/70">
+                      <Mail className="w-4 h-4" />
+                      {application.applicantEmail}
+                    </div>
+                    
+                    <div className="text-base text-white/70">
+                      Applied: {new Date(application.appliedAt).toLocaleDateString()}
+                    </div>
                   
                   {application.applicantLanguages && application.applicantLanguages.length > 0 && (
                     <div className="flex flex-wrap gap-1">
@@ -201,11 +243,11 @@ const ManageListingApplications: React.FC = () => {
                     </div>
                   )}
                   
-                  {application.message && (
-                    <div className="bg-gray-50 p-3 rounded-md">
-                      <p className="text-base">{application.message}</p>
-                    </div>
-                  )}
+                    {application.message && (
+                      <div className="bg-white/10 p-3 rounded-md">
+                        <p className="text-base text-white/90">{application.message}</p>
+                      </div>
+                    )}
                   
                   {application.status === 'pending' && (
                     <div className="flex gap-2 pt-3">
@@ -258,8 +300,9 @@ const ManageListingApplications: React.FC = () => {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </div>
+        </Dialog>
+      </div>
+    </ColoredPageWrapper>
   );
 };
 

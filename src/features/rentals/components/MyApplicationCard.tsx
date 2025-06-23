@@ -161,7 +161,7 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
                 {monthlyPrice > 0 ? (
                   <>
                     <span className="text-xl">{formatPrice(pricePerRoom, application.listing.pricing.currency)}</span>
-                    <span className="text-white/60 text-sm">/ room monthly</span>
+                    <span className="text-white/60 text-sm">/ Room monthly</span>
                   </>
                 ) : (
                   <span className="text-white/60 text-sm">Price N/A</span>

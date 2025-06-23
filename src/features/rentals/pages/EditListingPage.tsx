@@ -80,20 +80,16 @@ const EditListingPage: React.FC = () => {
   if (isLoading) {
     return (
       <ColoredPageWrapper seed="edit">
-        <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBack}
-              className="text-white/70 hover:text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back
-            </Button>
-            <h1 className="text-white font-semibold text-xl text-center">Edit Listing</h1>
-            <div className="w-16"></div>
-          </div>
+        {/* Sticky Header - Consistent with CafeDetail */}
+        <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleBack}
+            className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+          >
+            <ArrowLeft className="h-5 w-5 text-white/90" />
+          </Button>
         </div>
 
         <div className="relative z-10 flex items-center justify-center min-h-[400px]">
@@ -109,20 +105,16 @@ const EditListingPage: React.FC = () => {
   if (error || !listing) {
     return (
       <ColoredPageWrapper seed="edit">
-        <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-3 px-4 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBack}
-              className="text-white/70 hover:text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back
-            </Button>
-            <h1 className="text-white font-semibold text-xl text-center">Edit Listing</h1>
-            <div className="w-16"></div>
-          </div>
+        {/* Sticky Header - Consistent with CafeDetail */}
+        <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleBack}
+            className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+          >
+            <ArrowLeft className="h-5 w-5 text-white/90" />
+          </Button>
         </div>
 
         <div className="relative z-10 flex items-center justify-center min-h-[400px]">
@@ -140,20 +132,16 @@ const EditListingPage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed="edit">
-      <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-4 px-4 border-b border-white/10">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            className="text-white/70 hover:text-white hover:bg-white/10"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back
-          </Button>
-          <h1 className="text-white font-semibold text-xl text-center">Edit Listing</h1>
-          <div className="w-16"></div>
-        </div>
+      {/* Sticky Header - Consistent with CafeDetail */}
+      <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleBack}
+          className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+        >
+          <ArrowLeft className="h-5 w-5 text-white/90" />
+        </Button>
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">

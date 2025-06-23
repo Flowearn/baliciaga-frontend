@@ -63,6 +63,14 @@ export const updateUserProfile = async (profileData: UpdateUserProfileData): Pro
     profile: profileData
   };
   
-  const response = await apiClient.post('/users/profile', backendPayload);
-  return response.data.data; // Backend returns { success: true, data: {...} }
+  console.log('🔄 Updating user profile with payload:', backendPayload);
+  
+  try {
+    const response = await apiClient.post('/users/profile', backendPayload);
+    console.log('✅ Profile update response:', response.data);
+    return response.data.data; // Backend returns { success: true, data: {...} }
+  } catch (error: any) {
+    console.error('❌ Profile update failed:', error.response?.data || error.message);
+    throw error;
+  }
 }; 

@@ -24,6 +24,7 @@ export interface Cafe {
   servesVegetarianFood?: boolean; // Optional, whether the cafe serves vegetarian food
   "tableUrl"?: string; // Optional, table booking URL
   "menuUrl"?: string; // Optional, menu URL
+  category?: 'cafe' | 'dining'; // Optional, used for food category filtering
 }
 
 // Rental Listing Types
@@ -59,7 +60,7 @@ export interface Listing {
     minimumStay: number;
     maximumStay?: number;
   };
-  status: 'active' | 'paused' | 'closed';
+  status: 'active' | 'cancelled' | 'finalized' | 'open';
   initiatorId: string;
   acceptedApplicantsCount: number;
   totalSpots: number;

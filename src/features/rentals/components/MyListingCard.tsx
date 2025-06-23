@@ -274,7 +274,7 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
               </span>
               
               {/* Cancelled/Filled Status Badge */}
-              {status === 'paused' && (
+              {status === 'cancelled' && (
                 <span className="px-3 py-0.5 rounded-full text-sm font-semibold text-white shadow-md shadow-black/20 bg-red-500/80">
                   Cancelled
                 </span>
@@ -324,7 +324,7 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
                     return (
                       <>
                         <span className="text-xl">{formatPrice(perRoom, pricing.currency)}</span>
-                        <span className="text-white/60 text-sm">/ room monthly</span>
+                        <span className="text-white/60 text-sm">/ Room monthly</span>
                       </>
                     );
                   }
@@ -426,14 +426,14 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Finalize this deal?</AlertDialogTitle>
+                    <AlertDialogTitle>Finalize Listing?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will mark the listing as 'closed' and confirm all accepted applicants. This action is irreversible.
+                      This action is final and will close the listing to new applications. All accepted applicants will be notified. Are you sure you want to proceed?
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Not yet</AlertDialogCancel>
-                    <AlertDialogAction onClick={(e) => handleFinalize(e)}>Confirm and Finalize</AlertDialogAction>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={(e) => handleFinalize(e)}>Confirm & Finalize</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>

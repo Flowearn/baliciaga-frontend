@@ -194,7 +194,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6 pb-24">
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6 pb-8">
       
       {/* Property Photos Section */}
       <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90">

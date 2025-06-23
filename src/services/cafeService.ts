@@ -3,8 +3,8 @@ import { type Cafe } from '../types'; // Import the centralized Cafe type
 // Get the API base URL from environment variables with a fallback for local development
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3006/dev';
 
-// Use this function to fetch cafe/bar/cowork list from backend API based on category
-export const fetchCafes = async (category: 'cafe' | 'bar' | 'cowork' = 'cafe'): Promise<Cafe[]> => {
+// Use this function to fetch cafe/bar/cowork/food list from backend API based on category
+export const fetchCafes = async (category: 'cafe' | 'bar' | 'cowork' | 'food' = 'cafe'): Promise<Cafe[]> => {
   // Build the API endpoint based on category
   const endpoint = `${API_BASE_URL}/places?type=${category}`;
   
@@ -21,7 +21,7 @@ export const fetchCafes = async (category: 'cafe' | 'bar' | 'cowork' = 'cafe'): 
 };
 
 // Get details for a single place
-export const fetchPlaceDetails = async (placeId: string, categoryType: 'cafe' | 'bar' | 'cowork' = 'cafe'): Promise<Cafe> => {
+export const fetchPlaceDetails = async (placeId: string, categoryType: 'cafe' | 'bar' | 'cowork' | 'food' = 'cafe'): Promise<Cafe> => {
   // Build the API endpoint with categoryType
   const endpoint = `${API_BASE_URL}/places/${placeId}?type=${categoryType}`;
   

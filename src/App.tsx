@@ -18,6 +18,9 @@ import MyListingsPage from "./features/rentals/pages/MyListingsPage";
 import ManageListingApplications from "./features/rentals/pages/ManageListingApplications";
 import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
+import ConfirmSignUpPage from "./pages/ConfirmSignUpPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import UserProfilePage from "./features/profile/pages/UserProfilePage";
 import NotFound from "./pages/NotFound";
 import AccountPage from "./pages/AccountPage";
@@ -26,35 +29,55 @@ import CreateProfilePage from "./pages/CreateProfilePage";
 import StagewiseTest from "./pages/StagewiseTest";
 
 import GlobalHeader from "./components/GlobalHeader";
-import { BottomNavBar } from "./components/BottomNavBar";
+import { TopNavBar } from "./components/TopNavBar";
+import { RegionalFilterBar } from "./components/RegionalFilterBar";
 import ScrollToTop from "./components/ScrollToTop";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
 // Main Layout component that provides the shared layout and scroll restoration
 const MainLayout = () => {
   const location = useLocation();
-  // 修复：确保底部导航栏在所有相关页面都显示，包括 /create-listing
-  const showBottomNav = location.pathname.startsWith('/listings') || 
-                       location.pathname.startsWith('/login') || 
-                       location.pathname.startsWith('/signup') ||
-                       location.pathname === '/create-listing' ||
-                       location.pathname.startsWith('/my-') ||
-                       location.pathname.startsWith('/profile');
+  const [searchParams] = useSearchParams();
+  
+  // Show TopNavBar only on Rental-related pages (Rule 2)
+  const showTopNav = (location.pathname.startsWith('/listings') || 
+                     location.pathname.startsWith('/my-listings') || 
+                     location.pathname.startsWith('/my-applications')) &&
+                     !location.pathname.startsWith('/login') &&
+                     !location.pathname.startsWith('/signup');
+  
+  // Show RegionalFilterBar only on Food, Bar, or Cowork pages (not on Rental)
+  const showRegionalFilter = location.pathname === '/' && 
+                            ['food', 'bar', 'cowork'].includes(searchParams.get('type') || 'food');
 
   // Check if we're on a detail page that needs full background
   const isDetailPage = location.pathname.startsWith('/places/');
   
+  // Check if we're on a rental detail page (listings/:id or my-listings/:id) for sticky nav
+  const isRentalDetailPage = location.pathname.match(/^\/listings\/[^\/]+$/) || 
+                             location.pathname.match(/^\/my-listings\/[^\/]+$/);
+  
   // Check if we're on AccountPage (which needs full viewport for centering)
   const isAccountPage = location.pathname === '/account';
+  
+  // Hide GlobalHeader on detail pages
+  const hideGlobalHeader = location.pathname.startsWith('/places/') || 
+                          location.pathname.match(/^\/listings\/[^\/]+$/) || 
+                          location.pathname.match(/^\/my-listings\/[^\/]+$/);
 
   return (
     <div className={isDetailPage ? '' : 'min-h-screen bg-background-creamy'}>
       <ScrollToTop />
-      {!isAccountPage && <GlobalHeader />}
+      {!isAccountPage && !hideGlobalHeader && <GlobalHeader />}
+      {showRegionalFilter && <RegionalFilterBar />}
+      {showTopNav && (
+        <div className="sticky top-0 z-50">
+          <TopNavBar />
+        </div>
+      )}
       <Outlet />
-      {showBottomNav && !isAccountPage && <BottomNavBar />}
     </div>
   );
 };
@@ -116,6 +139,18 @@ const routeObjects = [
       {
         path: "signup", // Sign up page
         element: <SignUpPage />,
+      },
+      {
+        path: "confirm-signup", // Confirm sign up page
+        element: <ConfirmSignUpPage />,
+      },
+      {
+        path: "forgot-password", // Forgot password page
+        element: <ForgotPasswordPage />,
+      },
+      {
+        path: "reset-password", // Reset password page
+        element: <ResetPasswordPage />,
       },
       {
         path: "create-profile", // Profile creation page for authenticated users without profile

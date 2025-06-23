@@ -15,7 +15,7 @@ import {
   FileText,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
@@ -34,8 +34,8 @@ const MyListingsPage: React.FC = () => {
   const tabs = [
     { value: 'all', label: 'All', icon: FileText },
     { value: 'active', label: 'Active', icon: CheckCircle },
-    { value: 'paused', label: 'Cancelled', icon: XCircle },
-    { value: 'closed', label: 'Finalized', icon: CheckCircle },
+    { value: 'cancelled', label: 'Cancelled', icon: XCircle },
+    { value: 'finalized', label: 'Finalized', icon: CheckCircle },
   ];
 
   // Fetch listings based on current tab
@@ -241,12 +241,7 @@ const MyListingsPage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed="listings">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-sm py-4 px-4 border-b border-white/10">
-        <h1 className="text-white font-semibold text-xl text-center">My Listings</h1>
-      </div>
-
-      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 pb-20 max-w-4xl">
+      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 pb-8 max-w-4xl">
         {/* Status Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-4 bg-black/20 border-white/20">
@@ -257,7 +252,7 @@ const MyListingsPage: React.FC = () => {
                 <TabsTrigger 
                   key={tab.value} 
                   value={tab.value} 
-                  className={`flex items-center gap-2 ${
+                  className={`flex items-center gap-2 text-sm ${
                     isActive 
                       ? 'bg-white/20 text-white' 
                       : 'text-white/80 hover:text-white hover:bg-white/10'
