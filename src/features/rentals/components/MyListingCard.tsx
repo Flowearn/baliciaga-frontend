@@ -10,6 +10,7 @@ import {
 import { finalizeListing, cancelListing } from '@/services/listingService';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -255,10 +256,11 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
             onClick={() => onCardClick?.(listing.listingId)}
           >
             {mainPhoto ? (
-              <img 
+              <OptimizedImage 
                 src={mainPhoto} 
                 alt={title}
-                className="w-full h-full object-cover"
+                aspectRatio="4:3"
+                priority={false}
               />
             ) : (
               <div className="w-full h-full bg-gray-300 flex items-center justify-center">

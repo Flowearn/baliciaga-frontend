@@ -16,6 +16,7 @@ import { LANGUAGES } from '../../../constants/languages';
 import apiClient from '../../../services/apiClient';
 import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { 
   Settings, 
   Edit3, 

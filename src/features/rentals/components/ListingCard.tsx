@@ -3,6 +3,7 @@ import { Listing } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { formatNoYear } from '@/utils/formatDate';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 interface ListingCardProps {
   listing: Listing;
@@ -106,11 +107,11 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onCardClick, isArchi
         "relative aspect-[4/3] rounded-xl overflow-hidden mb-2",
         isArchived && "border-2 border-dashed border-gray-400"
       )}>
-            <img
+        <OptimizedImage
           src={listing.photos?.[0] || '/placeholder-villa.jpg'}
           alt={listing.title}
-              className="w-full h-full object-cover"
-            />
+          aspectRatio="4:3"
+        />
             
         {/* 1️⃣ 基础渐变层 - 使用自定义类覆盖Amplify样式 */}
         <div className="absolute inset-0 gradient-overlay-base z-[1] pointer-events-none"></div>

@@ -14,6 +14,7 @@ import { X, Upload, Sparkles, Plus, UploadCloud, User, Building, Menu as MenuIco
 import { analyzeListingSource, AnalyzeSourceResponse, createListing } from '@/services/listingService';
 import { uploadListingPhotos } from '@/services/uploadService';
 import { isInternalStaff } from '@/utils/authUtils';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 // Extended type for AI extracted data with additional fields
 interface ExtractedListingWithAI {
@@ -371,14 +372,6 @@ const CreateListingPage: React.FC = () => {
     const minimumStay = typeof formData.minimumStay === 'string' ? Number(formData.minimumStay) || 1 : formData.minimumStay;
     const squareFootage = typeof formData.squareFootage === 'string' ? (formData.squareFootage === '' ? null : Number(formData.squareFootage)) : formData.squareFootage;
 
-    // 将值为0的租金字段转换为null
-    if (monthlyRent === 0) {
-      monthlyRent = null;
-    }
-    if (yearlyRent === 0) {
-      yearlyRent = null;
-    }
-
     // Enhanced validation: at least one price field must be filled
     if (!formData.title || !formData.address) {
       toast.error('Please fill in all required fields');
@@ -391,8 +384,8 @@ const CreateListingPage: React.FC = () => {
       return;
     }
 
-    // Price validation: at least one of monthlyRent or yearlyRent must be provided (and not 0)
-    if (!monthlyRent && !yearlyRent) {
+    // Price validation: at least one of monthlyRent or yearlyRent must be provided (可以为0)
+    if (monthlyRent === null && yearlyRent === null) {
       toast.error('Please provide either Monthly Rent or Yearly Rent');
       return;
     }
@@ -460,6 +453,9 @@ const CreateListingPage: React.FC = () => {
         {/* A. AI 提取区域 - 移动到顶部 */}
         <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90">
           <div className="space-y-4">
+              <p className="text-white text-base">
+                Paste the property description or upload a screenshot of it, then click 'Extract Info' to get started.
+              </p>
               <Textarea
                 ref={textareaRef}
                 className="w-full min-h-[80px] resize-none bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white border-white/20 focus:border-white/40"
@@ -482,21 +478,20 @@ const CreateListingPage: React.FC = () => {
                 </div>
               )}
               
-              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+              <div className="flex gap-2 mt-4">
                 <Button
                   onClick={() => fileInputRef.current?.click()}
-                  className="bg-white/20 text-white hover:bg-white/30 rounded-full px-4 h-9 text-base"
+                  className="flex-1 bg-transparent text-white border border-white/20 hover:bg-white/10 hover:border-white/30 rounded-full px-4 h-9 text-sm"
                 >
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload className="h-4 w-4 mr-1" />
                   {selectedScreenshot ? 'Change Screenshot' : 'Upload Screenshot'}
                 </Button>
                 <Button
                   onClick={handleAnalyzeSource}
-                  disabled={isAnalyzing || (!aiInput.trim() && !selectedScreenshot)}
-                  className="bg-white/20 text-white hover:bg-white/30 rounded-full px-4 h-9 text-base"
+                  className="flex-1 bg-white text-[#0a0a0a] hover:bg-white/90 rounded-full px-4 h-9 text-sm font-medium"
                 >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  {isAnalyzing ? 'Analyzing...' : 'Extract with AI'}
+                  <Sparkles className="h-4 w-4 mr-1" />
+                  {isAnalyzing ? 'Analyzing...' : 'Extract Info'}
                 </Button>
                 <input
                   type="file"
@@ -529,13 +524,10 @@ const CreateListingPage: React.FC = () => {
                 )}
                 <Button
                   {...getRootProps()}
-                  className={`bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-9 text-base ${
-                    formData.photos.length >= 10 ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  disabled={formData.photos.length >= 10}
+                  className="bg-white text-[#0a0a0a] hover:bg-white/90 rounded-full px-3 h-9 text-sm font-medium"
                 >
                   <input {...getInputProps()} />
-                  <UploadCloud className="h-4 w-4 mr-2" />
+                  <UploadCloud className="h-4 w-4 mr-1" />
                   Upload
                 </Button>
               </div>
@@ -551,10 +543,12 @@ const CreateListingPage: React.FC = () => {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {photoPreviews.map((preview, index) => (
                   <div key={index} className="relative group">
-                    <img
+                    <OptimizedImage
                       src={preview}
                       alt={`Preview ${index + 1}`}
-                      className="w-full h-auto rounded-lg border"
+                      aspectRatio="1:1"
+                      priority={false}
+                      className="rounded-lg border"
                     />
                     <button
                       onClick={() => removePhoto(index)}
@@ -579,10 +573,10 @@ const CreateListingPage: React.FC = () => {
           <p className="text-xl text-center text-white/90 mb-4">I am ...</p>
           <div className={`grid ${showPlatformOption ? 'grid-cols-3' : 'grid-cols-2'} gap-4`}>
             <div className="flex flex-col items-center gap-2">
-              <User className="h-8 w-8 text-white/60" />
+              <User className="h-6 w-6 text-white/60" />
               <button
                 onClick={() => setPosterRole('tenant')}
-                className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-base ${
+                className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-sm ${
                   posterRole === 'tenant'
                     ? 'bg-white text-gray-800'
                     : 'bg-white/10 text-white/70 hover:bg-white/15'
@@ -592,10 +586,10 @@ const CreateListingPage: React.FC = () => {
               </button>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <Building className="h-8 w-8 text-white/60" />
+              <Building className="h-6 w-6 text-white/60" />
               <button
                 onClick={() => setPosterRole('landlord')}
-                className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-base ${
+                className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-sm ${
                   posterRole === 'landlord'
                     ? 'bg-white text-gray-800'
                     : 'bg-white/10 text-white/70 hover:bg-white/15'
@@ -606,10 +600,10 @@ const CreateListingPage: React.FC = () => {
             </div>
             {showPlatformOption && (
               <div className="flex flex-col items-center gap-2">
-                <MenuIcon className="h-8 w-8 text-white/60" />
+                <MenuIcon className="h-6 w-6 text-white/60" />
                 <button
                   onClick={() => setPosterRole('platform')}
-                  className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-base ${
+                  className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-sm ${
                     posterRole === 'platform'
                       ? 'bg-white text-gray-800'
                       : 'bg-white/10 text-white/70 hover:bg-white/15'

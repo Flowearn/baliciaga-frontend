@@ -2,6 +2,7 @@ import React from 'react';
 import { User, Calendar, MapPin, Briefcase, Check, X } from 'lucide-react';
 import { ReceivedApplication } from '../../../services/applicationService';
 import { Button } from '@/components/ui/button';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 interface ReceivedApplicationCardProps {
   application: ReceivedApplication;
@@ -94,10 +95,11 @@ export const ReceivedApplicationCard: React.FC<ReceivedApplicationCardProps> = (
           
           <div className="w-24 h-24 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
             {profile.profilePicture ? (
-              <img 
+              <OptimizedImage 
                 src={profile.profilePicture} 
                 alt={applicant.name}
-                className="w-full h-full object-cover"
+                aspectRatio="1:1"
+                priority={false}
               />
             ) : (
               <User className="w-12 h-12 text-gray-400" />

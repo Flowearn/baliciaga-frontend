@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { 
   MapPin,
   Calendar,
@@ -117,10 +118,11 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
           onClick={handleListingClick}
         >
           {application.listing.photos?.[0] ? (
-            <img 
+            <OptimizedImage 
               src={application.listing.photos[0]} 
               alt={application.listing.title}
-              className="w-full h-full object-cover"
+              aspectRatio="4:3"
+              priority={false}
             />
           ) : (
             <div className="w-full h-full bg-gray-300 flex items-center justify-center">
@@ -296,10 +298,11 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
                   
                   <div className="w-24 h-24 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {roommate.profile.profilePictureUrl ? (
-                      <img 
+                      <OptimizedImage 
                         src={roommate.profile.profilePictureUrl} 
                         alt={roommate.profile.name || roommate.email}
-                        className="w-full h-full object-cover"
+                        aspectRatio="1:1"
+                        priority={false}
                       />
                     ) : (
                       <Users className="w-12 h-12 text-white/80" />

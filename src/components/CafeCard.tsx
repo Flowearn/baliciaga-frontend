@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Clock, MapPin } from "lucide-react";
 import { type Cafe } from '../types';
 import useEmblaCarousel from 'embla-carousel-react';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 // Extend Cafe type to include optional distance
 interface CafeWithDistance extends Cafe {
@@ -58,11 +59,11 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
             {hasPhotos ? (
               cafe.photos.map((photoUrl, index) => (
                 <div className="embla__slide flex-[0_0_100%] min-w-0 relative" key={index}>
-                  <img
+                  <OptimizedImage
                     src={photoUrl}
                     alt={`${cafe.name} - Photo ${index + 1}`}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
+                    aspectRatio="4:3"
+                    priority={false}
                   />
                 </div>
               ))

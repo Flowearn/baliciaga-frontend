@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { 
   User,
   Globe,
@@ -172,10 +173,11 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingI
         {/* Right side: Avatar */}
         <div className="w-24 h-24 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {profile?.profilePicture || profile?.profilePictureUrl ? (
-            <img 
+            <OptimizedImage 
               src={profile.profilePicture || profile.profilePictureUrl} 
               alt={profile?.name || 'Anonymous'}
-              className="w-full h-full object-cover"
+              aspectRatio="1:1"
+              priority={false}
             />
           ) : (
             <User className="w-12 h-12 text-white/80" />

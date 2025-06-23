@@ -4,6 +4,7 @@ import { uploadListingPhotos } from '@/services/uploadService';
 import { formatPrice } from '@/lib/utils';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { 
   X,
   UploadCloud,
@@ -242,10 +243,12 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {formData.photos.map((photoUrl, index) => (
                 <div key={index} className="relative group">
-                  <img
+                  <OptimizedImage
                     src={photoUrl}
                     alt={`Photo ${index + 1}`}
-                    className="w-full h-auto rounded-lg border border-white/20"
+                    aspectRatio="1:1"
+                    priority={false}
+                    className="rounded-lg border border-white/20"
                   />
                   <button
                     type="button"

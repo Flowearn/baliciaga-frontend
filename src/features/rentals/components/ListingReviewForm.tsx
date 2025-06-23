@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { 
   Calendar, 
   Banknote, 
@@ -438,10 +439,12 @@ const ListingReviewForm: React.FC<ListingReviewFormProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {photoPreviewUrls.map((url, index) => (
                 <div key={index} className="relative group">
-                  <img
+                  <OptimizedImage
                     src={url}
                     alt={`Property photo ${index + 1}`}
-                    className="w-full h-24 object-cover rounded-lg border"
+                    aspectRatio="4:3"
+                    priority={false}
+                    className="h-24 rounded-lg border"
                   />
                   <Button
                     type="button"

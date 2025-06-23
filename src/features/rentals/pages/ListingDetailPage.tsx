@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { 
   ArrowLeft,
   MapPin,
@@ -366,10 +367,12 @@ const ListingDetailPage: React.FC = () => {
         {/* Main Photo */}
         {listing.photos && listing.photos.length > 0 && (
           <div className="mb-6">
-            <img 
+            <OptimizedImage 
               src={listing.photos[0]} 
               alt={listing.title}
-              className="w-full h-64 sm:h-72 object-cover rounded-xl shadow-lg"
+              aspectRatio="4:3"
+              priority={true}
+              className="rounded-xl shadow-lg h-64 sm:h-72"
             />
           </div>
         )}

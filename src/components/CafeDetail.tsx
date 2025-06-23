@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -279,10 +280,11 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
                 <div className="embla__container flex h-full">
                   {cafe.photos.map((photoUrl, index) => (
                     <div className="embla__slide flex-[0_0_100%] min-w-0 relative" key={index}>
-                      <img 
+                      <OptimizedImage 
                         src={photoUrl} 
                         alt={`${cafe.name} - Photo ${index + 1}`} 
-                        className="w-full h-full object-cover"
+                        aspectRatio="4:3"
+                        priority={index === 0}
                       />
                     </div>
                   ))}
@@ -465,10 +467,11 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
               rel="noopener noreferrer"
             >
               {cafe.staticMapS3Url ? (
-                <img 
+                <OptimizedImage 
                   src={cafe.staticMapS3Url}
                   alt={`Map of ${cafe.name}`}
-                  className="w-full h-auto object-cover"
+                  aspectRatio="4:3"
+                  priority={false}
                 />
               ) : (
                 <div className="w-full h-[300px] bg-gray-200 flex items-center justify-center text-gray-600">
