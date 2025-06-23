@@ -127,6 +127,17 @@ export const signInWithPassword = async (
   try {
     console.log('🔐 用户登录:', email);
     
+    // 检查是否已有用户登录，如果有则先登出
+    try {
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        console.log('⚠️ 检测到已有用户登录，先登出当前用户');
+        await signOut();
+      }
+    } catch (e) {
+      // 忽略错误，继续登录流程
+    }
+    
     const result = await signIn({
       username: email,
       password: password
@@ -166,6 +177,9 @@ export const signInWithPassword = async (
         needsConfirmation: true,
         error: '请先验证您的邮箱'
       };
+    } else if (error.name === 'UserAlreadyAuthenticatedException') {
+      // 如果仍然报错，提供更友好的错误信息
+      errorMessage = '已有用户登录，请刷新页面后重试';
     } else if (error.message) {
       errorMessage = error.message;
     }

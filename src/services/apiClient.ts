@@ -16,6 +16,7 @@ const apiClient = axios.create({
 // 请求拦截器 - 自动添加认证token
 apiClient.interceptors.request.use(
   async (config) => {
+    console.log('[API Client] Request interceptor - URL:', config.url);
     try {
       // 获取当前用户的认证token
       const session = await fetchAuthSession();
@@ -24,6 +25,9 @@ apiClient.interceptors.request.use(
       if (idToken) {
         // 添加Authorization header
         config.headers.Authorization = `Bearer ${idToken}`;
+        console.log('[API Client] Added auth token');
+      } else {
+        console.log('[API Client] No auth token found');
       }
 
       // --- NEW: Add dynamic user headers for local development ---
@@ -44,9 +48,14 @@ apiClient.interceptors.request.use(
             config.headers['x-test-user-sub'] = userSub;
             config.headers['x-test-user-email'] = userEmail || '';
             // For testing, check if user has InternalStaff group
-            const isStaff = await import('@/utils/authUtils').then(m => m.isInternalStaff());
-            if (isStaff) {
-              config.headers['x-test-user-groups'] = 'InternalStaff';
+            try {
+              const { isInternalStaff } = await import('@/utils/authUtils');
+              const isStaff = await isInternalStaff();
+              if (isStaff) {
+                config.headers['x-test-user-groups'] = 'InternalStaff';
+              }
+            } catch (staffCheckError) {
+              console.log('Could not check InternalStaff status:', staffCheckError);
             }
           }
         } catch (e) {
@@ -63,6 +72,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('[API Client] Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -70,9 +80,20 @@ apiClient.interceptors.request.use(
 // 响应拦截器 - 处理常见错误
 apiClient.interceptors.response.use(
   (response) => {
+    console.log('[API Client] Response received:', response.config.url, response.status);
     return response;
   },
   (error) => {
+    console.error('[API Client] Response error:', error);
+    console.error('[API Client] Error code:', error.code);
+    console.error('[API Client] Error message:', error.message);
+    
+    if (error.code === 'ERR_NETWORK') {
+      console.error('[API Client] Network error - request failed to reach server');
+      console.error('[API Client] Request URL:', error.config?.url);
+      console.error('[API Client] Request headers:', error.config?.headers);
+    }
+    
     if (error.response?.status === 401) {
       console.error('Unauthorized access - please login again');
       // 可以在这里触发重新登录流程
