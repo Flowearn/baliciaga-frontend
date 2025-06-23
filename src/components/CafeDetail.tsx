@@ -283,7 +283,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
                       <OptimizedImage 
                         src={photoUrl} 
                         alt={`${cafe.name} - Photo ${index + 1}`} 
-                        aspectRatio="4:3"
+                        aspectRatio="1:1"
                         priority={index === 0}
                       />
                     </div>
