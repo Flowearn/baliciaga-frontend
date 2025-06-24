@@ -81,13 +81,13 @@ const MainLayout = () => {
     if (showRegionalFilter) layerCount++; // RegionalFilterBar  
     if (showTopNav) layerCount++; // TopNavBar
     
-    // 根据层级数返回对应的静态padding-top类 (减少12px以收紧间距)
+    // 根据层级数返回对应的padding-top类，包含安全区域适配
     switch (layerCount) {
-      case 3: return 'pt-40'; // 3层导航: GlobalHeader + RegionalFilterBar + TopNavBar (160px, 原176px-16px)
-      case 2: return 'pt-28'; // 2层导航: GlobalHeader + TopNavBar (112px, 原128px-16px)  
-      case 1: return 'pt-20'; // 1层导航: 仅GlobalHeader (80px, 原96px-16px)
-      case 0: return 'pt-0';  // 无导航: Account页面 (0px, 保持不变)
-      default: return 'pt-20'; // 默认fallback (调整为pt-20)
+      case 3: return 'pt-[calc(10rem+env(safe-area-inset-top))]'; // 3层导航: GlobalHeader + RegionalFilterBar + TopNavBar (160px + 安全区域)
+      case 2: return 'pt-[calc(7rem+env(safe-area-inset-top))]'; // 2层导航: GlobalHeader + TopNavBar (112px + 安全区域)  
+      case 1: return 'pt-[calc(5rem+env(safe-area-inset-top))]'; // 1层导航: 仅GlobalHeader (80px + 安全区域)
+      case 0: return 'pt-[env(safe-area-inset-top)]';  // 无导航: Account页面 (仅安全区域)
+      default: return 'pt-[calc(5rem+env(safe-area-inset-top))]'; // 默认fallback
     }
   };
   
