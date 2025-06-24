@@ -23,11 +23,6 @@ const CafeDetailPage: React.FC = () => {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number; } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   
-  // Scroll to top when component mounts
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-  
   // Pantone background colors
   useEffect(() => {
     const pantoneBackgroundColors = [
@@ -167,7 +162,7 @@ const CafeDetailPage: React.FC = () => {
       </div>
       
       {/* Content layer */}
-      <div className="relative z-10 min-h-screen pb-8">
+      <div className="relative z-10 min-h-screen pb-2">
         <CafeDetail 
           cafe={cafe} 
           onClose={handleGoBack}

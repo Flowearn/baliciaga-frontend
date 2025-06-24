@@ -173,14 +173,10 @@
     background-image: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
   }
 
-  /* Pricing details grid layout - now using clean CSS without !important */
+  /* Pricing details grid layout - 2 columns on all devices, no spanning */
   .pricing-details-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.25rem 2rem;
-  }
-
-  .pricing-details-grid .col-span-2-sm {
-    grid-column: span 2 / span 2;
   }
 }

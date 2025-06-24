@@ -470,7 +470,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
                 <OptimizedImage 
                   src={cafe.staticMapS3Url}
                   alt={`Map of ${cafe.name}`}
-                  aspectRatio="4:3"
+                  aspectRatio="16:9"
                   priority={false}
                 />
               ) : (

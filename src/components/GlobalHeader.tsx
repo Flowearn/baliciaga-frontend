@@ -99,7 +99,7 @@ const GlobalHeader = () => {
   ];
 
   return (
-    <div className="bg-background-creamy/70 backdrop-blur-sm pt-1 pb-2 px-4">
+    <div className="bg-background-creamy/70 backdrop-blur-sm pt-1 pb-0 px-4">
       <div className="pt-0 pb-0">
         <div className="flex items-center justify-between w-full">
           <Button 
@@ -163,7 +163,7 @@ const GlobalHeader = () => {
                     className={`w-full flex items-center justify-center py-1 px-2 rounded-full text-sm transition-colors duration-200 ease-in-out focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ${
                       isActive
                         ? 'bg-brand/80 text-white shadow-lg border border-brand/80 hover:bg-brand/70' // 激活状态: 使用品牌色
-                        : 'bg-white/80 text-gray-500 border border-gray-400/50 hover:bg-white/90' // 非激活状态
+                        : 'bg-background-creamy/90 text-gray-500 hover:bg-background-creamy' // 非激活状态
                   }`}
                   style={{ height: '28px' }}
                   >

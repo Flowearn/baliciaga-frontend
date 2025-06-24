@@ -246,8 +246,7 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
   };
 
   return (
-    <div>
-      {/* Main Card UI */}
+    <div className="w-full mb-2">
       <Card className="bg-black/40 backdrop-blur-sm border-white/20 shadow-lg hover:shadow-xl transition-all duration-200">
         <CardContent className="p-4 sm:p-6">
           {/* Property Image - Full width, clickable */}

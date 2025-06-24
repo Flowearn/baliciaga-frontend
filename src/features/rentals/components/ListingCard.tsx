@@ -29,12 +29,12 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onCardClick, isArchi
           label: `${filled}/${total} Filled`, 
           color: 'bg-green-500/80 text-white'
         };
-      case 'closed':
+      case 'finalized':
         return { 
           label: 'Finalized', 
           color: 'bg-gray-600/80 text-white'
         };
-      case 'paused':
+      case 'cancelled':
       default:
         return { 
           label: 'Cancelled', 
@@ -99,7 +99,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onCardClick, isArchi
 
   return (
     <div className={cn(
-      "w-full cursor-pointer transition-all duration-200",
+      "w-full cursor-pointer transition-all duration-200 mb-2",
       isArchived && "opacity-60 grayscale hover:opacity-80 hover:grayscale-0"
     )} onClick={handleCardClick}>
       {/* Image Container with Status Badge */}

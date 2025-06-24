@@ -36,49 +36,75 @@ import { useLocation, useSearchParams } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
-// Main Layout component that provides the shared layout and scroll restoration
+// Main Layout component implementing simplified binary layout architecture
 const MainLayout = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   
-  // Show TopNavBar only on Rental-related pages (Rule 2)
-  const showTopNav = (location.pathname.startsWith('/listings') || 
+  // **黄金规则实施：二元化布局逻辑**
+  
+  // 1. 详情页检测：任何详情页都采用沉浸式布局
+  const isDetailPage = location.pathname.startsWith('/places/') ||           // Food/Bar/Cowork details
+                       location.pathname.match(/^\/listings\/[^/]+$/) ||      // Rental details
+                       location.pathname.match(/^\/my-listings\/[^/]+$/);     // My listing details
+  
+  // 2. 详情页模式：沉浸式布局（无任何导航栏）
+  if (isDetailPage) {
+    return (
+      <div className="min-h-screen">
+        <ScrollToTop />
+        <Outlet />
+      </div>
+    );
+  }
+  
+  // 3. 列表页模式：完整导航式布局
+  
+  // 决定显示哪些导航元素（仅对列表页有效）
+  const showTopNav = location.pathname.startsWith('/listings') || 
                      location.pathname.startsWith('/my-listings') || 
                      location.pathname.startsWith('/my-applications') ||
-                     location.pathname === '/create-listing') &&
-                     !location.pathname.startsWith('/login') &&
-                     !location.pathname.startsWith('/signup');
+                     location.pathname === '/create-listing';
   
-  // Show RegionalFilterBar only on Food, Bar, or Cowork pages (not on Rental)
   const showRegionalFilter = location.pathname === '/' && 
                             ['food', 'bar', 'cowork'].includes(searchParams.get('type') || 'food');
-
-  // Check if we're on a detail page that needs full background
-  const isDetailPage = location.pathname.startsWith('/places/');
   
-  // Check if we're on a rental detail page (listings/:id or my-listings/:id) for sticky nav
-  const isRentalDetailPage = location.pathname.match(/^\/listings\/[^\/]+$/) || 
-                             location.pathname.match(/^\/my-listings\/[^\/]+$/);
-  
-  // Check if we're on AccountPage (which needs full viewport for centering)
   const isAccountPage = location.pathname === '/account';
   
-  // Hide GlobalHeader on detail pages
-  const hideGlobalHeader = location.pathname.startsWith('/places/') || 
-                          location.pathname.match(/^\/listings\/[^\/]+$/) || 
-                          location.pathname.match(/^\/my-listings\/[^\/]+$/);
-
+  // **静态预设的padding-top控制：根据导航层级数量**
+  const getPaddingTopClass = () => {
+    let layerCount = 0;
+    
+    // 计算可见导航层级数
+    if (!isAccountPage) layerCount++; // GlobalHeader
+    if (showRegionalFilter) layerCount++; // RegionalFilterBar  
+    if (showTopNav) layerCount++; // TopNavBar
+    
+    // 根据层级数返回对应的静态padding-top类 (减少12px以收紧间距)
+    switch (layerCount) {
+      case 3: return 'pt-40'; // 3层导航: GlobalHeader + RegionalFilterBar + TopNavBar (160px, 原176px-16px)
+      case 2: return 'pt-28'; // 2层导航: GlobalHeader + TopNavBar (112px, 原128px-16px)  
+      case 1: return 'pt-20'; // 1层导航: 仅GlobalHeader (80px, 原96px-16px)
+      case 0: return 'pt-0';  // 无导航: Account页面 (0px, 保持不变)
+      default: return 'pt-20'; // 默认fallback (调整为pt-20)
+    }
+  };
+  
   return (
-    <div className={isDetailPage ? '' : 'min-h-screen bg-background-creamy flex flex-col gap-y-4'}>
+    <div className="min-h-screen bg-background-creamy flex flex-col">
       <ScrollToTop />
-      {!isAccountPage && !hideGlobalHeader && <GlobalHeader />}
-      {showRegionalFilter && <RegionalFilterBar />}
-      {showTopNav && (
-        <div className="sticky top-0 z-50">
-          <TopNavBar />
-        </div>
-      )}
-      <Outlet />
+      
+      {/* 固定导航栏容器 - 仅在列表页显示 */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background-creamy">
+        {!isAccountPage && <GlobalHeader />}
+        {showRegionalFilter && <RegionalFilterBar />}
+        {showTopNav && <TopNavBar />}
+      </div>
+      
+      {/* 主内容区域 - 使用静态预设的padding-top */}
+      <main className={`flex-1 ${getPaddingTopClass()}`}>
+        <Outlet />
+      </main>
     </div>
   );
 };
@@ -156,6 +182,10 @@ const routeObjects = [
       {
         path: "create-profile", // Profile creation page for authenticated users without profile
         element: <CreateProfilePage />,
+      },
+      {
+        path: "account", // Account page
+        element: <AccountPage />,
       },
       {
         path: "stagewise-test", // Test page for Stagewise integration (development only)

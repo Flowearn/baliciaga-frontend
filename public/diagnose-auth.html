@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth & API Diagnostics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Authentication & API Diagnostics</h1>
+
+    <div class="section">
+        <h2>1. Current Auth Status</h2>
+        <div id="auth-status"></div>
+        <button onclick="checkAuth()">Check Auth Status</button>
+    </div>
+
+    <div class="section">
+        <h2>2. API Configuration</h2>
+        <div id="api-config"></div>
+        <button onclick="checkApiConfig()">Check API Config</button>
+    </div>
+
+    <div class="section">
+        <h2>3. Direct API Test</h2>
+        <div id="api-test"></div>
+        <button onclick="testDirectApi()">Test Direct API Call</button>
+    </div>
+
+    <div class="section">
+        <h2>4. API with Auth Test</h2>
+        <div id="api-auth-test"></div>
+        <button onclick="testApiWithAuth()">Test API with Auth Headers</button>
+    </div>
+
+    <div class="section">
+        <h2>5. Frontend API Client Test</h2>
+        <div id="client-test"></div>
+        <button onclick="testApiClient()">Test via API Client</button>
+    </div>
+
+    <script>
+        // Check authentication status
+        async function checkAuth() {
+            const statusDiv = document.getElementById('auth-status');
+            statusDiv.innerHTML = '<div class="status info">Checking authentication...</div>';
+            
+            try {
+                // Check localStorage for auth tokens
+                const authKeys = Object.keys(localStorage).filter(key => 
+                    key.includes('amplify') || key.includes('cognito') || key.includes('aws')
+                );
+                
+                let html = '<h3>LocalStorage Auth Keys:</h3>';
+                if (authKeys.length === 0) {
+                    html += '<div class="status warning">No auth keys found in localStorage</div>';
+                } else {
+                    html += '<ul>';
+                    authKeys.forEach(key => {
+                        const value = localStorage.getItem(key);
+                        const preview = value && value.length > 100 ? value.substring(0, 100) + '...' : value;
+                        html += `<li><strong>${key}:</strong> ${preview}</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                // Try to get current user
+                try {
+                    const { getCurrentUser } = await import('aws-amplify/auth');
+                    const user = await getCurrentUser();
+                    html += '<div class="status success">User is authenticated: ' + JSON.stringify(user) + '</div>';
+                } catch (e) {
+                    html += '<div class="status error">No authenticated user: ' + e.message + '</div>';
+                }
+                
+                statusDiv.innerHTML = html;
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="status error">Error checking auth: ' + error.message + '</div>';
+            }
+        }
+
+        // Check API configuration
+        function checkApiConfig() {
+            const configDiv = document.getElementById('api-config');
+            
+            let html = '<h3>API Configuration:</h3>';
+            html += '<ul>';
+            html += '<li><strong>Current URL:</strong> ' + window.location.href + '</li>';
+            html += '<li><strong>Protocol:</strong> ' + window.location.protocol + '</li>';
+            html += '<li><strong>Expected Backend:</strong> http://localhost:3006/dev</li>';
+            html += '</ul>';
+            
+            if (window.location.protocol === 'https:') {
+                html += '<div class="status error">⚠️ You are using HTTPS! This will block HTTP backend requests due to mixed content policy.</div>';
+                html += '<div class="status warning">Please access the site via: http://localhost:8082</div>';
+            } else {
+                html += '<div class="status success">✓ Using HTTP protocol - backend requests should work</div>';
+            }
+            
+            configDiv.innerHTML = html;
+        }
+
+        // Test direct API call
+        async function testDirectApi() {
+            const testDiv = document.getElementById('api-test');
+            testDiv.innerHTML = '<div class="status info">Testing direct API call...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:3006/dev/listings', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                let html = '<h3>Direct API Response:</h3>';
+                html += '<div class="status ' + (response.ok ? 'success' : 'error') + '">';
+                html += 'Status: ' + response.status + ' ' + response.statusText;
+                html += '</div>';
+                html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                testDiv.innerHTML = html;
+            } catch (error) {
+                testDiv.innerHTML = '<div class="status error">Failed to call API: ' + error.message + '</div>';
+                if (error.message.includes('Failed to fetch')) {
+                    testDiv.innerHTML += '<div class="status warning">This usually means CORS error or the backend is not running</div>';
+                }
+            }
+        }
+
+        // Test API with auth headers
+        async function testApiWithAuth() {
+            const testDiv = document.getElementById('api-auth-test');
+            testDiv.innerHTML = '<div class="status info">Testing API with auth headers...</div>';
+            
+            try {
+                // Get auth token
+                let authToken = null;
+                const authKeys = Object.keys(localStorage).filter(key => key.includes('idToken'));
+                if (authKeys.length > 0) {
+                    authToken = localStorage.getItem(authKeys[0]);
+                }
+                
+                if (!authToken) {
+                    testDiv.innerHTML = '<div class="status error">No auth token found in localStorage</div>';
+                    return;
+                }
+                
+                const response = await fetch('http://localhost:3006/dev/listings', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': authToken,
+                        'X-Local-UserId': 'finaltest78@test.com',
+                        'X-Local-Username': 'finaltest78@test.com'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                let html = '<h3>API Response with Auth:</h3>';
+                html += '<div class="status ' + (response.ok ? 'success' : 'error') + '">';
+                html += 'Status: ' + response.status + ' ' + response.statusText;
+                html += '</div>';
+                html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                testDiv.innerHTML = html;
+            } catch (error) {
+                testDiv.innerHTML = '<div class="status error">Failed to call API with auth: ' + error.message + '</div>';
+            }
+        }
+
+        // Test using the frontend's API client
+        async function testApiClient() {
+            const testDiv = document.getElementById('client-test');
+            testDiv.innerHTML = '<div class="status info">Testing via frontend API client...</div>';
+            
+            try {
+                // Try to use the app's API client
+                const apiClient = window.apiClient || window.APIClient;
+                if (!apiClient) {
+                    testDiv.innerHTML = '<div class="status warning">API client not found in global scope. This is normal - the API client is usually not exposed globally.</div>';
+                    return;
+                }
+                
+                const response = await apiClient.get('/listings');
+                
+                let html = '<h3>API Client Response:</h3>';
+                html += '<div class="status success">Successfully fetched listings</div>';
+                html += '<pre>' + JSON.stringify(response.data, null, 2) + '</pre>';
+                
+                testDiv.innerHTML = html;
+            } catch (error) {
+                testDiv.innerHTML = '<div class="status error">Failed via API client: ' + error.message + '</div>';
+            }
+        }
+
+        // Auto-run checks on load
+        window.onload = () => {
+            checkApiConfig();
+            checkAuth();
+        };
+    </script>
+</body>
+</html>

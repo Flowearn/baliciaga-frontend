@@ -92,7 +92,7 @@ const ListingsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-creamy">
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-4 pb-8">
+              <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-4 pb-4">
         {/* Header with Post Villa Button */}
         <div className="flex gap-3 mb-6">
           {/* Post Villa Button */}
@@ -145,7 +145,7 @@ const ListingsPage: React.FC = () => {
         {!isLoading && !error && (
           <>
             {listings.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                 {listings.map((listing) => (
                   <ListingCard 
                     key={listing.listingId} 

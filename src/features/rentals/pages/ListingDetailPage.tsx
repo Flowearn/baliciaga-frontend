@@ -25,7 +25,8 @@ import {
   MessageSquare,
   CheckCircle2,
   X,
-  Edit
+  Edit,
+  Share2
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from '@/context/AuthContext';
@@ -241,6 +242,50 @@ const ListingDetailPage: React.FC = () => {
     }
   };
 
+  // Helper function to copy link to clipboard
+  async function copyLinkToClipboard(urlToCopy: string) {
+    try {
+      await navigator.clipboard.writeText(urlToCopy);
+      alert('Link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy link using navigator.clipboard: ', err);
+      // Final fallback if navigator.clipboard.writeText also fails
+      alert('Failed to copy link automatically. Please copy manually from address bar.');
+    }
+  }
+
+  // Handle Share button click
+  const handleShareClick = async () => {
+    const shareUrl = window.location.href; // URL of the current listing detail page
+    const listingTitle = listing?.title || 'Listing'; // Use actual listing title if available
+    const shareTitle = `Baliciaga: ${listingTitle}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          url: shareUrl,
+        });
+        console.log('Content shared successfully via Web Share API');
+      } catch (error: any) {
+        console.error('Error using Web Share API:', error);
+        
+        // Check if user cancelled the share action
+        if (error.name === 'AbortError') {
+          console.log('Share cancelled by user.');
+          return; // Don't show fallback if user explicitly cancelled
+        }
+        
+        // Only fall back to clipboard copy for actual errors
+        await copyLinkToClipboard(shareUrl);
+      }
+    } else {
+      // Fallback if Web Share API is not supported
+      console.log('Web Share API not supported, falling back to clipboard copy.');
+      await copyLinkToClipboard(shareUrl);
+    }
+  };
+
   const getAmenityIcon = (amenity: string) => {
     const amenityLower = amenity.toLowerCase();
     if (amenityLower.includes('wifi') || amenityLower.includes('internet')) {
@@ -363,14 +408,14 @@ const ListingDetailPage: React.FC = () => {
         </Button>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 pt-0 pb-24 max-w-4xl">
+              <div className="relative z-10 container mx-auto px-4 pt-0 pb-4 max-w-4xl flex flex-col gap-y-4">
         {/* Main Photo */}
         {listing.photos && listing.photos.length > 0 && (
-          <div className="mb-6">
+          <div>
             <OptimizedImage 
               src={listing.photos[0]} 
               alt={listing.title}
-              aspectRatio="4:3"
+              aspectRatio="16:9"
               priority={true}
               className="rounded-xl shadow-lg h-64 sm:h-72"
             />
@@ -378,11 +423,20 @@ const ListingDetailPage: React.FC = () => {
         )}
 
         {/* Basic Info Card */}
-        <Card className="mb-6 bg-black/40 backdrop-blur-sm shadow-lg border-none">
+        <Card className="bg-black/40 backdrop-blur-sm shadow-lg border-none">
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-white/90 mb-2">{listing.title}</h1>
+                <div className="flex items-start justify-between mb-2">
+                  <h1 className="text-2xl font-bold text-white/90 flex-1 pr-2">{listing.title}</h1>
+                  <Button 
+                    className="bg-white text-[#0a0a0a] hover:bg-gray-100 rounded-full px-3 h-8 text-sm font-normal flex items-center justify-center gap-x-1.5"
+                    onClick={handleShareClick}
+                  >
+                    <Share2 size={16} />
+                    Share
+                  </Button>
+                </div>
                 <div className="flex items-center text-white/90 mb-3">
                   <MapPin className="w-3 h-3 mr-2" />
                   <span className="text-sm">{listing.location.address}</span>
@@ -458,52 +512,54 @@ const ListingDetailPage: React.FC = () => {
             <div className="border-t border-white/20 pt-4">
               <h3 className="font-semibold mb-2 text-white/90">Pricing Details</h3>
               <div className="pricing-details-grid text-base text-white/90">
-                {/* Show monthly rent only if not null and greater than 0 */}
-                {listing.pricing.monthlyRent !== null && listing.pricing.monthlyRent !== undefined && listing.pricing.monthlyRent > 0 && (
-                  <div className="flex flex-col">
-                    <span className="text-white/70 text-sm">Monthly Rent:</span>
-                    <span className="font-medium text-white/100">{formatPrice(listing.pricing.monthlyRent, listing.pricing.currency)}</span>
-                  </div>
-                )}
-                
-                {/* Show yearly rent only if not null and greater than 0 */}
-                {listing.pricing.yearlyRent !== null && listing.pricing.yearlyRent !== undefined && listing.pricing.yearlyRent > 0 && (
-                  <div className="col-span-2-sm">
-                    <div className="flex flex-col">
-                      <span className="text-white/70 text-sm">Yearly Rent:</span>
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-medium text-blue-400">{formatPrice(listing.pricing.yearlyRent, listing.pricing.currency)}</span>
-                        <span className="text-sm text-white/70">(equivalent monthly = {formatPrice(Math.round(listing.pricing.yearlyRent / 12), listing.pricing.currency)})</span>
+                {(() => {
+                  // Create array of all possible pricing details in order
+                  const allPricingItems = [
+                    {
+                      label: "Monthly Rent:",
+                      value: listing.pricing.monthlyRent !== null && listing.pricing.monthlyRent !== undefined && listing.pricing.monthlyRent > 0 
+                        ? formatPrice(listing.pricing.monthlyRent, listing.pricing.currency) 
+                        : null
+                    },
+                    {
+                      label: "Yearly Rent:",
+                      value: listing.pricing.yearlyRent !== null && listing.pricing.yearlyRent !== undefined && listing.pricing.yearlyRent > 0 
+                        ? (
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-medium text-blue-400">{formatPrice(listing.pricing.yearlyRent, listing.pricing.currency)}</span>
+                            <span className="text-sm text-white/70">(monthly = {formatPrice(Math.round(listing.pricing.yearlyRent / 12), listing.pricing.currency)})</span>
+                          </div>
+                        )
+                        : null
+                    },
+                    {
+                      label: "Deposit:",
+                      value: formatPrice(listing.pricing.deposit, listing.pricing.currency) // Always show deposit, even if 0
+                    },
+                    {
+                      label: "Utilities:",
+                      value: listing.pricing.utilities !== null && listing.pricing.utilities !== undefined
+                        ? (listing.pricing.utilities === 0 ? 'Covered' : formatPrice(listing.pricing.utilities, listing.pricing.currency))
+                        : null
+                    },
+                    {
+                      label: "Available From:",
+                      value: formatNoYear(listing.availability.availableFrom)
+                    }
+                  ];
+
+                  // Filter out items with null/undefined values and render sequentially
+                  return allPricingItems
+                    .filter(item => item.value !== null && item.value !== undefined)
+                    .map((item, index) => (
+                      <div key={index} className="flex flex-col">
+                        <span className="text-white/70 text-sm">{item.label}</span>
+                        <span className="font-medium text-white/100">
+                          {item.value}
+                        </span>
                       </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Deposit and Utilities in same column */}
-                <div className="space-y-3">
-                  {/* Always show deposit, even if 0 */}
-                  <div className="flex flex-col">
-                    <span className="text-white/70 text-sm">Deposit:</span>
-                    <span className="font-medium text-white/100">{formatPrice(listing.pricing.deposit, listing.pricing.currency)}</span>
-                  </div>
-                  
-                  {/* Show utilities - display "Covered" when 0, hide when null */}
-                  {listing.pricing.utilities !== null && listing.pricing.utilities !== undefined && (
-                    <div className="flex flex-col">
-                      <span className="text-white/70 text-sm">Utilities:</span>
-                      <span className="font-medium text-white/100">
-                        {listing.pricing.utilities === 0 
-                          ? 'Covered' 
-                          : formatPrice(listing.pricing.utilities, listing.pricing.currency)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex flex-col">
-                  <span className="text-white/70 text-sm">Available From:</span>
-                  <span className="font-medium text-white/100">{formatNoYear(listing.availability.availableFrom)}</span>
-                </div>
+                    ));
+                })()}
               </div>
             </div>
           </CardContent>
@@ -513,7 +569,7 @@ const ListingDetailPage: React.FC = () => {
         {listing.initiator && (
           <InitiatorProfileCard 
             initiator={listing.initiator} 
-            className="mb-6"
+            className=""
             isAcceptedCandidate={isAcceptedCandidate}
             isOwner={isOwner}
           />
@@ -522,7 +578,7 @@ const ListingDetailPage: React.FC = () => {
         {/* Amenities - Currently not available in listing data */}
 
         {/* Action Buttons */}
-        <div className="mt-6 pb-6">
+        <div className="pb-6">
           {isOwner ? (
             // Owner controls
             <div className="flex gap-3 max-w-4xl mx-auto">

@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 type OptimizedImageProps = {
   src: string;
   alt: string;
-  aspectRatio: '1:1' | '4:3';
+  aspectRatio: '1:1' | '4:3' | '16:9';
   priority?: boolean;
   className?: string;
 };
@@ -62,7 +62,8 @@ export function OptimizedImage({
     setIsLoaded(false);
   }, [src]);
 
-  const ratioClass = aspectRatio === '1:1' ? 'aspect-square' : 'aspect-[4/3]';
+  const ratioClass = aspectRatio === '1:1' ? 'aspect-square' : 
+                     aspectRatio === '16:9' ? 'aspect-video' : 'aspect-[4/3]';
 
   return (
     <div

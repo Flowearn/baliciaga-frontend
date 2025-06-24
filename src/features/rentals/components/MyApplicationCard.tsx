@@ -109,7 +109,7 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
   };
 
   return (
-    <div className="mb-4">
+    <div className="mb-2">
     <Card className="bg-black/40 backdrop-blur-sm border-white/20 shadow-lg hover:shadow-xl transition-all duration-200">
       <CardContent className="p-4 sm:p-6">
         {/* Property Image - Full width, clickable */}

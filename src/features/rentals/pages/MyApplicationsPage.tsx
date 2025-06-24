@@ -143,7 +143,7 @@ const MyApplicationsPage: React.FC = () => {
     return (
       <ColoredPageWrapper seed="applications">
         <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
-          <div className="space-y-4">
+          <div className="space-y-2">
             {[...Array(3)].map((_, index) => (
               <div key={index} className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md">
                 <div className="flex gap-4">

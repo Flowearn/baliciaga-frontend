@@ -241,7 +241,7 @@ const MyListingsPage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed="listings">
-      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 pb-8 max-w-4xl">
+              <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 pb-4 max-w-4xl">
         {/* Status Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-4 bg-black/20 border-white/20">
@@ -271,7 +271,7 @@ const MyListingsPage: React.FC = () => {
           ) : error ? (
             <ErrorState onRetry={handleRetry} />
           ) : listings.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-2">
               {listings.map((listing) => (
                 <MyListingCard key={listing.listingId} listing={listing} onCardClick={handleCardClick} />
               ))}
