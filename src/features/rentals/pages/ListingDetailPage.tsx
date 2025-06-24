@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
 import { 
   ArrowLeft,
   MapPin,
@@ -35,6 +37,7 @@ import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
 import { fetchListingById, incrementView, finalizeListing, cancelListing } from '@/services/listingService';
 import { createApplication, fetchMyApplications } from '@/services/applicationService';
 import ApplicationModal from '@/features/applications/components/ApplicationModal';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import InitiatorProfileCard from '@/features/rentals/components/InitiatorProfileCard';
 import { Listing } from '@/types';
 import { formatPrice } from '@/lib/utils';
@@ -71,6 +74,32 @@ const ListingDetailPage: React.FC = () => {
   const [isOperating, setIsOperating] = useState(false);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [isAcceptedCandidate, setIsAcceptedCandidate] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showFinalizeDialog, setShowFinalizeDialog] = useState(false);
+
+  // Carousel setup with autoplay
+  const autoplayOptions = { delay: 3000, stopOnInteraction: false };
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { loop: true }, 
+    [Autoplay(autoplayOptions)]
+  );
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Handle slide changes
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setCurrentSlide(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+  
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on('select', onSelect);
+    onSelect();
+    
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
+  }, [emblaApi, onSelect]);
 
   // 判断当前登录用户是否为房源发起人：比较内部业务主键 userId
   const isOwner = authUser?.userId && listing?.initiatorId === authUser.userId;
@@ -130,11 +159,11 @@ const ListingDetailPage: React.FC = () => {
     setShowApplicationModal(true);
   };
 
-  const submitApplication = async (message: string) => {
+  const submitApplication = async (message: string, applicantLeaseDuration?: string) => {
     if (!listing || !authUser) return;
 
     try {
-      await createApplication(listing.listingId, message);
+      await createApplication(listing.listingId, message, applicantLeaseDuration);
       toast.success('Application submitted successfully!');
       setShowApplicationModal(false);
     } catch (error) {
@@ -170,8 +199,8 @@ const ListingDetailPage: React.FC = () => {
       const response = await finalizeListing(listing.listingId);
       
       if (response.success) {
-        toast.success('房源已成功完成组队！', {
-          description: `${response.data?.updatedApplicationsCount || 0} 个申请已更新为已签约状态。`
+        toast.success('Listing finalized successfully!', {
+          description: `${response.data?.updatedApplicationsCount || 0} application(s) have been updated to signed status.`
         });
         
         // 更新本地状态
@@ -186,16 +215,16 @@ const ListingDetailPage: React.FC = () => {
       const errorWithMessage = error as { message?: string };
       
       if (axiosError.response?.status === 403) {
-        toast.error('权限不足', {
-          description: '只有招租信息的发起人可以完成组队。'
+        toast.error('Permission denied', {
+          description: 'Only the listing owner can finalize this listing.'
         });
       } else if (axiosError.response?.status === 404) {
-        toast.error('招租信息不存在', {
-          description: '找不到指定的招租信息。'
+        toast.error('Listing not found', {
+          description: 'The specified listing could not be found.'
         });
       } else {
-        toast.error('完成组队失败', {
-          description: errorWithMessage.message || '操作失败，请稍后重试。'
+        toast.error('Failed to finalize listing', {
+          description: errorWithMessage.message || 'Operation failed, please try again later.'
         });
       }
     } finally {
@@ -211,7 +240,7 @@ const ListingDetailPage: React.FC = () => {
       const response = await cancelListing(listing.listingId);
       
       if (response.success) {
-        toast.success('房源已成功取消！');
+        toast.success('Listing cancelled successfully!');
         
         // 更新本地状态
         setListing(prev => prev ? { ...prev, status: 'cancelled' as const } : null);
@@ -225,16 +254,16 @@ const ListingDetailPage: React.FC = () => {
       const errorWithMessage = error as { message?: string };
       
       if (axiosError.response?.status === 403) {
-        toast.error('权限不足', {
-          description: '只有招租信息的发起人可以取消房源。'
+        toast.error('Permission denied', {
+          description: 'Only the listing owner can cancel this listing.'
         });
       } else if (axiosError.response?.status === 404) {
-        toast.error('招租信息不存在', {
-          description: '找不到指定的招租信息。'
+        toast.error('Listing not found', {
+          description: 'The specified listing could not be found.'
         });
       } else {
-        toast.error('取消房源失败', {
-          description: errorWithMessage.message || '操作失败，请稍后重试。'
+        toast.error('Failed to cancel listing', {
+          description: errorWithMessage.message || 'Operation failed, please try again later.'
         });
       }
     } finally {
@@ -267,11 +296,11 @@ const ListingDetailPage: React.FC = () => {
           url: shareUrl,
         });
         console.log('Content shared successfully via Web Share API');
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error using Web Share API:', error);
         
         // Check if user cancelled the share action
-        if (error.name === 'AbortError') {
+        if (error instanceof Error && error.name === 'AbortError') {
           console.log('Share cancelled by user.');
           return; // Don't show fallback if user explicitly cancelled
         }
@@ -408,17 +437,84 @@ const ListingDetailPage: React.FC = () => {
         </Button>
       </div>
 
-              <div className="relative z-10 container mx-auto px-4 pt-0 pb-[52px] max-w-4xl flex flex-col gap-y-4">
-        {/* Main Photo */}
+              <div className="relative z-10 container mx-auto px-4 pt-0 pb-24 max-w-4xl flex flex-col gap-y-4">
+        {/* Main Photo Gallery with Carousel */}
         {listing.photos && listing.photos.length > 0 && (
-          <div>
-            <OptimizedImage 
-              src={listing.photos[0]} 
-              alt={listing.title}
-              aspectRatio="16:9"
-              priority={true}
-              className="rounded-xl shadow-lg h-64 sm:h-72"
-            />
+          <div className="embla relative rounded-xl overflow-hidden shadow-lg">
+            <div className="embla__viewport aspect-square" ref={emblaRef}>
+              <div className="embla__container flex h-full">
+                {listing.photos.map((photoUrl, index) => (
+                  <div className="embla__slide flex-[0_0_100%] min-w-0 relative" key={index}>
+                    <OptimizedImage
+                      src={photoUrl}
+                      alt={`${listing.title} - Photo ${index + 1}`}
+                      aspectRatio="1:1"
+                      priority={index === 0}
+                      className="h-full"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Slide indicators */}
+            {listing.photos.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1.5 z-10">
+                {listing.photos.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      index === currentSlide 
+                        ? 'bg-white w-6' 
+                        : 'bg-white/50 hover:bg-white/70'
+                    }`}
+                    onClick={() => emblaApi?.scrollTo(index)}
+                  />
+                ))}
+              </div>
+            )}
+            
+            {/* Status Badge - copied from ListingCard */}
+            <span
+              className={`absolute top-5 right-5 z-[2] rounded-full px-3 py-0.5 text-sm font-semibold shadow-md shadow-black/20 ${
+                (() => {
+                  const filled = listing.acceptedApplicantsCount ?? 0;
+                  const total = listing.totalSpots ?? listing.details.bedrooms ?? 1;
+                  
+                  switch (listing.status) {
+                    case 'active':
+                      return 'bg-green-500/80 text-white';
+                    case 'finalized':
+                      return 'bg-gray-600/80 text-white';
+                    case 'cancelled':
+                    default:
+                      return 'bg-rose-500/80 text-white';
+                  }
+                })()
+              }`}
+            >
+              {(() => {
+                const filled = listing.acceptedApplicantsCount ?? 0;
+                const total = listing.totalSpots ?? listing.details.bedrooms ?? 1;
+                
+                switch (listing.status) {
+                  case 'active':
+                    return `${filled}/${total} Filled`;
+                  case 'finalized':
+                    return 'Finalized';
+                  case 'cancelled':
+                  default:
+                    return 'Cancelled';
+                }
+              })()}
+            </span>
+            
+            {/* Lease Duration Badge */}
+            {listing.availability?.leaseDuration && listing.availability.leaseDuration !== '' && (
+              <span className="absolute top-5 left-5 z-[2] rounded-full bg-black/60 px-3 py-0.5 text-sm font-semibold text-white shadow-md shadow-black/20">
+                {listing.availability.leaseDuration}
+              </span>
+            )}
           </div>
         )}
 
@@ -525,9 +621,9 @@ const ListingDetailPage: React.FC = () => {
                       label: "Yearly Rent:",
                       value: listing.pricing.yearlyRent !== null && listing.pricing.yearlyRent !== undefined && listing.pricing.yearlyRent > 0 
                         ? (
-                          <div className="flex items-baseline gap-2">
-                            <span className="font-medium text-blue-400">{formatPrice(listing.pricing.yearlyRent, listing.pricing.currency)}</span>
-                            <span className="text-sm text-white/70">(monthly = {formatPrice(Math.round(listing.pricing.yearlyRent / 12), listing.pricing.currency)})</span>
+                          <div>
+                            <div className="font-medium text-blue-400">{formatPrice(listing.pricing.yearlyRent, listing.pricing.currency)}</div>
+                            <div className="text-sm text-white/70">(monthly = {formatPrice(Math.round(listing.pricing.yearlyRent / 12), listing.pricing.currency)})</div>
                           </div>
                         )
                         : null
@@ -545,6 +641,12 @@ const ListingDetailPage: React.FC = () => {
                     {
                       label: "Available From:",
                       value: formatNoYear(listing.availability.availableFrom)
+                    },
+                    {
+                      label: "Lease Term:",
+                      value: listing.availability.leaseDuration && listing.availability.leaseDuration !== '' 
+                        ? listing.availability.leaseDuration 
+                        : null
                     }
                   ];
 
@@ -575,6 +677,22 @@ const ListingDetailPage: React.FC = () => {
           />
         )}
 
+        {/* Apply Button for Non-owners when listing is finalized - placed 16px below initiator */}
+        {!isOwner && listing.status !== 'active' && (
+          <div className="mt-4">
+            <Button 
+              onClick={handleApply}
+              className="w-full bg-gray-500/10 text-white/50 border-gray-500/10 font-semibold py-3 rounded-2xl cursor-not-allowed"
+              size="lg"
+              disabled={true}
+            >
+              <span>
+                {listing.status === 'finalized' ? 'Listing Finalized' : 'Listing Unavailable'}
+              </span>
+            </Button>
+          </div>
+        )}
+
         {/* Amenities - Currently not available in listing data */}
 
         {/* Action Buttons */}
@@ -585,7 +703,7 @@ const ListingDetailPage: React.FC = () => {
               {listing.status === 'active' && (
                 <>
                   <Button 
-                    onClick={handleCancel}
+                    onClick={() => setShowCancelDialog(true)}
                     disabled={isOperating}
                     className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-red-500/20 font-semibold py-2 px-4 rounded-2xl"
                     size="lg"
@@ -602,8 +720,9 @@ const ListingDetailPage: React.FC = () => {
                       </>
                     )}
                   </Button>
+                  
                   <Button 
-                    onClick={handleFinalize}
+                    onClick={() => setShowFinalizeDialog(true)}
                     disabled={isOperating}
                     className="flex-1 bg-green-500/20 hover:bg-green-500/30 text-white border-green-500/20 font-semibold py-2 px-4 rounded-2xl"
                     size="lg"
@@ -633,14 +752,14 @@ const ListingDetailPage: React.FC = () => {
               {listing.status === 'finalized' && (
                 <div className="w-full text-center py-3">
                   <Badge className="bg-green-100 text-green-800 text-base px-3 py-1">
-                    已完成组队
+                    Finalized
                   </Badge>
                 </div>
               )}
               {listing.status === 'cancelled' && (
                 <div className="w-full text-center py-3">
                   <Badge className="bg-gray-100 text-gray-800 text-base px-3 py-1">
-                    已取消
+                    Cancelled
                   </Badge>
                 </div>
               )}
@@ -655,28 +774,99 @@ const ListingDetailPage: React.FC = () => {
         onClose={() => setShowApplicationModal(false)}
         onSubmit={submitApplication}
         listingTitle={listing.title}
+        leaseDuration={listing.availability?.leaseDuration}
       />
 
-      {/* Sticky Apply Button for Regular Users */}
-      {!isOwner && (
-        <div className="fixed bottom-4 left-0 right-0 z-40 px-8 pb-4 bg-gradient-to-t from-black/60 to-transparent pt-8">
-          <div className="max-w-4xl mx-auto">
+      {/* Cancel Confirmation Dialog */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent className="w-[calc(100vw-40px)] max-w-md bg-black/40 backdrop-blur-sm rounded-xl border-white/20">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-white">
+              Cancel Listing?
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-white/80">
+              Are you sure you want to cancel this listing? This action cannot be undone and will remove your listing from public view.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button 
+              onClick={() => setShowCancelDialog(false)}
+              disabled={isOperating}
+              className="bg-white/20 hover:bg-white/30 text-white border-white/20 rounded-full"
+            >
+              No, keep it
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowCancelDialog(false);
+                handleCancel();
+              }}
+              disabled={isOperating}
+              className="bg-red-500/20 hover:bg-red-500/30 text-white border-red-500/20 rounded-full"
+            >
+              Yes, cancel listing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Finalize Confirmation Dialog */}
+      <Dialog open={showFinalizeDialog} onOpenChange={setShowFinalizeDialog}>
+        <DialogContent className="w-[calc(100vw-40px)] max-w-md bg-black/40 backdrop-blur-sm rounded-xl border-white/20">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-white">
+              Finalize Listing?
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-white/80">
+              Are you sure you want to finalize this listing? This will:
+            </p>
+            <ul className="mt-2 space-y-1 text-white/70 list-disc list-inside">
+              <li>Close the listing to new applications</li>
+              <li>Mark all accepted applications as signed</li>
+              <li>Notify all accepted candidates</li>
+            </ul>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button 
+              onClick={() => setShowFinalizeDialog(false)}
+              disabled={isOperating}
+              className="bg-white/20 hover:bg-white/30 text-white border-white/20 rounded-full"
+            >
+              Not yet
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowFinalizeDialog(false);
+                handleFinalize();
+              }}
+              disabled={isOperating}
+              className="bg-green-500/20 hover:bg-green-500/30 text-white border-green-500/20 rounded-full"
+            >
+              Yes, finalize listing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sticky Apply Button for Regular Users - Only show when listing is active */}
+      {!isOwner && listing.status === 'active' && (
+        <div className="sticky bottom-[56px] z-10 p-4 bg-gradient-to-t from-background-creamy to-transparent">
+          <div className="max-w-4xl mx-auto px-4">
             <Button 
               onClick={handleApply}
-              className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-white border-blue-500/20 font-semibold py-3 rounded-2xl disabled:bg-gray-500/10 disabled:text-white/50 disabled:border-gray-500/10 backdrop-blur-sm"
+              className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-white border-blue-500/20 font-semibold py-3 rounded-2xl backdrop-blur-sm"
               size="lg"
-              disabled={listing.status !== 'active'}
             >
-              {listing.status === 'active' ? (
-                <>
-                  <MessageSquare className="w-5 h-5 mr-2" />
-                  Apply for This Property
-                </>
-              ) : (
-                <span>
-                  {listing.status === 'finalized' ? 'Listing Finalized' : 'Listing Unavailable'}
-                </span>
-              )}
+              <MessageSquare className="w-5 h-5 mr-2" />
+              Apply for This Property
             </Button>
           </div>
         </div>

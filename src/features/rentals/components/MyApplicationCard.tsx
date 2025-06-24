@@ -177,7 +177,7 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
                 size="sm"
                 onClick={handleCancelApplication}
                 disabled={isCancelling}
-                className="bg-red-500/20 hover:bg-red-500/30 text-white border-red-500/20 rounded-full"
+                className="h-8 text-[13px] bg-red-500/20 hover:bg-red-500/30 text-white border-red-500/20 rounded-full"
               >
                 {isCancelling ? (
                   <>

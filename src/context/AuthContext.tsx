@@ -2,12 +2,13 @@
 
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { Hub } from 'aws-amplify/utils';
-import { getCurrentUser, AuthUser, signOut } from 'aws-amplify/auth';
+import { getCurrentUser, fetchUserAttributes, AuthUser, signOut } from 'aws-amplify/auth';
 import { fetchUserProfile, UserProfile } from '../services/userService';
 
 // 扩展的用户类型，合并Amplify AuthUser和我们的UserProfile
 export type ExtendedUser = AuthUser & Partial<UserProfile> & {
   sub: string; // Cognito User ID，用于身份验证和所有权判断
+  email?: string; // 用户邮箱，来自Cognito或后端数据库
 };
 
 interface AuthContextType {
@@ -40,9 +41,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('🔍 [AuthContext] 开始检查当前用户...');
       const authenticatedUser = await getCurrentUser();
       
+      // 获取用户属性（包括email）
+      const userAttributes = await fetchUserAttributes();
+      console.log('📧 [AuthContext] 用户属性:', userAttributes);
+      
       // 尝试获取用户的完整业务资料
       try {
         const profileData = await fetchUserProfile();
+        console.log('👤 [AuthContext] 后端用户资料:', profileData);
         
         // 合并Amplify用户数据和业务资料，确保包含所有必要的身份字段
         const fullUserObject: ExtendedUser = {
@@ -50,9 +56,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           ...profileData,
           // 确保 sub (Cognito User ID) 可用，这是关键的身份标识符
           sub: authenticatedUser.userId, // Amplify v6 中，userId 就是 Cognito sub
+          // 确保email字段可用 - 优先使用后端的email，其次使用Cognito的email
+          email: profileData.email || userAttributes.email || authenticatedUser.username,
         };
         
-        
+        console.log('✅ [AuthContext] 完整用户对象:', fullUserObject);
         setIsAuthenticated(true);
         setUser(fullUserObject);
       } catch (profileError) {
@@ -60,9 +68,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const basicUserObject: ExtendedUser = {
           ...authenticatedUser,
           sub: authenticatedUser.userId, // 确保即使在基础对象中也包含 sub
+          // 从Cognito属性中获取email
+          email: userAttributes.email || authenticatedUser.username,
         };
         
-        
+        console.log('✅ [AuthContext] 基础用户对象:', basicUserObject);
         setIsAuthenticated(true);
         setUser(basicUserObject);
       }

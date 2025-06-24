@@ -64,8 +64,8 @@ const MyApplicationsPage: React.FC = () => {
       if (response && typeof response === 'object') {
         // Since apiClient returns response.data, the actual data is directly in response
         if ('applications' in response) {
-          newApplications = response.applications || [];
-          pagination = response.pagination || null;
+          newApplications = (response.applications as MyApplication[]) || [];
+          pagination = (response as { pagination?: { nextCursor?: string | null; hasMore?: boolean; total?: number } }).pagination || null;
           
         }
       }
@@ -195,7 +195,7 @@ const MyApplicationsPage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed="applications">
-      <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 max-w-4xl">
+      <div className="relative z-10 container mx-auto px-4 pt-4 sm:pt-8 pb-24 max-w-4xl">
 
         {/* Applications List */}
         {applications.length === 0 ? (

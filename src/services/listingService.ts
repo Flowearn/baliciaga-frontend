@@ -105,6 +105,7 @@ export interface CreateListingPayload {
   description: string;
   amenities: string[];
   photos: string[]; // 图片 URL 数组
+  leaseDuration?: string; // 租赁时长
 }
 
 export interface CreateListingResponse {

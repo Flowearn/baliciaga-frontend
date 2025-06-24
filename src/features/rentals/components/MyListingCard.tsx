@@ -11,6 +11,7 @@ import { finalizeListing, cancelListing } from '@/services/listingService';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import useEmblaCarousel from 'embla-carousel-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +39,12 @@ import {
   ChevronDown,
   XCircle,
   CheckCircle,
-  Banknote
+  Banknote,
+  User,
+  UserCircle2,
+  Briefcase,
+  Globe,
+  MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ApplicationCard from './ApplicationCard';
@@ -56,6 +62,10 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
   const [isCancelling, setIsCancelling] = useState(false);
   const [isApplicantsVisible, setIsApplicantsVisible] = useState(false);
   
+  // Carousel setup
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
   const {
     listingId,
     title,
@@ -70,6 +80,44 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
 
   const { user: authUser } = useAuth();
   const isOwner = authUser?.userId === listing.initiatorId;
+  
+  // Check if listing has posterRole to determine if initiator is a tenant
+  // Note: posterRole might not exist in older listings
+  interface InitiatorInfo {
+    name?: string;
+    whatsApp?: string;
+    profilePictureUrl?: string;
+  }
+  const listingWithRole = listing as MyListing & { posterRole?: string; initiator?: InitiatorInfo };
+  const initiatorIsTenant = listingWithRole.posterRole === 'tenant';
+
+  // Track carousel slide changes
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const onSelect = () => {
+      setCurrentImageIndex(emblaApi.selectedScrollSnap());
+    };
+
+    emblaApi.on('select', onSelect);
+    onSelect();
+
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
+  }, [emblaApi]);
+
+  // Preload next image
+  useEffect(() => {
+    // Check if photos exist and there's a next image
+    if (photos && photos.length > currentImageIndex + 1) {
+      const nextImageUrl = photos[currentImageIndex + 1];
+      
+      // Create a new Image object in memory to preload the next image
+      const img = new Image();
+      img.src = nextImageUrl;
+    }
+  }, [currentImageIndex, photos]);
 
   // Get applications for this listing when accordion is opened
   const { data: applicationsData, isLoading: isLoadingApplications, error: applicationsError } = useQuery({
@@ -249,23 +297,33 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
     <div className="w-full mb-2">
       <Card className="bg-black/40 backdrop-blur-sm border-white/20 shadow-lg hover:shadow-xl transition-all duration-200">
         <CardContent className="p-4 sm:p-6">
-          {/* Property Image - Full width, clickable */}
+          {/* Property Image - Full width, clickable with carousel */}
           <div 
-            className="w-full aspect-video rounded-lg overflow-hidden bg-gray-200 cursor-pointer relative mb-4"
+            className="embla w-full aspect-video rounded-lg overflow-hidden bg-gray-200 cursor-pointer relative mb-4"
             onClick={() => onCardClick?.(listing.listingId)}
           >
-            {mainPhoto ? (
-              <OptimizedImage 
-                src={mainPhoto} 
-                alt={title}
-                aspectRatio="4:3"
-                priority={false}
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                <MapPin className="w-6 h-6 text-gray-500" />
+            <div className="embla__viewport h-full" ref={emblaRef}>
+              <div className="embla__container flex h-full">
+                {photos && photos.length > 0 ? (
+                  photos.map((photoUrl, index) => (
+                    <div className="embla__slide flex-[0_0_100%] min-w-0 relative" key={index}>
+                      <OptimizedImage 
+                        src={photoUrl} 
+                        alt={`${title} - Photo ${index + 1}`}
+                        aspectRatio="4:3"
+                        priority={false}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <div className="embla__slide flex-[0_0_100%] min-w-0 relative">
+                    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                      <MapPin className="w-6 h-6 text-gray-500" />
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
             
             {/* Status Badges - positioned at top-right */}
             <div className="absolute top-5 right-5 z-[2] flex gap-2">
@@ -286,6 +344,13 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
                 </span>
               )}
             </div>
+
+            {/* Lease Duration Badge */}
+            {listing.availability?.leaseDuration && listing.availability.leaseDuration !== '' && (
+              <span className="absolute top-5 left-5 z-[2] rounded-full bg-black/60 px-3 py-0.5 text-sm font-semibold text-white shadow-md shadow-black/20">
+                {listing.availability.leaseDuration}
+              </span>
+            )}
           </div>
 
           {/* Listing Details */}
@@ -509,12 +574,105 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
                 <div className="py-8 text-center text-red-400">
                   <p>Error loading applications</p>
                 </div>
-              ) : applications.length === 0 ? (
+              ) : applications.length === 0 && !initiatorIsTenant ? (
                 <div className="py-8 text-center text-white/60">
                   <p>No applications found</p>
                 </div>
               ) : (
                 <div className="space-y-3">
+                  {/* Show initiator as first "application" if they are a tenant */}
+                  {initiatorIsTenant && listingWithRole.initiator && (
+                    <div className="p-4 bg-white/10 rounded-lg border border-green-500/30">
+                      <div className="flex gap-3 items-start">
+                        {/* Left side: Information */}
+                        <div className="flex-1 pr-2">
+                          {/* Name with "Initiator" badge */}
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold text-white">
+                              {listingWithRole.initiator.name || authUser?.username || 'Initiator'}
+                            </h4>
+                            <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">
+                              Initiator (Tenant)
+                            </span>
+                          </div>
+                          
+                          {/* Show profile information if available */}
+                          {authUser?.profile && (
+                            <>
+                              {/* Age and Gender */}
+                              {(authUser.profile.age || authUser.profile.gender) && (
+                                <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+                                  <UserCircle2 className="w-4 h-4 text-white/60 flex-shrink-0" />
+                                  <span>
+                                    {[
+                                      authUser.profile.age && `${authUser.profile.age} years old`,
+                                      authUser.profile.gender && authUser.profile.gender.charAt(0).toUpperCase() + authUser.profile.gender.slice(1)
+                                    ].filter(Boolean).join(' • ')}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {/* Occupation */}
+                              {authUser.profile.occupation && (
+                                <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+                                  <Briefcase className="w-4 h-4 text-white/60 flex-shrink-0" />
+                                  <span>{authUser.profile.occupation}</span>
+                                </div>
+                              )}
+                              
+                              {/* Languages */}
+                              {authUser.profile.languages && authUser.profile.languages.length > 0 && (
+                                <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+                                  <Globe className="w-4 h-4 text-white/60 flex-shrink-0" />
+                                  <span>
+                                    {authUser.profile.languages.map(lang => 
+                                      lang.charAt(0).toUpperCase() + lang.slice(1)
+                                    ).join(', ')}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {/* WhatsApp */}
+                              {listingWithRole.initiator.whatsApp && (
+                                <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+                                  <MessageSquare className="w-4 h-4 text-green-400 flex-shrink-0" />
+                                  <a 
+                                    href={`https://wa.me/${listingWithRole.initiator.whatsApp.replace(/[^0-9]/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-green-400 hover:text-green-300 underline transition-colors"
+                                  >
+                                    {listingWithRole.initiator.whatsApp}
+                                  </a>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        
+                        {/* Right side: Avatar */}
+                        <div className="w-24 h-24 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {listingWithRole.initiator.profilePictureUrl ? (
+                            <OptimizedImage 
+                              src={listingWithRole.initiator.profilePictureUrl} 
+                              alt={listingWithRole.initiator.name || 'Initiator'}
+                              aspectRatio="1:1"
+                              priority={false}
+                            />
+                          ) : (
+                            <User className="w-12 h-12 text-white/80" />
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Status indicator */}
+                      <div className="mt-4 text-center">
+                        <span className="text-sm text-green-400">✓ Confirmed tenant</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Regular applications */}
                   {applications.map((application: ReceivedApplication) => (
                     <ApplicationCard 
                       key={application.applicationId} 

@@ -149,7 +149,7 @@ const ManageListingApplications: React.FC = () => {
             <ArrowLeft className="h-5 w-5 text-white/90" />
           </Button>
         </div>
-        <div className="container mx-auto p-6 pb-8">
+        <div className="container mx-auto p-6 pb-24">
           <div className="flex items-center justify-center min-h-[200px]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/60 mx-auto"></div>
@@ -174,7 +174,7 @@ const ManageListingApplications: React.FC = () => {
             <ArrowLeft className="h-5 w-5 text-white/90" />
           </Button>
         </div>
-        <div className="container mx-auto p-6 pb-8">
+        <div className="container mx-auto p-6 pb-24">
           <div className="text-center text-red-400">
             <p>{error}</p>
           </div>

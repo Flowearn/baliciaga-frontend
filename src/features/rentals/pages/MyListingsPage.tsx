@@ -55,7 +55,7 @@ const MyListingsPage: React.FC = () => {
       });
 
       if (response.success) {
-        let newListings = response.data.listings;
+        const newListings = response.data.listings;
         
         // No filtering needed - show all listings regardless of status
         
@@ -241,7 +241,7 @@ const MyListingsPage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed="listings">
-              <div className="relative z-10 container mx-auto px-4 py-4 sm:py-8 pb-4 max-w-4xl">
+              <div className="relative z-10 container mx-auto px-4 pt-4 sm:pt-8 pb-24 max-w-4xl">
         {/* Status Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-4 bg-black/20 border-white/20">

@@ -9,7 +9,12 @@ import {
   Briefcase,
   Phone,
   Check,
-  X
+  X,
+  Mail,
+  Calendar,
+  MessageSquare,
+  UserCircle2,
+  MapPin
 } from 'lucide-react';
 import { ReceivedApplication, updateApplicationStatus } from '@/services/applicationService';
 import { formatNoYear } from '@/utils/formatDate';
@@ -126,39 +131,69 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingI
           
           {/* Email */}
           {application.applicant?.email && (
-            <div className="text-base text-white/80 whitespace-nowrap overflow-hidden text-ellipsis">
-              {application.applicant.email}
+            <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+              <Mail className="w-4 h-4 text-white/60 flex-shrink-0" />
+              <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+                {application.applicant.email}
+              </span>
+            </div>
+          )}
+          
+          {/* WhatsApp - CRITICAL ADDITION */}
+          {profile?.whatsApp && (
+            <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+              <MessageSquare className="w-4 h-4 text-green-400 flex-shrink-0" />
+              <a 
+                href={`https://wa.me/${profile.whatsApp.replace(/[^0-9]/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green-400 hover:text-green-300 underline transition-colors"
+              >
+                {profile.whatsApp}
+              </a>
             </div>
           )}
           
           {/* Age and Gender in same row */}
           {(profile?.age || profile?.gender) && (
-            <div className="text-base text-white/80 mt-1 whitespace-nowrap">
-              {[
-                profile.age && `${profile.age} years old`,
-                profile.gender && profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1)
-              ].filter(Boolean).join(' • ')}
+            <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+              <UserCircle2 className="w-4 h-4 text-white/60 flex-shrink-0" />
+              <span className="whitespace-nowrap">
+                {[
+                  profile.age && `${profile.age} years old`,
+                  profile.gender && profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1)
+                ].filter(Boolean).join(' • ')}
+              </span>
             </div>
           )}
           
           {/* Nationality */}
           {profile?.nationality && (
-            <div className="text-base text-white/80 whitespace-nowrap">
-              {profile.nationality}
+            <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+              <MapPin className="w-4 h-4 text-white/60 flex-shrink-0" />
+              <span className="whitespace-nowrap">{profile.nationality}</span>
             </div>
           )}
           
           {/* Occupation */}
           {profile?.occupation && (
-            <div className="text-base text-white/80 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
-              {profile.occupation}
+            <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+              <Briefcase className="w-4 h-4 text-white/60 flex-shrink-0" />
+              <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+                {profile.occupation}
+              </span>
             </div>
           )}
           
           {/* Languages */}
           {profile?.languages && profile.languages.length > 0 && (
-            <div className="text-base text-white/80 mt-1">
-              {profile.languages.join(', ')}
+            <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+              <Globe className="w-4 h-4 text-white/60 flex-shrink-0" />
+              <span>
+                {profile.languages.map(lang => 
+                  lang.charAt(0).toUpperCase() + lang.slice(1)
+                ).join(', ')}
+              </span>
             </div>
           )}
           

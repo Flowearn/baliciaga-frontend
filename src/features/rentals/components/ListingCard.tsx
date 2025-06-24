@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Listing } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { formatNoYear } from '@/utils/formatDate';
 import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import useEmblaCarousel from 'embla-carousel-react';
 
 interface ListingCardProps {
   listing: Listing;
@@ -12,11 +13,42 @@ interface ListingCardProps {
 }
 
 const ListingCard: React.FC<ListingCardProps> = ({ listing, onCardClick, isArchived = false }) => {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
   const handleCardClick = () => {
     if (onCardClick) {
       onCardClick(listing.listingId);
     }
   };
+
+  // Track carousel slide changes
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const onSelect = () => {
+      setCurrentImageIndex(emblaApi.selectedScrollSnap());
+    };
+
+    emblaApi.on('select', onSelect);
+    onSelect();
+
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
+  }, [emblaApi]);
+
+  // Preload next image
+  useEffect(() => {
+    // Check if photos exist and there's a next image
+    if (listing?.photos && listing.photos.length > currentImageIndex + 1) {
+      const nextImageUrl = listing.photos[currentImageIndex + 1];
+      
+      // Create a new Image object in memory to preload the next image
+      const img = new Image();
+      img.src = nextImageUrl;
+    }
+  }, [currentImageIndex, listing?.photos]);
 
   // 获取状态胶囊信息 - 使用80%透明底色+白色文字
   const getStatusInfo = (listing: Listing) => {
@@ -104,14 +136,34 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onCardClick, isArchi
     )} onClick={handleCardClick}>
       {/* Image Container with Status Badge */}
       <div className={cn(
-        "relative aspect-[4/3] rounded-xl overflow-hidden mb-2",
+        "embla relative aspect-[4/3] rounded-xl overflow-hidden mb-2",
         isArchived && "border-2 border-dashed border-gray-400"
       )}>
-        <OptimizedImage
-          src={listing.photos?.[0] || '/placeholder-villa.jpg'}
-          alt={listing.title}
-          aspectRatio="4:3"
-        />
+        <div className="embla__viewport h-full" ref={emblaRef}>
+          <div className="embla__container flex h-full">
+            {listing.photos && listing.photos.length > 0 ? (
+              listing.photos.map((photoUrl, index) => (
+                <div className="embla__slide flex-[0_0_100%] min-w-0 relative" key={index}>
+                  <OptimizedImage
+                    src={photoUrl}
+                    alt={`${listing.title} - Photo ${index + 1}`}
+                    aspectRatio="4:3"
+                    priority={false}
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="embla__slide flex-[0_0_100%] min-w-0 relative">
+                <OptimizedImage
+                  src="/placeholder-villa.jpg"
+                  alt={listing.title}
+                  aspectRatio="4:3"
+                  priority={false}
+                />
+              </div>
+            )}
+          </div>
+        </div>
             
         {/* 1️⃣ 基础渐变层 - 使用自定义类覆盖Amplify样式 */}
         <div className="absolute inset-0 gradient-overlay-base z-[1] pointer-events-none"></div>
@@ -132,6 +184,13 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onCardClick, isArchi
         >
           {label}
         </span>
+
+        {/* Lease Duration Badge */}
+        {listing.availability?.leaseDuration && listing.availability.leaseDuration !== '' && (
+          <span className="absolute top-5 left-5 z-[2] rounded-full bg-black/60 px-3 py-0.5 text-sm font-semibold text-white shadow-md shadow-black/20">
+            {listing.availability.leaseDuration}
+          </span>
+        )}
 
         {/* 5️⃣ Archived Overlay */}
         {isArchived && (

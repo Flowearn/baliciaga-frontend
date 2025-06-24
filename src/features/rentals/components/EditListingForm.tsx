@@ -171,12 +171,14 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
         squareFootage: typeof formData.squareFootage === 'string' ? (formData.squareFootage === '' ? null : Number(formData.squareFootage)) : formData.squareFootage,
         minimumStay: typeof formData.minimumStay === 'string' ? Number(formData.minimumStay) || 1 : formData.minimumStay,
         amenities: formData.amenities.join(','), // Convert array to comma-separated string
-        photos: formData.photos // Include photos array
+        photos: formData.photos.filter(photo => photo && photo.trim() !== '') // Filter out empty/null photos
       };
 
       console.log('Updating listing with data:', payload);
       console.log('Original amenities array:', formData.amenities);
       console.log('Converted amenities string:', payload.amenities);
+      console.log('Photos before filter:', formData.photos);
+      console.log('Photos after filter:', payload.photos);
       
       const response = await updateListing(listing.listingId, payload);
       
@@ -186,9 +188,12 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
       } else {
         throw new Error(response.error?.message || 'Failed to update listing');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating listing:', error);
-      toast.error('Failed to update listing');
+      const errorMessage = error?.response?.data?.error?.message || 
+                          error?.response?.data?.error?.details?.join(', ') ||
+                          'Failed to update listing';
+      toast.error(errorMessage);
     } finally {
       setIsUpdating(false);
     }

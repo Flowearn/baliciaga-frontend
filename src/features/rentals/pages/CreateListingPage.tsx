@@ -15,6 +15,7 @@ import { analyzeListingSource, AnalyzeSourceResponse, createListing } from '@/se
 import { uploadListingPhotos } from '@/services/uploadService';
 import { isInternalStaff } from '@/utils/authUtils';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import LeaseDurationSelector from '@/features/rentals/components/LeaseDurationSelector';
 
 // Extended type for AI extracted data with additional fields
 interface ExtractedListingWithAI {
@@ -90,6 +91,12 @@ const CreateListingPage: React.FC = () => {
   // Poster role state
   const [posterRole, setPosterRole] = useState<'tenant' | 'landlord' | 'platform' | null>(null);
   const [showPlatformOption, setShowPlatformOption] = useState(false);
+  
+  // Lease duration state
+  const [leaseDuration, setLeaseDuration] = useState<string>('');
+
+  // Photo error state
+  const [photoError, setPhotoError] = useState('');
 
   // Random background color effect
   useEffect(() => {
@@ -168,6 +175,11 @@ const CreateListingPage: React.FC = () => {
     // Create preview URLs
     const newPreviews = newFiles.map(file => URL.createObjectURL(file));
     setPhotoPreviews(prev => [...prev, ...newPreviews]);
+
+    // Clear photo error when photos are added
+    if (newFiles.length > 0) {
+      setPhotoError('');
+    }
   }, [formData.photos.length]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -189,6 +201,9 @@ const CreateListingPage: React.FC = () => {
       photos: prev.photos.filter((_, i) => i !== index)
     }));
     setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+    
+    // Clear photo error when photos are removed (will be handled by submit validation)
+    setPhotoError('');
   };
 
   // Handle file selection for screenshot upload
@@ -228,6 +243,8 @@ const CreateListingPage: React.FC = () => {
             bathrooms: extracted.bathrooms || prev.bathrooms,
             squareFootage: extracted.squareFootage || aiData?.landSize || aiData?.buildingSize || prev.squareFootage,
             address: extracted.address || prev.address,
+            locationArea: extracted.locationArea || aiData?.locationArea || prev.locationArea,
+            currency: extracted.currency || prev.currency,
             minimumStay: extracted.minimumStay ? parseMinimumStay(extracted.minimumStay) : prev.minimumStay,
             amenities: (extracted.amenities && extracted.amenities.length > 0) ? extracted.amenities : prev.amenities,
           }));
@@ -265,6 +282,8 @@ const CreateListingPage: React.FC = () => {
             bathrooms: extracted.bathrooms || prev.bathrooms,
             squareFootage: extracted.squareFootage || aiData?.landSize || aiData?.buildingSize || prev.squareFootage,
             address: extracted.address || prev.address,
+            locationArea: extracted.locationArea || aiData?.locationArea || prev.locationArea,
+            currency: extracted.currency || prev.currency,
             minimumStay: extracted.minimumStay ? parseMinimumStay(extracted.minimumStay) : prev.minimumStay,
             amenities: (extracted.amenities && extracted.amenities.length > 0) ? extracted.amenities : prev.amenities,
           }));
@@ -364,6 +383,14 @@ const CreateListingPage: React.FC = () => {
 
   // Handle form submission
   const handleSubmit = async () => {
+    // Photo validation: check at the very beginning
+    if (formData.photos.length === 0) {
+      setPhotoError('At least one photo is required.');
+      return;
+    } else {
+      setPhotoError(''); // Clear error if photos exist
+    }
+
     // Convert string values to numbers for validation and submission
     let monthlyRent = typeof formData.monthlyRent === 'string' ? Number(formData.monthlyRent) || 0 : formData.monthlyRent;
     let yearlyRent = typeof formData.yearlyRent === 'string' ? (formData.yearlyRent === '' ? null : Number(formData.yearlyRent)) : formData.yearlyRent;
@@ -375,12 +402,6 @@ const CreateListingPage: React.FC = () => {
     // Enhanced validation: at least one price field must be filled
     if (!formData.title || !formData.address) {
       toast.error('Please fill in all required fields');
-      return;
-    }
-
-    // Photo validation: at least one photo is required
-    if (!formData.photos || formData.photos.length === 0) {
-      toast.error('At least one photo is required');
       return;
     }
 
@@ -422,7 +443,8 @@ const CreateListingPage: React.FC = () => {
         minimumStay: minimumStay,
         description: formData.description,
         amenities: formData.amenities,
-        photos: photoUrls // 修复：传递实际的图片URL数组而不是空数组
+        photos: photoUrls, // 修复：传递实际的图片URL数组而不是空数组
+        leaseDuration: leaseDuration // Add lease duration to payload
       });
       
       if (response.success && response.data) {
@@ -515,7 +537,7 @@ const CreateListingPage: React.FC = () => {
 
             {/* 右侧内容块 */}
             <div className="flex-1 flex flex-col items-end gap-2">
-              <h3 className="text-xl font-bold text-white/90">Property Photos <span className="text-red-500">*</span></h3>
+              <h3 className="text-xl font-bold text-white/90">Property Photos <span className="text-red-500 ml-1">*</span></h3>
               <div className="flex items-center gap-3">
                 {formData.photos.length > 0 && (
                   <span className="text-base text-white/70">
@@ -563,57 +585,9 @@ const CreateListingPage: React.FC = () => {
           )}
           
           {/* Photo validation error message */}
-          {formData.photos.length === 0 && (
-            <p className="text-red-400 text-base mt-2">At least one photo is required.</p>
+          {photoError && (
+            <p className="text-red-500 text-sm mt-2">{photoError}</p>
           )}
-        </div>
-        
-        {/* Poster Role Selection Container */}
-        <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90 mb-6">
-          <p className="text-xl text-center text-white/90 mb-4">I am ...</p>
-          <div className={`grid ${showPlatformOption ? 'grid-cols-3' : 'grid-cols-2'} gap-4`}>
-            <div className="flex flex-col items-center gap-2">
-              <User className="h-6 w-6 text-white/60" />
-              <button
-                onClick={() => setPosterRole('tenant')}
-                className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-sm ${
-                  posterRole === 'tenant'
-                    ? 'bg-white text-gray-800'
-                    : 'bg-white/10 text-white/70 hover:bg-white/15'
-                }`}
-              >
-                Tenant
-              </button>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <Building className="h-6 w-6 text-white/60" />
-              <button
-                onClick={() => setPosterRole('landlord')}
-                className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-sm ${
-                  posterRole === 'landlord'
-                    ? 'bg-white text-gray-800'
-                    : 'bg-white/10 text-white/70 hover:bg-white/15'
-                }`}
-              >
-                Landlord/Agent
-              </button>
-            </div>
-            {showPlatformOption && (
-              <div className="flex flex-col items-center gap-2">
-                <MenuIcon className="h-6 w-6 text-white/60" />
-                <button
-                  onClick={() => setPosterRole('platform')}
-                  className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-sm ${
-                    posterRole === 'platform'
-                      ? 'bg-white text-gray-800'
-                      : 'bg-white/10 text-white/70 hover:bg-white/15'
-                  }`}
-                >
-                  Platform
-                </button>
-              </div>
-            )}
-          </div>
         </div>
         
         {/* B. "Property Details" 表单区域 */}
@@ -807,35 +781,93 @@ const CreateListingPage: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* Amenities Section */}
+          <div className="mt-6">
+            <h3 className="text-xl font-bold text-white mb-4">Amenities</h3>
+            {formData.amenities.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.amenities.map((amenity, index) => (
+                  <Badge key={index} variant="secondary" className="px-3 py-1">
+                    {amenity}
+                    <button
+                      onClick={() => removeAmenity(amenity)}
+                      className="ml-2 text-gray-500 hover:text-red-500"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* D. "Amenities" 显示区域 */}
-        <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90 mb-0">
-          <h3 className="text-xl font-semibold text-white mb-4">Amenities</h3>
-          {formData.amenities.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {formData.amenities.map((amenity, index) => (
-                <Badge key={index} variant="secondary" className="px-3 py-1">
-                  {amenity}
-                  <button
-                    onClick={() => removeAmenity(amenity)}
-                    className="ml-2 text-gray-500 hover:text-red-500"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
+        {/* Initiator Info Container */}
+        <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90 mb-6">
+          <h2 className="text-xl font-bold text-white mb-4">Initiator Info <span className="text-red-500 ml-1">*</span></h2>
+          
+          {/* Poster Role Selection */}
+          <p className="text-base text-white/90 mb-3">I am ...</p>
+          <div className={`grid ${showPlatformOption ? 'grid-cols-3' : 'grid-cols-2'} gap-4 mb-6`}>
+            <div className="flex flex-col items-center gap-2">
+              <User className="h-6 w-6 text-white/60" />
+              <button
+                onClick={() => setPosterRole('tenant')}
+                className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-sm ${
+                  posterRole === 'tenant'
+                    ? 'bg-white text-gray-800'
+                    : 'bg-white/10 text-white/70 hover:bg-white/15'
+                }`}
+              >
+                Tenant
+              </button>
             </div>
-                      ) : (
-              <p className="text-white/70 text-base">No amenities selected yet. AI will extract amenities automatically.</p>
+            <div className="flex flex-col items-center gap-2">
+              <Building className="h-6 w-6 text-white/60" />
+              <button
+                onClick={() => setPosterRole('landlord')}
+                className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-sm ${
+                  posterRole === 'landlord'
+                    ? 'bg-white text-gray-800'
+                    : 'bg-white/10 text-white/70 hover:bg-white/15'
+                }`}
+              >
+                Landlord/Agent
+              </button>
+            </div>
+            {showPlatformOption && (
+              <div className="flex flex-col items-center gap-2">
+                <MenuIcon className="h-6 w-6 text-white/60" />
+                <button
+                  onClick={() => setPosterRole('platform')}
+                  className={`h-9 w-full px-4 rounded-full transition-all duration-200 flex items-center justify-center text-sm ${
+                    posterRole === 'platform'
+                      ? 'bg-white text-gray-800'
+                      : 'bg-white/10 text-white/70 hover:bg-white/15'
+                  }`}
+                >
+                  Platform
+                </button>
+              </div>
             )}
+          </div>
+          
+          {/* Lease Duration Selection */}
+          <p className="text-base text-white/90 mb-3">Preferred Lease Duration</p>
+          <LeaseDurationSelector
+            selectedDuration={leaseDuration}
+            onDurationSelect={setLeaseDuration}
+            showNegotiable={true}
+            className="grid grid-cols-2 sm:grid-cols-3"
+          />
         </div>
 
         {/* D. 发布按钮 */}
-        <div className="mt-6 pb-8 px-4">
+        <div className="mt-6 pb-24 px-4">
           <button
             onClick={handleSubmit}
-            disabled={isPublishing}
+            disabled={isPublishing || leaseDuration === '' || leaseDuration === null}
             className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-white font-semibold rounded-2xl py-3 transition-colors backdrop-blur-sm border border-blue-500/20"
           >
             {isPublishing ? 'Publishing...' : 'Publish Listing'}

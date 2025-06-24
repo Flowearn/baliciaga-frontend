@@ -162,7 +162,7 @@ const CafeDetailPage: React.FC = () => {
       </div>
       
       {/* Content layer */}
-      <div className="relative z-10 min-h-screen pb-2">
+      <div className="relative z-10 min-h-screen pb-24">
         <CafeDetail 
           cafe={cafe} 
           onClose={handleGoBack}

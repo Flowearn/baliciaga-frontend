@@ -357,10 +357,11 @@ const UserProfilePage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       
       toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully!`);
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Error updating ${field}:`, error);
-      console.error('Error details:', error.response?.data || error.message);
-      toast.error(`Failed to update ${field}: ${error.response?.data?.error?.message || error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error details:', errorMessage);
+      toast.error(`Failed to update ${field}: ${errorMessage}`);
       
       // 如果保存失败，回滚UI状态到保存前的状态
       setProfileForm(profileForm);
@@ -370,7 +371,7 @@ const UserProfilePage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed="profile">
-      <div className="relative z-10 max-w-md mx-auto pt-4">
+      <div className="relative z-10 max-w-md mx-auto pt-4 pb-24">
         {/* Avatar Section */}
         <div className="flex flex-col items-center my-4 profile-avatar-section">
           <div className="relative mb-2 cursor-pointer group" onClick={triggerAvatarUpload}>
@@ -408,7 +409,7 @@ const UserProfilePage: React.FC = () => {
         </div>
 
         {/* Profile completion guidance text */}
-        <p className="text-sm text-white text-center my-4 max-w-[360px] mx-auto">
+        <p className="text-sm text-white text-center my-4 mx-8">
           A complete profile helps your application get accepted faster.
         </p>
 
@@ -583,7 +584,7 @@ const UserProfilePage: React.FC = () => {
           </div>
 
         {/* Sign Out */}
-        <div className="mx-8 mb-4">
+        <div className="mx-16 mb-4">
           <Button 
             onClick={handleSignOut}
             className="w-full bg-red-500/20 hover:bg-red-500/30 text-white border-red-500/20 rounded-full"

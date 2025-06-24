@@ -2,6 +2,7 @@ import apiClient from './apiClient';
 
 export interface CreateApplicationPayload {
   message: string;
+  applicantLeaseDuration?: string;
 }
 
 export interface CreateApplicationResponse {
@@ -21,11 +22,16 @@ export interface CreateApplicationResponse {
 
 export const createApplication = async (
   listingId: string, 
-  message: string
+  message: string,
+  applicantLeaseDuration?: string
 ): Promise<CreateApplicationResponse> => {
-  const response = await apiClient.post(`/listings/${listingId}/applications`, {
-    message
-  });
+  const payload: CreateApplicationPayload = { message };
+  
+  if (applicantLeaseDuration) {
+    payload.applicantLeaseDuration = applicantLeaseDuration;
+  }
+  
+  const response = await apiClient.post(`/listings/${listingId}/applications`, payload);
   return response.data;
 };
 
