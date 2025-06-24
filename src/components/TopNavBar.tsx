@@ -3,11 +3,11 @@ import { NavLink } from 'react-router-dom';
 
 export const TopNavBar = () => {
   return (
-    <div className="bg-background-creamy/70 backdrop-blur-sm py-0 px-4">
+    <div className="py-0 px-4">
       <div className="flex gap-10 justify-center">
         <NavLink
           to="/my-listings"
-          className={({ isActive }) => `relative py-2 px-3 text-sm font-medium transition-colors duration-200 ease-in-out whitespace-nowrap ${
+          className={({ isActive }) => `relative py-2 px-3 text-sm transition-colors duration-200 ease-in-out whitespace-nowrap ${
             isActive
               ? 'text-brand'
               : 'text-gray-500 hover:text-gray-700'
@@ -25,7 +25,7 @@ export const TopNavBar = () => {
         
         <NavLink
           to="/my-applications"
-          className={({ isActive }) => `relative py-2 px-3 text-sm font-medium transition-colors duration-200 ease-in-out whitespace-nowrap ${
+          className={({ isActive }) => `relative py-2 px-3 text-sm transition-colors duration-200 ease-in-out whitespace-nowrap ${
             isActive
               ? 'text-brand'
               : 'text-gray-500 hover:text-gray-700'
@@ -44,7 +44,7 @@ export const TopNavBar = () => {
         <NavLink
           to="/listings"
           end
-          className={({ isActive }) => `relative py-2 px-3 text-sm font-medium transition-colors duration-200 ease-in-out whitespace-nowrap ${
+          className={({ isActive }) => `relative py-2 px-3 text-sm transition-colors duration-200 ease-in-out whitespace-nowrap ${
             isActive
               ? 'text-brand'
               : 'text-gray-500 hover:text-gray-700'

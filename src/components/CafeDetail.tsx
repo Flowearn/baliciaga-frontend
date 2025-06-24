@@ -341,7 +341,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           {cafe.gofoodUrl && (
             <Button
               asChild
-              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-9 text-base font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-9 text-base flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
             >
               <a href={cafe.gofoodUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
                 <Bike size={16} />
@@ -354,7 +354,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           {cafe && cafe.tableUrl && typeof cafe.tableUrl === 'string' && cafe.tableUrl.trim() !== '' && (
             <Button
               asChild
-              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-9 text-base font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-9 text-base flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
             >
               <a href={cafe.tableUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
                 <BookOpen size={16} />
@@ -367,7 +367,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           {cafe && cafe.menuUrl && typeof cafe.menuUrl === 'string' && cafe.menuUrl.trim() !== '' && (
             <Button
               asChild
-              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-9 text-base font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
+              className="bg-white/20 text-white hover:bg-white/30 rounded-full px-3 h-9 text-base flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
             >
               <a href={cafe.menuUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-x-1.5">
                 <FileText size={16} />
@@ -378,7 +378,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           
           {/* Share button */}
           <Button 
-            className="bg-white text-gray-800 hover:bg-gray-100 rounded-full px-3 h-9 text-base font-normal flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
+            className="bg-white text-gray-800 hover:bg-gray-100 rounded-full px-3 h-9 text-base flex items-center justify-center flex-1 basis-[calc(50%-theme(space.1.5))] gap-x-1.5"
             onClick={handleShareClick}
           >
             <Share2 size={16} />

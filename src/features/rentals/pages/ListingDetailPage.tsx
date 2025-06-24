@@ -408,7 +408,7 @@ const ListingDetailPage: React.FC = () => {
         </Button>
       </div>
 
-              <div className="relative z-10 container mx-auto px-4 pt-0 pb-4 max-w-4xl flex flex-col gap-y-4">
+              <div className="relative z-10 container mx-auto px-4 pt-0 pb-[52px] max-w-4xl flex flex-col gap-y-4">
         {/* Main Photo */}
         {listing.photos && listing.photos.length > 0 && (
           <div>
@@ -659,7 +659,7 @@ const ListingDetailPage: React.FC = () => {
 
       {/* Sticky Apply Button for Regular Users */}
       {!isOwner && (
-        <div className="fixed bottom-20 left-0 right-0 z-40 px-8 pb-4 bg-gradient-to-t from-black/60 to-transparent pt-8">
+        <div className="fixed bottom-4 left-0 right-0 z-40 px-8 pb-4 bg-gradient-to-t from-black/60 to-transparent pt-8">
           <div className="max-w-4xl mx-auto">
             <Button 
               onClick={handleApply}

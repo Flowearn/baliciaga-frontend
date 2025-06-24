@@ -370,10 +370,10 @@ const UserProfilePage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed="profile">
-      <div className="relative z-10 max-w-md mx-auto">
+      <div className="relative z-10 max-w-md mx-auto pt-4">
         {/* Avatar Section */}
-        <div className="flex flex-col items-center mb-8 profile-avatar-section">
-          <div className="relative mb-4 cursor-pointer group" onClick={triggerAvatarUpload}>
+        <div className="flex flex-col items-center my-4 profile-avatar-section">
+          <div className="relative mb-2 cursor-pointer group" onClick={triggerAvatarUpload}>
             <Avatar className="w-24 h-24 transition-opacity group-hover:opacity-80">
               <AvatarImage 
                 src={avatarPreviewUrl || user?.profile?.profilePictureUrl} 
@@ -408,7 +408,7 @@ const UserProfilePage: React.FC = () => {
         </div>
 
         {/* Profile completion guidance text */}
-        <p className="text-sm text-white text-center my-4 max-w-md mx-auto">
+        <p className="text-sm text-white text-center my-4 max-w-[360px] mx-auto">
           A complete profile helps your application get accepted faster.
         </p>
 

@@ -7,11 +7,11 @@ interface FoodNavBarProps {
 
 export const FoodNavBar: React.FC<FoodNavBarProps> = ({ selectedSubCategory, onSubCategoryChange }) => {
   return (
-    <div className="bg-background-creamy/70 backdrop-blur-sm py-0 px-4">
+    <div className="py-0 px-4">
       <div className="flex gap-10 justify-center">
         <button
           onClick={() => onSubCategoryChange('all')}
-          className={`relative py-2 px-3 text-sm font-medium transition-colors duration-200 ease-in-out ${
+          className={`relative py-2 px-3 text-sm transition-colors duration-200 ease-in-out ${
             selectedSubCategory === 'all'
               ? 'text-brand'
               : 'text-gray-500 hover:text-gray-700'
@@ -27,7 +27,7 @@ export const FoodNavBar: React.FC<FoodNavBarProps> = ({ selectedSubCategory, onS
         
         <button
           onClick={() => onSubCategoryChange('cafe')}
-          className={`relative py-2 px-3 text-sm font-medium transition-colors duration-200 ease-in-out ${
+          className={`relative py-2 px-3 text-sm transition-colors duration-200 ease-in-out ${
             selectedSubCategory === 'cafe'
               ? 'text-brand'
               : 'text-gray-500 hover:text-gray-700'
@@ -43,7 +43,7 @@ export const FoodNavBar: React.FC<FoodNavBarProps> = ({ selectedSubCategory, onS
         
         <button
           onClick={() => onSubCategoryChange('dining')}
-          className={`relative py-2 px-3 text-sm font-medium transition-colors duration-200 ease-in-out ${
+          className={`relative py-2 px-3 text-sm transition-colors duration-200 ease-in-out ${
             selectedSubCategory === 'dining'
               ? 'text-brand'
               : 'text-gray-500 hover:text-gray-700'

@@ -64,7 +64,8 @@ const MainLayout = () => {
   const showTopNav = location.pathname.startsWith('/listings') || 
                      location.pathname.startsWith('/my-listings') || 
                      location.pathname.startsWith('/my-applications') ||
-                     location.pathname === '/create-listing';
+                     location.pathname === '/create-listing' ||
+                     location.pathname === '/profile';
   
   const showRegionalFilter = location.pathname === '/' && 
                             ['food', 'bar', 'cowork'].includes(searchParams.get('type') || 'food');
@@ -95,7 +96,7 @@ const MainLayout = () => {
       <ScrollToTop />
       
       {/* 固定导航栏容器 - 仅在列表页显示 */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background-creamy">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background-creamy/90 backdrop-blur-sm">
         {!isAccountPage && <GlobalHeader />}
         {showRegionalFilter && <RegionalFilterBar />}
         {showTopNav && <TopNavBar />}

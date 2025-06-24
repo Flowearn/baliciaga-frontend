@@ -2,11 +2,11 @@ import React from 'react';
 
 export const RegionalFilterBar: React.FC = () => {
   return (
-    <div className="bg-background-creamy/70 backdrop-blur-sm py-0 px-4">
+    <div className="py-0 px-4">
       <div className="flex gap-10 justify-center">
         {/* Canggu - Active/Default */}
         <button
-          className="relative py-2 px-3 text-sm font-medium text-brand transition-colors duration-200 ease-in-out group"
+          className="relative py-2 px-3 text-sm text-brand transition-colors duration-200 ease-in-out group"
         >
           <span className="relative">
             Canggu
@@ -16,7 +16,7 @@ export const RegionalFilterBar: React.FC = () => {
         
         {/* Ubud - Coming Soon */}
         <button
-          className="relative py-2 px-3 text-sm font-medium text-gray-400 transition-colors duration-200 ease-in-out opacity-50 cursor-not-allowed"
+          className="relative py-2 px-3 text-sm text-gray-400 transition-colors duration-200 ease-in-out opacity-50 cursor-not-allowed"
           disabled={true}
         >
           <span className="relative">
