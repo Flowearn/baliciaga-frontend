@@ -23,7 +23,7 @@ export default {
 				brand: {
 					DEFAULT: "#B7AC93",
 				},
-				'background-creamy': '#f7f7f2',
+				'background-creamy': '#ffffff',
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
