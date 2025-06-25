@@ -79,3 +79,4 @@ inspect-*.js
 !README.md
 !CONTRIBUTING.md
 !docs/**/*.md
+.vercel

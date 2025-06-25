@@ -7,7 +7,7 @@ export const TopNavBar = () => {
   const activeTheme = useThemeStore((state) => state.activeTheme);
   
   return (
-    <div className="py-2 px-4">
+    <div className="pt-0 pb-2 px-4">
       <div className="flex gap-10 justify-center">
         <NavLink
           to="/my-listings"
