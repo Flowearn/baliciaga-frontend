@@ -60,11 +60,8 @@ const Index = () => {
     initialSelectedCategoryValue
   );
   
-  // State for food sub-category selection - initialize from URL parameter
-  const initialFoodSubCategory = searchParams.get('subCategory') as 'all' | 'cafe' | 'dining' | null;
-  const [selectedFoodSubCategory, setSelectedFoodSubCategory] = useState<'all' | 'cafe' | 'dining'>(
-    initialFoodSubCategory || 'all'
-  );
+  // Get food sub-category directly from URL parameter
+  const selectedFoodSubCategory = (searchParams.get('subCategory') as 'all' | 'cafe' | 'dining') || 'all';
   
   // State for preloading control
   const [isHomepageActive, setIsHomepageActive] = useState<boolean>(true);
@@ -121,7 +118,6 @@ const Index = () => {
       // When switching to food, preserve existing subCategory or default to 'all'
       const currentSubCategory = searchParams.get('subCategory') || 'all';
       setSearchParams({ type: newCategory, subCategory: currentSubCategory }, { replace: true });
-      setSelectedFoodSubCategory(currentSubCategory as 'all' | 'cafe' | 'dining');
     } else {
       // For non-food categories, remove subCategory from URL
       setSearchParams({ type: newCategory }, { replace: true });
@@ -144,10 +140,7 @@ const Index = () => {
       setSelectedCategory(newCategoryToSet);
     }
     
-    // Update food sub-category from URL if on food category
-    if (newCategoryToSet === 'food' && subCategoryFromUrl) {
-      setSelectedFoodSubCategory(subCategoryFromUrl);
-    }
+    // Food sub-category is now managed directly from URL params, no state needed
   }, [searchParams]); // 只依赖 searchParams，移除 selectedCategory 以避免循环更新
 
   // Geolocation fetch function
@@ -474,12 +467,11 @@ const Index = () => {
       {/* The sticky header and category buttons have been removed from here. */}
       {/* They are now handled globally by GlobalHeader.tsx in App.tsx. */}
       
-      {/* Food Sub-category Navigation */}
+      {/* Food Sub-category Navigation - 现在作为页面内容的一部分，会随页面滚动 */}
       {selectedCategory === 'food' && (
         <FoodNavBar 
           selectedSubCategory={selectedFoodSubCategory}
           onSubCategoryChange={(subCategory) => {
-            setSelectedFoodSubCategory(subCategory);
             // Update URL to preserve sub-category selection
             setSearchParams({ type: 'food', subCategory }, { replace: true });
           }}

@@ -7,7 +7,7 @@ interface FoodNavBarProps {
 
 export const FoodNavBar: React.FC<FoodNavBarProps> = ({ selectedSubCategory, onSubCategoryChange }) => {
   return (
-    <div className="py-0 px-4">
+    <div className="pt-0 pb-2 px-4">
       <div className="flex gap-10 justify-center">
         <button
           onClick={() => onSubCategoryChange('all')}

@@ -142,7 +142,7 @@ const MyApplicationsPage: React.FC = () => {
   if (isLoading) {
     return (
       <ColoredPageWrapper seed="applications">
-        <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
+        <div className="relative z-10 container mx-auto px-4 pt-8 pb-8 max-w-4xl">
           <div className="space-y-2">
             {[...Array(3)].map((_, index) => (
               <div key={index} className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md">
@@ -175,7 +175,7 @@ const MyApplicationsPage: React.FC = () => {
   if (error) {
     return (
       <ColoredPageWrapper seed="applications">
-        <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
+        <div className="relative z-10 container mx-auto px-4 pt-8 pb-8 max-w-4xl">
           <div className="bg-black/40 backdrop-blur-sm rounded-2xl flex flex-col items-center p-8 text-white/80">
             <AlertCircle className="h-12 w-12 stroke-red-400 mb-4" />
             <h3 className="text-base font-semibold mb-2 text-white">Something went wrong</h3>
@@ -195,7 +195,7 @@ const MyApplicationsPage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed="applications">
-      <div className="relative z-10 container mx-auto px-4 pt-4 sm:pt-8 pb-24 max-w-4xl">
+      <div className="relative z-10 container mx-auto px-4 pt-8 pb-24 max-w-4xl">
 
         {/* Applications List */}
         {applications.length === 0 ? (

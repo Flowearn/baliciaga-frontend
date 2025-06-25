@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useThemeStore } from '@/stores/useThemeStore';
 import { useAuth, ExtendedUser } from '../../../context/AuthContext';
 import { signOut } from 'aws-amplify/auth';
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,8 @@ import {
   X,
   Briefcase,
   Camera,
-  Upload
+  Upload,
+  ArrowLeft
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import EditableField from '../components/EditableField';
@@ -55,8 +57,23 @@ interface ProfileFormData {
 
 const UserProfilePage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, setUser } = useAuth();
   const queryClient = useQueryClient();
+  
+  // Immersive header color management
+  const setImmersiveTheme = useThemeStore((state) => state.setImmersiveTheme);
+
+  useEffect(() => {
+    // 为所有这些页面设置统一的深色主题
+    const pageThemeColor = '#FFFFFF'; 
+    setImmersiveTheme({ backgroundColor: pageThemeColor, foregroundColor: '#FFFFFF' });
+
+    // 关键的清理函数，在离开页面时恢复默认颜色
+    return () => {
+      setImmersiveTheme(null);
+    };
+  }, [setImmersiveTheme]);
   
   // 转换语言数组为选项格式
   const languageOptions = LANGUAGES.map(lang => ({
@@ -371,7 +388,29 @@ const UserProfilePage: React.FC = () => {
 
   return (
     <ColoredPageWrapper seed="profile">
-      <div className="relative z-10 max-w-md mx-auto pt-4 pb-24">
+      {/* Sticky Header - Consistent with other detail pages */}
+      <div className="sticky top-0 z-50" style={{ height: 'calc(16px + 1.5rem)' }}>
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative z-10 py-3 px-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => {
+              const fromPage = location.state?.from;
+              if (fromPage && fromPage !== '/login' && fromPage !== '/signup') {
+                navigate(fromPage);
+              } else {
+                navigate('/');
+              }
+            }}
+            className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+          >
+            <ArrowLeft className="h-5 w-5 text-white/90" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="relative z-10 max-w-md mx-auto pt-4 pb-24" style={{ marginTop: '16px' }}>
         {/* Avatar Section */}
         <div className="flex flex-col items-center my-4 profile-avatar-section">
           <div className="relative mb-2 cursor-pointer group" onClick={triggerAvatarUpload}>

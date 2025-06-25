@@ -1,6 +1,10 @@
 import React from 'react';
+import { useThemeStore } from '@/stores/useThemeStore';
 
 export const RegionalFilterBar: React.FC = () => {
+  // Subscribe to the immersive theme state
+  const activeTheme = useThemeStore((state) => state.activeTheme);
+  
   return (
     <div className="py-0 px-4">
       <div className="flex gap-10 justify-center">

@@ -92,7 +92,7 @@ const ListingsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-creamy">
-              <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-4 pb-24">
+              <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-24">
         {/* Header with Post Villa Button */}
         <div className="flex gap-3 mb-6">
           {/* Post Villa Button */}

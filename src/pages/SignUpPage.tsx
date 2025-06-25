@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useThemeStore } from '@/stores/useThemeStore';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 // Pantone background colors from CafeDetailPage
 const pantoneBackgroundColors = [
@@ -26,6 +28,29 @@ const SignUpPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  
+  // Immersive header color management
+  const setImmersiveTheme = useThemeStore((state) => state.setImmersiveTheme);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    if (user) {
+      // User is already logged in, redirect to home
+      navigate('/', { replace: true });
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
+    // 为所有这些页面设置统一的深色主题
+    const pageThemeColor = '#FFFFFF'; 
+    setImmersiveTheme({ backgroundColor: pageThemeColor, foregroundColor: '#FFFFFF' });
+
+    // 关键的清理函数，在离开页面时恢复默认颜色
+    return () => {
+      setImmersiveTheme(null);
+    };
+  }, [setImmersiveTheme]);
 
   // Set random background color on mount
   useEffect(() => {

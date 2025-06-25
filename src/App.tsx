@@ -6,6 +6,8 @@ import { Toaster as UIToaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import StagewiseWrapper from '@/components/StagewiseWrapper';
 import { useAuth } from "./context/AuthContext";
+import { cn } from "@/lib/utils";
+import { useThemeStore } from '@/stores/useThemeStore';
 
 import Index from "./pages/Index";
 import CafeDetailPage from "./pages/CafeDetailPage";
@@ -31,6 +33,7 @@ import StagewiseTest from "./pages/StagewiseTest";
 import GlobalHeader from "./components/GlobalHeader";
 import { TopNavBar } from "./components/TopNavBar";
 import { RegionalFilterBar } from "./components/RegionalFilterBar";
+import { FoodNavBar } from "./components/FoodNavBar";
 import ScrollToTop from "./components/ScrollToTop";
 import { useLocation, useSearchParams } from "react-router-dom";
 
@@ -40,6 +43,9 @@ const queryClient = new QueryClient();
 const MainLayout = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  
+  // Subscribe to the immersive theme state
+  const activeTheme = useThemeStore((state) => state.activeTheme);
   
   // **黄金规则实施：二元化布局逻辑**
   
@@ -60,15 +66,24 @@ const MainLayout = () => {
   
   // 3. 列表页模式：完整导航式布局
   
+  // 定义需要隐藏页头的路径
+  const hideHeaderOnPaths = ['/profile', '/login', '/signup', '/account', '/create-listing'];
+  
+  // 检查当前路径是否需要隐藏页头 - 使用startsWith以支持子路径
+  const shouldHideHeader = hideHeaderOnPaths.some(path => location.pathname.startsWith(path));
+  
   // 决定显示哪些导航元素（仅对列表页有效）
   const showTopNav = location.pathname.startsWith('/listings') || 
                      location.pathname.startsWith('/my-listings') || 
-                     location.pathname.startsWith('/my-applications') ||
-                     location.pathname === '/create-listing' ||
-                     location.pathname === '/profile';
+                     location.pathname.startsWith('/my-applications');
+                     // 移除 '/profile'，因为profile页面应该隐藏所有导航
   
   const showRegionalFilter = location.pathname === '/' && 
                             ['food', 'bar', 'cowork'].includes(searchParams.get('type') || 'food');
+  
+  // 添加FoodNavBar显示逻辑
+  const showFoodNavBar = location.pathname === '/' && 
+                         (searchParams.get('type') || 'food') === 'food';
   
   const isAccountPage = location.pathname === '/account';
   
@@ -77,17 +92,18 @@ const MainLayout = () => {
     let layerCount = 0;
     
     // 计算可见导航层级数
-    if (!isAccountPage) layerCount++; // GlobalHeader
+    if (!shouldHideHeader) layerCount++; // GlobalHeader (修改：使用统一的shouldHideHeader逻辑)
     if (showRegionalFilter) layerCount++; // RegionalFilterBar  
     if (showTopNav) layerCount++; // TopNavBar
+    // FoodNavBar 不再计算在固定导航中，因为它现在是页面内容的一部分
     
     // 根据层级数返回对应的padding-top类，包含安全区域适配
     switch (layerCount) {
-      case 3: return 'pt-[calc(10rem+env(safe-area-inset-top))]'; // 3层导航: GlobalHeader + RegionalFilterBar + TopNavBar (160px + 安全区域)
-      case 2: return 'pt-[calc(7rem+env(safe-area-inset-top))]'; // 2层导航: GlobalHeader + TopNavBar (112px + 安全区域)  
-      case 1: return 'pt-[calc(5rem+env(safe-area-inset-top))]'; // 1层导航: 仅GlobalHeader (80px + 安全区域)
-      case 0: return 'pt-[env(safe-area-inset-top)]';  // 无导航: Account页面 (仅安全区域)
-      default: return 'pt-[calc(5rem+env(safe-area-inset-top))]'; // 默认fallback
+      case 3: return 'pt-[calc(11rem+env(safe-area-inset-top))]'; // 3层导航: GlobalHeader + RegionalFilterBar + TopNavBar (176px + 安全区域)
+      case 2: return 'pt-[calc(8.5rem+env(safe-area-inset-top))]'; // 2层导航: GlobalHeader + TopNavBar (136px + 安全区域，增加更多间距避免重叠)  
+      case 1: return 'pt-[calc(5.5rem+env(safe-area-inset-top))]'; // 1层导航: 仅GlobalHeader (88px + 安全区域，更精确的高度)
+      case 0: return 'pt-[env(safe-area-inset-top)]';  // 无导航: 隐藏页头的页面 (仅安全区域)
+      default: return 'pt-[calc(5.5rem+env(safe-area-inset-top))]'; // 默认fallback
     }
   };
   
@@ -96,8 +112,12 @@ const MainLayout = () => {
       <ScrollToTop />
       
       {/* 固定导航栏容器 - 仅在列表页显示 */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background-creamy/90 backdrop-blur-sm">
-        {!isAccountPage && <GlobalHeader />}
+      <div className={cn(
+        "fixed top-0 left-0 right-0 z-50",
+        // 为整个导航容器添加统一的半透明背景，只在默认主题时显示
+        !activeTheme && "bg-white/90 backdrop-blur-sm"
+      )}>
+        {!shouldHideHeader && <GlobalHeader />}
         {showRegionalFilter && <RegionalFilterBar />}
         {showTopNav && <TopNavBar />}
       </div>

@@ -1,7 +1,11 @@
 import { type Cafe } from '../types'; // Import the centralized Cafe type
 
-// Get the API base URL from environment variables with a fallback for local development
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3006/dev';
+// Get the API base URL from environment variables
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+if (!API_BASE_URL) {
+  throw new Error('VITE_API_BASE_URL environment variable is not set');
+}
 
 // Use this function to fetch cafe/bar/cowork/food list from backend API based on category
 export const fetchCafes = async (category: 'cafe' | 'bar' | 'cowork' | 'food' = 'cafe'): Promise<Cafe[]> => {

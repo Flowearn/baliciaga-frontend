@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useThemeStore } from '@/stores/useThemeStore';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { X, Upload, Sparkles, Plus, UploadCloud, User, Building, Menu as MenuIcon, ImagePlus } from 'lucide-react';
+import { X, Upload, Sparkles, Plus, UploadCloud, User, Building, Menu as MenuIcon, ImagePlus, ArrowLeft } from 'lucide-react';
 import { analyzeListingSource, AnalyzeSourceResponse, createListing } from '@/services/listingService';
 import { uploadListingPhotos } from '@/services/uploadService';
 import { isInternalStaff } from '@/utils/authUtils';
@@ -84,6 +85,23 @@ const useAutoResizeTextarea = (value: string) => {
 
 const CreateListingPage: React.FC = () => {
   const navigate = useNavigate();
+  
+  // Immersive header color management
+  const setImmersiveTheme = useThemeStore((state) => state.setImmersiveTheme);
+
+  useEffect(() => {
+    // 为所有这些页面设置统一的深色主题
+    const pageThemeColor = '#FFFFFF'; 
+    setImmersiveTheme({
+      backgroundColor: pageThemeColor,
+      foregroundColor: '#FFFFFF'
+    });
+
+    // 关键的清理函数，在离开页面时恢复默认颜色
+    return () => {
+      setImmersiveTheme(null);
+    };
+  }, [setImmersiveTheme]);
   
   // State for random background color
   const [bgColor, setBgColor] = useState<string>('');
@@ -470,12 +488,27 @@ const CreateListingPage: React.FC = () => {
       
       {/* 内容层 */}
       <div className="relative z-20">
-        <div className="max-w-2xl mx-auto space-y-6 px-4 py-6">
+        {/* Sticky Header - 与 Profile 页面保持一致 */}
+        <div className="sticky top-0 z-50" style={{ height: 'calc(16px + 1.5rem)' }}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative z-10 py-3 px-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate('/listings')}
+              className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+            >
+              <ArrowLeft className="h-5 w-5 text-white/90" />
+            </Button>
+          </div>
+        </div>
+        
+        <div className="max-w-2xl mx-auto space-y-6 px-4 pb-6" style={{ marginTop: '16px' }}>
         
         {/* A. AI 提取区域 - 移动到顶部 */}
         <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90">
           <div className="space-y-4">
-              <p className="text-white text-base">
+              <p className="text-white/80 text-base">
                 Paste the property description or upload a screenshot of it, then click 'Extract Info' to get started.
               </p>
               <Textarea
@@ -537,7 +570,7 @@ const CreateListingPage: React.FC = () => {
 
             {/* 右侧内容块 */}
             <div className="flex-1 flex flex-col items-end gap-2">
-              <h3 className="text-xl font-bold text-white/90">Property Photos <span className="text-red-500 ml-1">*</span></h3>
+              <h3 className="text-xl font-bold text-white/80">Property Photos <span className="text-red-500 ml-1">*</span></h3>
               <div className="flex items-center gap-3">
                 {formData.photos.length > 0 && (
                   <span className="text-base text-white/70">
@@ -559,7 +592,7 @@ const CreateListingPage: React.FC = () => {
                       {/* Photo Previews */}
             {photoPreviews.length > 0 && (
               <div>
-                <h3 className="text-xl font-semibold text-white mb-4">
+                <h3 className="text-xl font-semibold text-white/80 mb-4">
                   Uploaded Photos ({photoPreviews.length}/10)
                 </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -592,11 +625,11 @@ const CreateListingPage: React.FC = () => {
         
         {/* B. "Property Details" 表单区域 */}
         <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90 mb-6">
-          <h2 className="text-xl font-bold text-white mb-6">Property Details</h2>
+          <h2 className="text-xl font-bold text-white/80 mb-6">Property Details</h2>
           
           {/* Property Title */}
           <div className="mb-4">
-            <label htmlFor="title" className="block text-base font-medium text-white/90 mb-2">
+            <label htmlFor="title" className="block text-base font-medium text-white/80 mb-2">
               Property Title
             </label>
             <input
@@ -611,7 +644,7 @@ const CreateListingPage: React.FC = () => {
 
           {/* Address */}
           <div className="mb-4">
-            <label htmlFor="address" className="block text-base font-medium text-white/90 mb-2">
+            <label htmlFor="address" className="block text-base font-medium text-white/80 mb-2">
               Address
             </label>
             <input
@@ -626,7 +659,7 @@ const CreateListingPage: React.FC = () => {
 
           {/* Location Area */}
           <div className="mb-4">
-            <label htmlFor="locationArea" className="block text-base font-medium text-white/90 mb-2">
+            <label htmlFor="locationArea" className="block text-base font-medium text-white/80 mb-2">
               Location Area
             </label>
             <input
@@ -642,7 +675,7 @@ const CreateListingPage: React.FC = () => {
           {/* Bedrooms / Bathrooms */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label htmlFor="bedrooms" className="block text-base font-medium text-white/90 mb-2">
+              <label htmlFor="bedrooms" className="block text-base font-medium text-white/80 mb-2">
                 Bedrooms
               </label>
               <input
@@ -655,7 +688,7 @@ const CreateListingPage: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="bathrooms" className="block text-base font-medium text-white/90 mb-2">
+              <label htmlFor="bathrooms" className="block text-base font-medium text-white/80 mb-2">
                 Bathrooms
               </label>
               <input
@@ -672,7 +705,7 @@ const CreateListingPage: React.FC = () => {
           {/* Square Feet / Min Stay */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label htmlFor="squareFootage" className="block text-base font-medium text-white/90 mb-2">
+              <label htmlFor="squareFootage" className="block text-base font-medium text-white/80 mb-2">
                 Square Feet
               </label>
               <input
@@ -686,7 +719,7 @@ const CreateListingPage: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="minimumStay" className="block text-base font-medium text-white/90 mb-2">
+              <label htmlFor="minimumStay" className="block text-base font-medium text-white/80 mb-2">
                 Min Stay (months)
               </label>
               <input
@@ -704,7 +737,7 @@ const CreateListingPage: React.FC = () => {
           <div className="mb-6">
             {/* Monthly Rent */}
             <div className="mb-4">
-              <label className="block text-base font-medium text-white/90 mb-2">
+              <label className="block text-base font-medium text-white/80 mb-2">
                 Monthly Rent
               </label>
               <div className="grid grid-cols-3 gap-4">
@@ -739,7 +772,7 @@ const CreateListingPage: React.FC = () => {
 
             {/* Yearly Rent */}
             <div className="mt-4">
-              <label className="block text-base font-medium text-white/90 mb-2">
+              <label className="block text-base font-medium text-white/80 mb-2">
                 Yearly Rent (Optional)
               </label>
               <div className="grid grid-cols-3 gap-4">
@@ -784,7 +817,7 @@ const CreateListingPage: React.FC = () => {
 
           {/* Amenities Section */}
           <div className="mt-6">
-            <h3 className="text-xl font-bold text-white mb-4">Amenities</h3>
+            <h3 className="text-xl font-bold text-white/80 mb-4">Amenities</h3>
             {formData.amenities.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {formData.amenities.map((amenity, index) => (
@@ -805,10 +838,10 @@ const CreateListingPage: React.FC = () => {
 
         {/* Initiator Info Container */}
         <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90 mb-6">
-          <h2 className="text-xl font-bold text-white mb-4">Initiator Info <span className="text-red-500 ml-1">*</span></h2>
+          <h2 className="text-xl font-bold text-white/80 mb-4">Initiator Info <span className="text-red-500 ml-1">*</span></h2>
           
           {/* Poster Role Selection */}
-          <p className="text-base text-white/90 mb-3">I am ...</p>
+          <p className="text-base text-white/80 mb-3">I am ...</p>
           <div className={`grid ${showPlatformOption ? 'grid-cols-3' : 'grid-cols-2'} gap-4 mb-6`}>
             <div className="flex flex-col items-center gap-2">
               <User className="h-6 w-6 text-white/60" />
@@ -854,7 +887,7 @@ const CreateListingPage: React.FC = () => {
           </div>
           
           {/* Lease Duration Selection */}
-          <p className="text-base text-white/90 mb-3">Preferred Lease Duration</p>
+          <p className="text-base text-white/80 mb-3">Preferred Lease Duration</p>
           <LeaseDurationSelector
             selectedDuration={leaseDuration}
             onDurationSelect={setLeaseDuration}

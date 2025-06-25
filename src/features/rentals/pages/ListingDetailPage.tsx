@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useThemeStore } from '@/stores/useThemeStore';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,6 +69,9 @@ const ListingDetailPage: React.FC = () => {
   
   const isMyListing = location.pathname.startsWith('/my-listings');
   
+  // Get theme store function for setting header color
+  const setImmersiveTheme = useThemeStore((state) => state.setImmersiveTheme);
+  
   const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +107,24 @@ const ListingDetailPage: React.FC = () => {
 
   // 判断当前登录用户是否为房源发起人：比较内部业务主键 userId
   const isOwner = authUser?.userId && listing?.initiatorId === authUser.userId;
+
+  // Manage header color lifecycle for immersive header effect
+  useEffect(() => {
+    // 定义此页面的主题色 (我们暂时使用一个深灰色作为测试)
+    const pageThemeColor = '#FFFFFF'; 
+
+    // 组件加载时，设置页头颜色
+    setImmersiveTheme({
+      backgroundColor: pageThemeColor,
+      foregroundColor: '#FFFFFF'
+    });
+
+    // **关键一步**: 返回一个清理函数，在组件卸载时执行
+    return () => {
+      // 离开页面时，恢复页头为默认颜色
+      setImmersiveTheme(null);
+    };
+  }, [setImmersiveTheme]); // 依赖项数组
 
   useEffect(() => {
     const loadListing = async () => {
@@ -336,44 +358,9 @@ const ListingDetailPage: React.FC = () => {
     return (
       <ColoredPageWrapper seed={listingId || 'listing'}>
         {/* Sticky Header - Consistent with CafeDetail */}
-        <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => {
-              const from = location.state?.from;
-              if (from) {
-                navigate(from);
-              } else {
-                // Fallback based on current route
-                const defaultBack = location.pathname.startsWith('/my-listings') 
-                  ? '/my-listings' 
-                  : '/listings';
-                navigate(defaultBack);
-              }
-            }}
-            className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
-          >
-            <ArrowLeft className="h-5 w-5 text-white/90" />
-          </Button>
-        </div>
-        <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
-          <Skeleton className="w-full h-64 rounded-xl mb-6 bg-white/20" />
-          <div className="space-y-4">
-            <Skeleton className="h-8 w-3/4 bg-white/20" />
-            <Skeleton className="h-4 w-full bg-white/20" />
-            <Skeleton className="h-4 w-2/3 bg-white/20" />
-          </div>
-        </div>
-      </ColoredPageWrapper>
-    );
-  }
-
-  if (error || !listing) {
-    return (
-      <ColoredPageWrapper seed={listingId || 'listing'}>
-        <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
-          <div className="flex items-center">
+        <div className="sticky top-0 z-50" style={{ height: 'calc(16px + 1.5rem)' }}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative z-10 py-3 px-4">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -395,7 +382,48 @@ const ListingDetailPage: React.FC = () => {
             </Button>
           </div>
         </div>
-        <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
+        <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl" style={{ marginTop: '16px' }}>
+          <Skeleton className="w-full h-64 rounded-xl mb-6 bg-white/20" />
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-3/4 bg-white/20" />
+            <Skeleton className="h-4 w-full bg-white/20" />
+            <Skeleton className="h-4 w-2/3 bg-white/20" />
+          </div>
+        </div>
+      </ColoredPageWrapper>
+    );
+  }
+
+  if (error || !listing) {
+    return (
+      <ColoredPageWrapper seed={listingId || 'listing'}>
+        <div className="sticky top-0 z-50" style={{ height: 'calc(16px + 1.5rem)' }}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative z-10 py-3 px-4">
+            <div className="flex items-center">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => {
+                  const from = location.state?.from;
+                  if (from) {
+                    navigate(from);
+                  } else {
+                    // Fallback based on current route
+                    const defaultBack = location.pathname.startsWith('/my-listings') 
+                      ? '/my-listings' 
+                      : '/listings';
+                    navigate(defaultBack);
+                  }
+                }}
+                className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+              >
+                <ArrowLeft className="h-5 w-5 text-white/90" />
+              </Button>
+            </div>
+          </div>
+        </div>
+        <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl" style={{ marginTop: '16px' }}>
           <div className="bg-black/40 backdrop-blur-sm rounded-2xl flex flex-col items-center p-8 text-white/80">
             <AlertCircle className="h-12 w-12 stroke-red-400 mb-4" />
             <h3 className="text-xl font-semibold mb-2 text-white">Something went wrong</h3>
@@ -415,29 +443,32 @@ const ListingDetailPage: React.FC = () => {
   return (
     <ColoredPageWrapper seed={listingId || 'listing'} className="min-h-screen">
       {/* Sticky Header - Consistent with CafeDetail */}
-      <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => {
-            const from = location.state?.from;
-            if (from) {
-              navigate(from);
-            } else {
-              // Fallback based on current route
-              const defaultBack = location.pathname.startsWith('/my-listings') 
-                ? '/my-listings' 
-                : '/listings';
-              navigate(defaultBack);
-            }
-          }}
-          className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
-        >
-          <ArrowLeft className="h-5 w-5 text-white/90" />
-        </Button>
+      <div className="sticky top-0 z-50" style={{ height: 'calc(16px + 1.5rem)' }}>
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative z-10 py-3 px-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => {
+              const from = location.state?.from;
+              if (from) {
+                navigate(from);
+              } else {
+                // Fallback based on current route
+                const defaultBack = location.pathname.startsWith('/my-listings') 
+                  ? '/my-listings' 
+                  : '/listings';
+                navigate(defaultBack);
+              }
+            }}
+            className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+          >
+            <ArrowLeft className="h-5 w-5 text-white/90" />
+          </Button>
+        </div>
       </div>
 
-              <div className="relative z-10 container mx-auto px-4 pt-0 pb-24 max-w-4xl flex flex-col gap-y-4">
+              <div className="relative z-10 container mx-auto px-4 pt-0 pb-24 max-w-4xl flex flex-col gap-y-4" style={{ marginTop: '16px' }}>
         {/* Main Photo Gallery with Carousel */}
         {listing.photos && listing.photos.length > 0 && (
           <div className="embla relative rounded-xl overflow-hidden shadow-lg">

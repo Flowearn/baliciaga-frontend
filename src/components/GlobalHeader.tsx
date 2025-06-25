@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate, useSearchParams, NavLink } from 'react-router-dom';
+import { useThemeStore } from '@/stores/useThemeStore';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,11 +19,15 @@ import {
   Share2,
   Building2
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const GlobalHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  
+  // Subscribe to immersive theme state
+  const activeTheme = useThemeStore((state) => state.activeTheme);
 
   // This function will navigate to home and add a search parameter
   const handleSearchClick = () => {
@@ -69,7 +74,7 @@ const GlobalHeader = () => {
       icon: Wine,
       // Custom match function for bar link  
       isActiveMatch: () => {
-  const isHomePage = location.pathname === '/';
+        const isHomePage = location.pathname === '/';
         const selectedCategory = searchParams.get('type') || 'cafe';
         return isHomePage && selectedCategory === 'bar';
       }
@@ -99,79 +104,123 @@ const GlobalHeader = () => {
   ];
 
   return (
-    <div className="pt-1 pb-0 px-4">
-      <div className="pt-0 pb-0">
-        <div className="flex items-center justify-between w-full">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-black hover:bg-gray-200/50"
-            onClick={handleSearchClick}
-          >
-            <SearchIcon className="h-6 w-6" />
-          </Button>
+    <div className="relative w-full">
+      {/* Layer 1: Dynamic Background Color */}
+      <div 
+        className="absolute inset-0 transition-colors duration-300" 
+        style={{ backgroundColor: activeTheme?.backgroundColor }}
+      />
+      
+      {/* Layer 2: Black Overlay (20% opacity when theme is active) */}
+      <div 
+        className="absolute inset-0 bg-black/20 transition-opacity duration-300"
+        style={{ opacity: activeTheme ? 1 : 0 }} 
+      />
+      
+      {/* Layer 3: Content */}
+      <div className={cn(
+        "relative z-10",
+        activeTheme ? "text-white" : "text-gray-800"
+      )}>
+        <div className="pt-2 pb-2 px-4">
+          {/* Main header content */}
+          <div className="flex items-center justify-between w-full">
+            {/* Search Button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={cn(
+                "transition-colors duration-300",
+                activeTheme 
+                  ? "text-white hover:bg-white/20" 
+                  : "text-black hover:bg-gray-200/50"
+              )}
+              onClick={handleSearchClick}
+            >
+              <SearchIcon className="h-6 w-6" />
+            </Button>
 
-          <h1 
-            className="text-[28px] font-bold text-black cursor-pointer"
-            onClick={() => navigate('/')}
-          >
-            Baliciaga
-          </h1>
+            {/* Logo/Title */}
+            <h1 
+              className={cn(
+                "text-[28px] font-bold cursor-pointer transition-colors duration-300",
+                activeTheme ? "text-white" : "text-black"
+              )}
+              onClick={() => navigate('/')}
+            >
+              Baliciaga
+            </h1>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-black hover:bg-gray-200/50">
-                <MenuIcon className="h-6 w-6" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 p-2 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg rounded-xl">
-              <DropdownMenuItem 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer mb-1" 
-                onSelect={() => navigate('/profile')}
-              >
-                <User className="w-4 h-4 text-gray-500" />
-                <span className="text-base font-medium">Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer mb-1" 
-                onSelect={() => { window.location.href = 'mailto:yo@baliciaga.com'; }}
-              >
-                <Mail className="w-4 h-4 text-gray-500" />
-                <span className="text-base font-medium">Contact</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer" 
-                onSelect={handleShareClick}
-              >
-                <Share2 className="w-4 h-4 text-gray-500" />
-                <span className="text-base font-medium">Share</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        
-        {/* 统一的导航按钮 - 使用NavLink和品牌色高亮 */}
-        <div className="mt-0">
-          <div className="flex gap-2">
-            {navLinks.map(link => {
-              const isActive = link.isActiveMatch();
-              return (
-                <div key={link.text} className="flex-1">
-                  <NavLink
-                    to={link.to}
-                    data-testid={`${link.text.toLowerCase()}-category-button`}
-                    className={`w-full flex items-center justify-center py-1 px-2 rounded-full text-sm transition-colors duration-200 ease-in-out focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 ${
-                      isActive
-                        ? 'bg-brand/80 text-white shadow-lg border border-brand/80 hover:bg-brand/70' // 激活状态: 使用品牌色
-                        : 'bg-background-creamy/90 text-gray-500 hover:bg-background-creamy' // 非激活状态
-                  }`}
-                  style={{ height: '28px' }}
-                  >
-                    <span>{link.text}</span>
-                  </NavLink>
-                </div>
-              );
-            })}
+            {/* Menu Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className={cn(
+                    "transition-colors duration-300",
+                    activeTheme 
+                      ? "text-white hover:bg-white/20" 
+                      : "text-black hover:bg-gray-200/50"
+                  )}
+                >
+                  <MenuIcon className="h-6 w-6" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 p-2 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg rounded-xl">
+                <DropdownMenuItem 
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer mb-1" 
+                  onSelect={() => navigate('/profile', { state: { from: location.pathname + location.search } })}
+                >
+                  <User className="w-4 h-4 text-gray-500" />
+                  <span className="text-base font-medium">Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer mb-1" 
+                  onSelect={() => { window.location.href = 'mailto:yo@baliciaga.com'; }}
+                >
+                  <Mail className="w-4 h-4 text-gray-500" />
+                  <span className="text-base font-medium">Contact</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer" 
+                  onSelect={handleShareClick}
+                >
+                  <Share2 className="w-4 h-4 text-gray-500" />
+                  <span className="text-base font-medium">Share</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          
+          {/* Primary Navigation Buttons */}
+          <div className="mt-2">
+            <div className="flex gap-2">
+              {navLinks.map(link => {
+                const isActive = link.isActiveMatch();
+                return (
+                  <div key={link.text} className="flex-1">
+                    <NavLink
+                      to={link.to}
+                      data-testid={`${link.text.toLowerCase()}-category-button`}
+                      className={cn(
+                        "w-full flex items-center justify-center py-1 px-2 rounded-full text-sm transition-all duration-200 ease-in-out focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0",
+                        isActive
+                          ? activeTheme
+                            ? 'bg-white/30 text-white shadow-lg border border-white/50 hover:bg-white/40' // Active + Immersive theme
+                            : 'bg-brand/80 text-white shadow-lg border border-brand/80 hover:bg-brand/70' // Active + Default theme
+                          : activeTheme
+                            ? 'bg-transparent border border-white/30 text-white hover:bg-white/20' // Inactive + Immersive theme
+                            : 'bg-background-creamy/90 text-gray-500 hover:bg-background-creamy' // Inactive + Default theme
+                      )}
+                      style={{ height: '28px' }}
+                    >
+                      <span>{link.text}</span>
+                    </NavLink>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -179,4 +228,4 @@ const GlobalHeader = () => {
   );
 };
 
-export default GlobalHeader; 
+export default GlobalHeader;

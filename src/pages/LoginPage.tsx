@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useThemeStore } from '@/stores/useThemeStore';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { signInWithPassword } from '@/services/authService';
@@ -26,7 +27,30 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { checkCurrentUser } = useAuth();
+  const { checkCurrentUser, user } = useAuth();
+  
+  // Immersive header color management
+  const setImmersiveTheme = useThemeStore((state) => state.setImmersiveTheme);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    if (user) {
+      // User is already logged in, redirect to home or intended destination
+      const redirectTo = new URLSearchParams(location.search).get('redirect') || '/';
+      navigate(redirectTo, { replace: true });
+    }
+  }, [user, navigate, location.search]);
+
+  useEffect(() => {
+    // 为所有这些页面设置统一的深色主题
+    const pageThemeColor = '#FFFFFF'; 
+    setImmersiveTheme({ backgroundColor: pageThemeColor, foregroundColor: '#FFFFFF' });
+
+    // 关键的清理函数，在离开页面时恢复默认颜色
+    return () => {
+      setImmersiveTheme(null);
+    };
+  }, [setImmersiveTheme]);
   
   // Get email from navigation state (if coming from signup)
   useEffect(() => {
@@ -79,7 +103,7 @@ const LoginPage = () => {
         
         // Navigate to profile or redirect URL
         const redirectTo = new URLSearchParams(location.search).get('redirect') || '/profile';
-        navigate(redirectTo);
+        navigate(redirectTo, { replace: true });
       } else if (result.needsConfirmation) {
         console.log('📧 Email confirmation needed');
         toast.error('Please verify your email first');

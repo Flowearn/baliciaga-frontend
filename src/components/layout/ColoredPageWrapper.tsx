@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { pickPantone } from "@/styles/pantoneBackgrounds";
+import { applyImmersiveTheme, resetDefaultTheme } from '@/lib/themeUtils';
 
 interface ColoredPageWrapperProps {
   children: React.ReactNode;
@@ -13,6 +14,14 @@ const ColoredPageWrapper: React.FC<ColoredPageWrapperProps> = ({ children, seed,
   useEffect(() => {
     const color = pickPantone(seed);
     setBgColor(color);
+
+    if (color) {
+      applyImmersiveTheme(color);
+    }
+
+    return () => {
+      resetDefaultTheme();
+    };
   }, [seed]);
 
   return (

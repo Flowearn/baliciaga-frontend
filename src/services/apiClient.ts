@@ -1,8 +1,12 @@
 import axios from 'axios';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
-// API Gateway基础URL - 根据环境变量自动切换
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3006/dev';
+// API Gateway基础URL - 必须通过环境变量设置
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+if (!API_BASE_URL) {
+  throw new Error('VITE_API_BASE_URL environment variable is not set');
+}
 
 // 创建axios实例
 const apiClient = axios.create({

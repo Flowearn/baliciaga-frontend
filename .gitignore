@@ -78,3 +78,4 @@ inspect-*.js
 *.md
 !README.md
 !CONTRIBUTING.md
+!docs/**/*.md

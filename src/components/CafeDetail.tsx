@@ -259,19 +259,22 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
   return (
     <div className="bg-transparent w-full rounded-lg relative z-5">
       {/* 新的极简页眉 */}
-      <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onClose}
-          className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
-        >
-          <ArrowLeft className="h-5 w-5 text-white/90" />
-        </Button>
+      <div className="sticky top-0 z-50" style={{ height: 'calc(16px + 1.5rem)' }}>
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative z-10 py-3 px-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClose}
+            className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+          >
+            <ArrowLeft className="h-5 w-5 text-white/90" />
+          </Button>
+        </div>
       </div>
 
       {/* Content Container */}
-      <div className="px-4 mb-8">
+      <div className="px-4 mb-8" style={{ marginTop: '16px' }}>
         {/* Carousel Image Container */}
         <div className="floating-image-container rounded-2xl overflow-hidden bg-gray-700 relative z-30 w-full aspect-square">
           {hasPhotos ? (

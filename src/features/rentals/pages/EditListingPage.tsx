@@ -81,18 +81,21 @@ const EditListingPage: React.FC = () => {
     return (
       <ColoredPageWrapper seed="edit">
         {/* Sticky Header - Consistent with CafeDetail */}
-        <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleBack}
-            className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
-          >
-            <ArrowLeft className="h-5 w-5 text-white/90" />
-          </Button>
+        <div className="sticky top-0 z-50" style={{ height: 'calc(16px + 1.5rem)' }}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative z-10 py-3 px-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleBack}
+              className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+            >
+              <ArrowLeft className="h-5 w-5 text-white/90" />
+            </Button>
+          </div>
         </div>
 
-        <div className="relative z-10 flex items-center justify-center min-h-[400px]">
+        <div className="relative z-10 flex items-center justify-center min-h-[400px]" style={{ marginTop: '16px' }}>
           <div className="flex flex-col items-center space-y-4">
             <Loader2 className="w-8 h-8 animate-spin text-white/60" />
             <p className="text-white/70">Loading listing details...</p>
@@ -106,18 +109,21 @@ const EditListingPage: React.FC = () => {
     return (
       <ColoredPageWrapper seed="edit">
         {/* Sticky Header - Consistent with CafeDetail */}
-        <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleBack}
-            className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
-          >
-            <ArrowLeft className="h-5 w-5 text-white/90" />
-          </Button>
+        <div className="sticky top-0 z-50" style={{ height: 'calc(16px + 1.5rem)' }}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative z-10 py-3 px-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleBack}
+              className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+            >
+              <ArrowLeft className="h-5 w-5 text-white/90" />
+            </Button>
+          </div>
         </div>
 
-        <div className="relative z-10 flex items-center justify-center min-h-[400px]">
+        <div className="relative z-10 flex items-center justify-center min-h-[400px]" style={{ marginTop: '16px' }}>
           <div className="text-center">
             <h2 className="text-white text-xl mb-2">Error Loading Listing</h2>
             <p className="text-white/70 mb-4">{error}</p>
@@ -133,18 +139,21 @@ const EditListingPage: React.FC = () => {
   return (
     <ColoredPageWrapper seed="edit">
       {/* Sticky Header - Consistent with CafeDetail */}
-      <div className="sticky top-0 z-50 py-3 px-4" style={{ height: 'calc(16px + 1.5rem)' }}>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={handleBack}
-          className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
-        >
-          <ArrowLeft className="h-5 w-5 text-white/90" />
-        </Button>
+      <div className="sticky top-0 z-50" style={{ height: 'calc(16px + 1.5rem)' }}>
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative z-10 py-3 px-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleBack}
+            className="p-0 h-auto w-auto bg-transparent hover:bg-transparent"
+          >
+            <ArrowLeft className="h-5 w-5 text-white/90" />
+          </Button>
+        </div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 pt-8 pb-24 max-w-4xl">
+      <div className="relative z-10 container mx-auto px-4 pt-8 pb-24 max-w-4xl" style={{ marginTop: '16px' }}>
         {listing && (
           <EditListingForm
             listing={listing}
