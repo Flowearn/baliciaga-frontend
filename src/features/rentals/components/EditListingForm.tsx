@@ -510,7 +510,7 @@ const EditListingForm: React.FC<EditListingFormProps> = ({ listing, onUpdateSucc
       <button
         type="submit"
         disabled={isUpdating}
-        className="w-full bg-[#2563eb] text-white font-semibold rounded-xl py-3 mt-6 sticky bottom-20 shadow-lg transition-colors"
+        className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-white font-semibold rounded-2xl py-3 mt-6 sticky bottom-20 transition-colors backdrop-blur-sm border border-blue-500/20"
       >
         {isUpdating ? 'Updating...' : 'Update Listing'}
       </button>

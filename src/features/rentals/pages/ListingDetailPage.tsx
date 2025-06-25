@@ -889,7 +889,7 @@ const ListingDetailPage: React.FC = () => {
 
       {/* Sticky Apply Button for Regular Users - Only show when listing is active */}
       {!isOwner && listing.status === 'active' && (
-        <div className="sticky bottom-[56px] z-10 p-4 bg-gradient-to-t from-background-creamy to-transparent">
+        <div className="sticky bottom-[56px] z-10 p-4">
           <div className="max-w-4xl mx-auto px-4">
             <Button 
               onClick={handleApply}
