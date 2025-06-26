@@ -509,7 +509,15 @@ const ListingDetailPage: React.FC = () => {
             <span
               className={`absolute top-5 right-5 z-[2] rounded-full px-3 py-0.5 text-sm font-semibold shadow-md shadow-black/20 ${
                 (() => {
-                  const filled = listing.acceptedApplicantsCount ?? 0;
+                  // 1. 从已接受的申请人数量开始计算
+                  let filled = listing.acceptedApplicantsCount ?? 0;
+                  
+                  // 2. 检查发起人的角色，如果是'tenant'，则名额+1
+                  if (listing.initiator?.role === 'tenant') {
+                    filled++;
+                  }
+                  
+                  // 3. 计算总名额
                   const total = listing.totalSpots ?? listing.details.bedrooms ?? 1;
                   
                   switch (listing.status) {

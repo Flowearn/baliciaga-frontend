@@ -47,6 +47,13 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingI
     }
   };
 
+  // Handle withdrawing an accepted application
+  const handleWithdraw = async () => {
+    // For now, just log to console as requested
+    console.log('Withdraw button clicked for application:', application.applicationId);
+    toast.info('Withdraw functionality will be implemented soon');
+  };
+
   // Render action buttons conditionally based on application status
   const renderActionButtons = () => {
     switch (application.status) {
@@ -75,11 +82,11 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingI
           <>
             <Button
               variant="outline"
-              onClick={() => handleStatusUpdate('ignored')}
-              className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 rounded-full"
+              onClick={() => handleWithdraw()}
+              className="flex-1 bg-orange-500/20 hover:bg-orange-500/30 text-white border-0 rounded-full"
             >
               <X className="h-4 w-4 mr-1" />
-              Ignore
+              Withdraw
             </Button>
             <Button
               className="flex-1 bg-green-500/20 hover:bg-green-500/20 cursor-default text-white border-0 rounded-full"
@@ -98,10 +105,10 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingI
               onClick={() => handleStatusUpdate('pending')}
               className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-white border-0 rounded-full"
             >
-              Withdraw
+              Reconsider
             </Button>
             <Button
-              className="flex-1 bg-yellow-500/20 hover:bg-yellow-500/20 cursor-default text-white border-0 rounded-full"
+              className="flex-1 bg-gray-500/20 hover:bg-gray-500/20 cursor-default text-white border-0 rounded-full"
               disabled
             >
               Ignored

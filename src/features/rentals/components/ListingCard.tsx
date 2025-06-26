@@ -52,7 +52,15 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onCardClick, isArchi
 
   // 获取状态胶囊信息 - 使用80%透明底色+白色文字
   const getStatusInfo = (listing: Listing) => {
-    const filled = listing.acceptedApplicantsCount ?? 0;
+    // 1. 从已接受的申请人数量开始计算
+    let filled = listing.acceptedApplicantsCount ?? 0;
+    
+    // 2. 检查发起人的角色，如果是'tenant'，则名额+1
+    if (listing.initiator?.role === 'tenant') {
+      filled++;
+    }
+    
+    // 3. 使用这个最终修正后的 filled 变量来渲染徽章
     const total = listing.totalSpots ?? listing.details.bedrooms ?? 1;
     
     switch (listing.status) {

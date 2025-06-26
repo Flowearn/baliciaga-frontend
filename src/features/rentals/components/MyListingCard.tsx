@@ -180,17 +180,17 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
     return lastNonNumericPart || location.address;
   };
 
-  // Calculate filled slots: 1 (initiator) + accepted applications
-  const calculateFilledSlots = () => {
-    const acceptedCount = applicationsData?.data?.applications?.filter(
-      (app: ReceivedApplication) => app.status === 'accepted'
-    ).length || 0;
-    return 1 + acceptedCount; // 1 for initiator + accepted applications
-  };
-
-  // Calculate total slots available
-  const totalSlots = listing.details.bedrooms || 1;
-  const filledSlots = calculateFilledSlots();
+  // Calculate filled slots using the correct logic that includes tenant initiators
+  // 1. 从已接受的申请人数量开始计算
+  let filledSlots = listing.acceptedApplicantsCount ?? 0;
+  
+  // 2. 检查发起人的角色，如果是'tenant'，则名额+1
+  if (listing.initiator?.role === 'tenant') {
+    filledSlots++;
+  }
+  
+  // 3. 计算总名额
+  const totalSlots = listing.totalSpots ?? listing.details.bedrooms ?? 1;
 
   // 移除旧的accordion处理函数，现在使用独立的按钮控制
 
@@ -328,7 +328,7 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
             {/* Status Badges - positioned at top-right */}
             <div className="absolute top-5 right-5 z-[2] flex gap-2">
               {/* Filled Badge */}
-              <span className="px-3 py-0.5 rounded-full text-sm font-semibold text-white shadow-md shadow-black/20 bg-teal-500/80">
+              <span className="px-3 py-0.5 rounded-full text-sm font-semibold text-white shadow-md shadow-black/20 bg-green-500/80">
                 {filledSlots}/{totalSlots} Filled
               </span>
               
