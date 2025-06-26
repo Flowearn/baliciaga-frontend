@@ -49,9 +49,21 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingI
 
   // Handle withdrawing an accepted application
   const handleWithdraw = async () => {
-    // For now, just log to console as requested
-    console.log('Withdraw button clicked for application:', application.applicationId);
-    toast.info('Withdraw functionality will be implemented soon');
+    try {
+      // Call the API to withdraw the application
+      const response = await updateApplicationStatus(application.applicationId, 'withdrawn');
+      
+      if (response.success) {
+        toast.success('Application withdrawn successfully');
+        // Invalidate queries to refresh the application list
+        queryClient.invalidateQueries({ queryKey: ['listing-applications', listingId] });
+      } else {
+        toast.error(response.error?.message || 'Failed to withdraw application');
+      }
+    } catch (error) {
+      console.error('Error withdrawing application:', error);
+      toast.error('Failed to withdraw application. Please try again.');
+    }
   };
 
   // Render action buttons conditionally based on application status
@@ -112,6 +124,25 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingI
               disabled
             >
               Ignored
+            </Button>
+          </>
+        );
+      case 'withdrawn':
+        return (
+          <>
+            <Button
+              variant="outline"
+              onClick={() => handleStatusUpdate('pending')}
+              className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-white border-0 rounded-full"
+            >
+              Reconsider
+            </Button>
+            <Button
+              className="flex-1 bg-orange-500/20 hover:bg-orange-500/20 cursor-default text-white border-0 rounded-full"
+              disabled
+            >
+              <X className="h-4 w-4 mr-1" />
+              Withdrawn
             </Button>
           </>
         );
