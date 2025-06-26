@@ -233,7 +233,7 @@ export interface UpdateApplicationStatusResponse {
 
 export const updateApplicationStatus = async (
   applicationId: string,
-  status: 'accepted' | 'ignored' | 'pending' | 'withdrawn'
+  status: 'accepted' | 'ignored' | 'pending'
 ): Promise<UpdateApplicationStatusResponse> => {
   const response = await apiClient.put(`/applications/${applicationId}`, {
     status

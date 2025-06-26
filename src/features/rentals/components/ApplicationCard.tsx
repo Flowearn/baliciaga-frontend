@@ -50,11 +50,11 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingI
   // Handle withdrawing an accepted application
   const handleWithdraw = async () => {
     try {
-      // Call the API to withdraw the application
-      const response = await updateApplicationStatus(application.applicationId, 'withdrawn');
+      // Call the API to reset the application back to pending
+      const response = await updateApplicationStatus(application.applicationId, 'pending');
       
       if (response.success) {
-        toast.success('Application withdrawn successfully');
+        toast.success('Application reset to pending status');
         // Invalidate queries to refresh the application list
         queryClient.invalidateQueries({ queryKey: ['listing-applications', listingId] });
       } else {
@@ -124,25 +124,6 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingI
               disabled
             >
               Ignored
-            </Button>
-          </>
-        );
-      case 'withdrawn':
-        return (
-          <>
-            <Button
-              variant="outline"
-              onClick={() => handleStatusUpdate('pending')}
-              className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-white border-0 rounded-full"
-            >
-              Reconsider
-            </Button>
-            <Button
-              className="flex-1 bg-orange-500/20 hover:bg-orange-500/20 cursor-default text-white border-0 rounded-full"
-              disabled
-            >
-              <X className="h-4 w-4 mr-1" />
-              Withdrawn
             </Button>
           </>
         );
