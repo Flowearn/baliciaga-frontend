@@ -635,29 +635,33 @@ const UserProfilePage: React.FC = () => {
 
       {/* 图片裁剪弹窗 */}
       <Dialog open={!!imageToCrop} onOpenChange={(open) => !open && handleCropCancel()}>
-        <DialogContent className="max-w-lg sm:max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Crop Your Avatar</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            {imageToCrop && (
-              <div className="flex justify-center">
-                <div className="w-full max-w-[300px] sm:max-w-[400px]">
+        <DialogContent className="h-screen w-full max-w-none p-0 sm:h-auto sm:max-w-lg sm:p-6">
+          {/* 移动端全屏布局，桌面端保持弹窗样式 */}
+          <div className="flex flex-col h-full">
+            {/* Header区域 - 固定高度 */}
+            <div className="flex-shrink-0 p-4 border-b sm:border-0 sm:p-0">
+              <DialogHeader>
+                <DialogTitle>Crop Your Avatar</DialogTitle>
+              </DialogHeader>
+            </div>
+            
+            {/* 图片裁切区域 - 自动伸缩占据剩余空间 */}
+            <div className="flex-grow flex items-center justify-center overflow-auto p-4">
+              {imageToCrop && (
+                <div className="w-full max-w-sm">
                   <ReactCrop
                     crop={crop}
                     onChange={(_, percentCrop) => setCrop(percentCrop)}
                     onComplete={(c) => setCompletedCrop(c)}
                     aspect={1}
                     circularCrop={true}
-                    className="max-w-full"
+                    className="mx-auto"
                   >
                     <img
                       ref={imgRef}
                       src={imageToCrop}
                       alt="Crop preview"
                       className="max-w-full h-auto"
-                      style={{ maxHeight: '50vh' }}
                       onLoad={() => {
                         // 设置默认裁剪区域
                         const { width, height } = imgRef.current!;
@@ -676,31 +680,34 @@ const UserProfilePage: React.FC = () => {
                     />
                   </ReactCrop>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
             
-            <div className="flex flex-col sm:flex-row gap-3 sticky bottom-0 bg-background pt-4">
-              <Button 
-                onClick={handleCropCancel}
-                variant="outline"
-                className="flex-1 min-h-[44px]"
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleCropConfirm}
-                disabled={!completedCrop || isUploadingAvatar}
-                className="flex-1 min-h-[44px]"
-              >
-                {isUploadingAvatar ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  'Confirm Crop'
-                )}
-              </Button>
+            {/* 按钮操作区域 - 固定在底部 */}
+            <div className="flex-shrink-0 p-4 border-t bg-background sm:border-0">
+              <div className="flex gap-3">
+                <Button 
+                  onClick={handleCropCancel}
+                  variant="outline"
+                  className="flex-1 min-h-[44px]"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleCropConfirm}
+                  disabled={!completedCrop || isUploadingAvatar}
+                  className="flex-1 min-h-[44px]"
+                >
+                  {isUploadingAvatar ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    'Confirm Crop'
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
