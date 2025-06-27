@@ -635,7 +635,7 @@ const UserProfilePage: React.FC = () => {
 
       {/* 图片裁剪弹窗 */}
       <Dialog open={!!imageToCrop} onOpenChange={(open) => !open && handleCropCancel()}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Crop Your Avatar</DialogTitle>
           </DialogHeader>
@@ -643,53 +643,63 @@ const UserProfilePage: React.FC = () => {
           <div className="space-y-4">
             {imageToCrop && (
               <div className="flex justify-center">
-                <ReactCrop
-                  crop={crop}
-                  onChange={(_, percentCrop) => setCrop(percentCrop)}
-                  onComplete={(c) => setCompletedCrop(c)}
-                  aspect={1}
-                  circularCrop={true}
-                  className="max-w-full"
-                >
-                  <img
-                    ref={imgRef}
-                    src={imageToCrop}
-                    alt="Crop preview"
-                    className="max-w-full h-auto"
-                    onLoad={() => {
-                      // 设置默认裁剪区域
-                      const { width, height } = imgRef.current!;
-                      const size = Math.min(width, height) * 0.8;
-                      const x = (width - size) / 2;
-                      const y = (height - size) / 2;
-                      
-                      setCrop({
-                        unit: 'px',
-                        x,
-                        y,
-                        width: size,
-                        height: size,
-                      });
-                    }}
-                  />
-                </ReactCrop>
+                <div className="w-full max-w-[300px] sm:max-w-[400px]">
+                  <ReactCrop
+                    crop={crop}
+                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                    onComplete={(c) => setCompletedCrop(c)}
+                    aspect={1}
+                    circularCrop={true}
+                    className="max-w-full"
+                  >
+                    <img
+                      ref={imgRef}
+                      src={imageToCrop}
+                      alt="Crop preview"
+                      className="max-w-full h-auto"
+                      style={{ maxHeight: '50vh' }}
+                      onLoad={() => {
+                        // 设置默认裁剪区域
+                        const { width, height } = imgRef.current!;
+                        const size = Math.min(width, height) * 0.8;
+                        const x = (width - size) / 2;
+                        const y = (height - size) / 2;
+                        
+                        setCrop({
+                          unit: 'px',
+                          x,
+                          y,
+                          width: size,
+                          height: size,
+                        });
+                      }}
+                    />
+                  </ReactCrop>
+                </div>
               </div>
             )}
             
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row gap-3 sticky bottom-0 bg-background pt-4">
               <Button 
                 onClick={handleCropCancel}
                 variant="outline"
-                className="flex-1"
+                className="flex-1 min-h-[44px]"
               >
                 Cancel
               </Button>
               <Button 
                 onClick={handleCropConfirm}
-                disabled={!completedCrop}
-                className="flex-1"
+                disabled={!completedCrop || isUploadingAvatar}
+                className="flex-1 min-h-[44px]"
               >
-                Confirm Crop
+                {isUploadingAvatar ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  'Confirm Crop'
+                )}
               </Button>
             </div>
           </div>
