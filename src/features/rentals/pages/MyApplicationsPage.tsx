@@ -130,13 +130,13 @@ const MyApplicationsPage: React.FC = () => {
     loadApplications();
   };
 
-  const handleApplicationCanceled = (applicationId: string) => {
-    // 从当前列表中移除已取消的申请
-    setApplications(prev => prev.filter(app => app.applicationId !== applicationId));
-    // 更新总数
-    setTotalCount(prev => Math.max(0, prev - 1));
-    
+  const handleApplicationCanceled = async (applicationId: string) => {
+    // 显示成功提示
     toast.success('Application has been removed from your list');
+    
+    // 重新加载整个申请列表以确保数据同步
+    // 这里使用与 MyListingCard 相同的"写后读"模式
+    await loadApplications();
   };
 
   if (isLoading) {

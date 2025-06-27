@@ -1,13 +1,13 @@
-/* Import Amplify styles into the 'amplify' layer */
-@import '@aws-amplify/ui-react/styles.css' layer(amplify);
+/* Import Amplify styles FIRST without layer to ensure higher specificity */
+@import '@aws-amplify/ui-react/styles.css';
 
 /* Tailwind directives - must be outside of @layer blocks */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Define the order of our CSS layers. `base` should come first. */
-@layer base, amplify, components, utilities;
+/* Define the order of our CSS layers */
+@layer base, components, utilities;
 
 /* Override default focus styles for navigation buttons */
 @layer utilities {

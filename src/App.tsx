@@ -29,6 +29,7 @@ import AccountPage from "./pages/AccountPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import CreateProfilePage from "./pages/CreateProfilePage";
 import StagewiseTest from "./pages/StagewiseTest";
+import AmplifyThemeTest from "./pages/AmplifyThemeTest";
 
 import GlobalHeader from "./components/GlobalHeader";
 import { TopNavBar } from "./components/TopNavBar";
@@ -211,6 +212,10 @@ const routeObjects = [
       {
         path: "stagewise-test", // Test page for Stagewise integration (development only)
         element: <StagewiseTest />,
+      },
+      {
+        path: "amplify-theme-test", // Test page for Amplify theme verification
+        element: <AmplifyThemeTest />,
       },
       {
         path: "*", // Catch-all for 404 pages

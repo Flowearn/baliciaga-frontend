@@ -48,6 +48,7 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
+      case 'ignored':  // 'ignored' 状态也使用与 'pending' 相同的颜色
         return 'bg-yellow-500/80 text-white';
       case 'accepted':
         return 'bg-green-500/80 text-white';
@@ -64,6 +65,7 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'pending':
+      case 'ignored':  // 'ignored' 状态也显示为 'Pending' 以保护用户体验
         return 'Pending';
       case 'accepted':
         return 'Accepted';

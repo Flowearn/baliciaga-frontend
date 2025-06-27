@@ -1,248 +1,156 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@aws-amplify/ui-react';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
-import { 
-  User,
-  Globe,
-  Briefcase,
-  Phone,
-  Check,
-  X,
-  Mail,
-  Calendar,
-  MessageSquare,
-  UserCircle2,
-  MapPin
-} from 'lucide-react';
-import { ReceivedApplication, updateApplicationStatus } from '@/services/applicationService';
-import { formatNoYear } from '@/utils/formatDate';
-import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { Mail, MessageSquare, CircleUserRound, Briefcase, Globe, User } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface ApplicationCardProps {
-  application: ReceivedApplication;
-  listingId: string;
+// 临时Application类型定义
+interface Application {
+  applicationId: string;
+  status: 'pending' | 'accepted' | 'ignored';
+  createdAt: string;
+  applicant?: {
+    email?: string;
+    profile?: {
+      name?: string;
+      whatsApp?: string;
+      age?: number;
+      gender?: string;
+      occupation?: string;
+      languages?: string[];
+      profilePictureUrl?: string;
+    };
+  };
 }
 
-const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, listingId }) => {
-  const queryClient = useQueryClient();
-  const profile = application.applicant?.profile;
+// 定义组件接收的Props
+interface ApplicationCardProps {
+  application: Application;
+  onStatusUpdate: (applicationId: string, status: 'accepted' | 'ignored' | 'pending') => void;
+}
 
-  // Handle application status update
-  const handleStatusUpdate = async (newStatus: 'accepted' | 'ignored' | 'pending') => {
-    try {
-      const response = await updateApplicationStatus(application.applicationId, newStatus);
-      
-      if (response.success) {
-        toast.success(`Application ${newStatus} successfully`);
-        queryClient.invalidateQueries({ queryKey: ['listing-applications', listingId] });
-      } else {
-        toast.error(response.error?.message || `Failed to ${newStatus} application`);
-      }
-    } catch (error) {
-      console.error(`Error updating application status:`, error);
-      toast.error(`Failed to ${newStatus} application`);
-    }
+export const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onStatusUpdate }) => {
+  
+  // 调试application状态
+  console.log(`🔍 ApplicationCard render - ID: ${application.applicationId}, Status: ${application.status}`);
+  
+  // 事件处理函数
+  const handleAccept = () => {
+    onStatusUpdate(application.applicationId, 'accepted');
   };
 
-  // Handle withdrawing an accepted application
-  const handleWithdraw = async () => {
-    try {
-      // Call the API to reset the application back to pending
-      const response = await updateApplicationStatus(application.applicationId, 'pending');
-      
-      if (response.success) {
-        toast.success('Application reset to pending status');
-        // Invalidate queries to refresh the application list
-        queryClient.invalidateQueries({ queryKey: ['listing-applications', listingId] });
-      } else {
-        toast.error(response.error?.message || 'Failed to withdraw application');
-      }
-    } catch (error) {
-      console.error('Error withdrawing application:', error);
-      toast.error('Failed to withdraw application. Please try again.');
-    }
+  const handleIgnore = () => {
+    onStatusUpdate(application.applicationId, 'ignored');
   };
 
-  // Render action buttons conditionally based on application status
-  const renderActionButtons = () => {
-    switch (application.status) {
-      case 'pending':
-        return (
-          <>
-            <Button 
-              variant="outline"
-              onClick={() => handleStatusUpdate('ignored')}
-              className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-white border-0 rounded-full"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Ignore
-            </Button>
-            <Button 
-              onClick={() => handleStatusUpdate('accepted')}
-              className="flex-1 bg-green-500/20 hover:bg-green-500/30 text-white border-0 rounded-full"
-            >
-              <Check className="h-4 w-4 mr-1" />
-              Accept
-            </Button>
-          </>
-        );
-      case 'accepted':
-        return (
-          <>
-            <Button
-              variant="outline"
-              onClick={() => handleWithdraw()}
-              className="flex-1 bg-orange-500/20 hover:bg-orange-500/30 text-white border-0 rounded-full"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Withdraw
-            </Button>
-            <Button
-              className="flex-1 bg-green-500/20 hover:bg-green-500/20 cursor-default text-white border-0 rounded-full"
-              disabled
-            >
-              <Check className="h-4 w-4 mr-1" />
-              Accepted
-            </Button>
-          </>
-        );
-      case 'ignored':
-        return (
-          <>
-            <Button
-              variant="outline"
-              onClick={() => handleStatusUpdate('pending')}
-              className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-white border-0 rounded-full"
-            >
-              Reconsider
-            </Button>
-            <Button
-              className="flex-1 bg-gray-500/20 hover:bg-gray-500/20 cursor-default text-white border-0 rounded-full"
-              disabled
-            >
-              Ignored
-            </Button>
-          </>
-        );
-      default:
-        return null;
-    }
+  const handleWithdraw = () => {
+    // "撤回"操作总是将状态重置为'pending'
+    onStatusUpdate(application.applicationId, 'pending');
   };
+
+  const applier = application.applicant?.profile;
+  const applierName = applier?.name || 'Applier';
 
   return (
     <div className="p-4 bg-white/10 rounded-lg border-none">
-      {/* Main content layout */}
       <div className="flex gap-3 items-start">
-        {/* Left side: Information */}
         <div className="flex-1 pr-2">
-          {/* Name */}
-          <h4 className="font-semibold text-white whitespace-nowrap overflow-hidden text-ellipsis mb-1">
-            {profile?.name || application.applicant?.email || 'Anonymous'}
-          </h4>
+          <h4 className="font-semibold text-white whitespace-nowrap overflow-hidden text-ellipsis mb-1">{applierName}</h4>
+          <div className="text-sm text-white/60 mb-2">Applied {new Date(application.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
           
-          {/* Applied Date */}
-          <div className="text-sm text-white/60 mb-2">
-            Applied {formatNoYear(application.createdAt)}
-          </div>
-          
-          {/* Email */}
           {application.applicant?.email && (
-            <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+            <div className="flex items-center gap-2 text-sm text-white/80 mt-1">
               <Mail className="w-4 h-4 text-white/60 flex-shrink-0" />
-              <span className="whitespace-nowrap overflow-hidden text-ellipsis">
-                {application.applicant.email}
-              </span>
+              <span className="whitespace-nowrap overflow-hidden text-ellipsis">{application.applicant.email}</span>
             </div>
           )}
-          
-          {/* WhatsApp - CRITICAL ADDITION */}
-          {profile?.whatsApp && (
-            <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+
+          {applier?.whatsApp && (
+             <div className="flex items-center gap-2 text-sm text-white/80 mt-1">
               <MessageSquare className="w-4 h-4 text-green-400 flex-shrink-0" />
-              <a 
-                href={`https://wa.me/${profile.whatsApp.replace(/[^0-9]/g, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-green-400 hover:text-green-300 underline transition-colors"
-              >
-                {profile.whatsApp}
-              </a>
+              <a href={`https://wa.me/${applier.whatsApp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline transition-colors">{applier.whatsApp}</a>
             </div>
           )}
           
-          {/* Age and Gender in same row */}
-          {(profile?.age || profile?.gender) && (
-            <div className="flex items-center gap-2 text-base text-white/80 mt-1">
-              <UserCircle2 className="w-4 h-4 text-white/60 flex-shrink-0" />
-              <span className="whitespace-nowrap">
-                {[
-                  profile.age && `${profile.age} years old`,
-                  profile.gender && profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1)
-                ].filter(Boolean).join(' • ')}
-              </span>
+          {(applier?.age || applier?.gender) && (
+            <div className="flex items-center gap-2 text-sm text-white/80 mt-1">
+              <CircleUserRound className="w-4 h-4 text-white/60 flex-shrink-0" />
+              <span className="whitespace-nowrap">{[applier.age ? `${applier.age} years old` : null, applier.gender].filter(Boolean).join(' • ')}</span>
             </div>
           )}
-          
-          {/* Nationality */}
-          {profile?.nationality && (
-            <div className="flex items-center gap-2 text-base text-white/80 mt-1">
-              <MapPin className="w-4 h-4 text-white/60 flex-shrink-0" />
-              <span className="whitespace-nowrap">{profile.nationality}</span>
-            </div>
-          )}
-          
-          {/* Occupation */}
-          {profile?.occupation && (
-            <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+
+          {applier?.occupation && (
+            <div className="flex items-center gap-2 text-sm text-white/80 mt-1">
               <Briefcase className="w-4 h-4 text-white/60 flex-shrink-0" />
-              <span className="whitespace-nowrap overflow-hidden text-ellipsis">
-                {profile.occupation}
-              </span>
+              <span className="whitespace-nowrap overflow-hidden text-ellipsis">{applier.occupation}</span>
             </div>
           )}
-          
-          {/* Languages */}
-          {profile?.languages && profile.languages.length > 0 && (
-            <div className="flex items-center gap-2 text-base text-white/80 mt-1">
+
+          {applier?.languages && applier.languages.length > 0 && (
+            <div className="flex items-center gap-2 text-sm text-white/80 mt-1">
               <Globe className="w-4 h-4 text-white/60 flex-shrink-0" />
-              <span>
-                {profile.languages.map(lang => 
-                  lang.charAt(0).toUpperCase() + lang.slice(1)
-                ).join(', ')}
-              </span>
-            </div>
-          )}
-          
-          {/* Application Message */}
-          {application.message && (
-            <div className="mt-3 p-3 bg-white/10 rounded-lg">
-              <p className="text-sm text-white/90">{application.message}</p>
+              <span className="capitalize">{applier.languages.join(', ')}</span>
             </div>
           )}
         </div>
-        
-        {/* Right side: Avatar */}
+
         <div className="w-24 h-24 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
-          {profile?.profilePicture || profile?.profilePictureUrl ? (
-            <OptimizedImage 
-              src={profile.profilePicture || profile.profilePictureUrl} 
-              alt={profile?.name || 'Anonymous'}
+          {applier?.profilePictureUrl ? (
+            <OptimizedImage
+              src={applier.profilePictureUrl}
+              alt={applierName}
               aspectRatio="1:1"
-              priority={false}
             />
           ) : (
-            <User className="w-12 h-12 text-white/80" />
+            <User className="w-12 h-12 text-white/50" />
           )}
         </div>
       </div>
+      
+      {/* --- Action Buttons & Tags Container --- */}
+      {application.status === 'pending' && (
+        <div className="flex w-full items-center gap-x-3 pt-4 mt-4 border-t border-white/10">
+          <Button variation="destructive" size="small" className="flex-1" onClick={handleIgnore}>
+            Ignore
+          </Button>
+          <Button variation="primary" size="small" className="flex-1" onClick={handleAccept}>
+            Accept
+          </Button>
+        </div>
+      )}
 
-      {/* Action buttons */}
-      <div className="flex gap-3 w-full mt-4">
-        {renderActionButtons()}
-      </div>
+      {application.status === 'accepted' && (
+        <div className="flex w-full items-center gap-x-3 pt-4 mt-4 border-t border-white/10">
+          <Button size="small" className="flex-1" onClick={handleWithdraw}>Withdraw</Button>
+          <div className="flex flex-1 items-center justify-center text-sm font-semibold text-green-400">Accepted</div>
+        </div>
+      )}
+
+      {application.status === 'ignored' && (
+        <div className="flex w-full items-center gap-x-3 pt-4 mt-4 border-t border-white/10">
+          <Button size="small" className="flex-1" onClick={handleWithdraw}>Reconsider</Button>
+          <div className="flex flex-1 items-center justify-center text-sm font-medium text-neutral-400">Ignored</div>
+        </div>
+      )}
+
+      {/* 处理异常的withdrawn状态：应该显示为pending */}
+      {(application.status as string) === 'withdrawn' && (
+        <div className="flex w-full items-center gap-x-3 pt-4 mt-4 border-t border-white/10">
+          <Button variation="destructive" size="small" className="flex-1" onClick={handleIgnore}>
+            Ignore
+          </Button>
+          <Button variation="primary" size="small" className="flex-1" onClick={handleAccept}>
+            Accept
+          </Button>
+        </div>
+      )}
+      
+      {/* 其他未知状态的调试信息 */}
+      {!['pending', 'accepted', 'ignored', 'withdrawn'].includes(application.status as string) && (
+        <div className="text-sm font-medium text-red-400 pt-4 mt-4 border-t border-white/10">
+          Unexpected status: {application.status}
+        </div>
+      )}
     </div>
   );
 };

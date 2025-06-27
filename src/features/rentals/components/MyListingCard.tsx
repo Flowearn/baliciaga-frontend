@@ -47,7 +47,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
-import ApplicationCard from './ApplicationCard';
+import { ApplicationCard } from './ApplicationCard';
 import { useAuth } from '@/context/AuthContext';
 
 interface MyListingCardProps {
@@ -676,8 +676,33 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
                   {applications.map((application: ReceivedApplication) => (
                     <ApplicationCard 
                       key={application.applicationId} 
-                      application={application} 
-                      listingId={listingId}
+                      application={application}
+                      onStatusUpdate={async (applicationId: string, status: 'accepted' | 'ignored' | 'pending') => {
+                        console.log(`🔄 Status update requested: ${applicationId} -> ${status}`);
+                        
+                        try {
+                          // 使用已存在的updateApplicationStatus服务函数
+                          await updateApplicationStatus(applicationId, status);
+
+                          console.log(`✅ Application ${applicationId} status updated to ${status}`);
+                          
+                          // 使用queryClient刷新applications数据以更新UI
+                          await queryClient.invalidateQueries({ 
+                            queryKey: ['listing-applications', listingId] 
+                          });
+                          
+                          // 显示成功提示
+                          toast.success(`Application ${status}`, {
+                            description: `The application has been ${status}.`
+                          });
+                          
+                        } catch (error) {
+                          console.error('Failed to update application status:', error);
+                          toast.error('Failed to update application', {
+                            description: 'Please try again later.'
+                          });
+                        }
+                      }}
                     />
                   ))}
                 </div>

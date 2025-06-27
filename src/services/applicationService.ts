@@ -31,6 +31,8 @@ export const createApplication = async (
     payload.applicantLeaseDuration = applicantLeaseDuration;
   }
   
+  console.log('[FRONTEND-CREATE-DIAGNOSIS] Request Body:', payload);
+  
   const response = await apiClient.post(`/listings/${listingId}/applications`, payload);
   return response.data;
 };
