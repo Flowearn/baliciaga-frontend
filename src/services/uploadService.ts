@@ -93,7 +93,7 @@ export const uploadAvatarPhoto = async (file: File): Promise<string> => {
         xhr.open('POST', `${import.meta.env.VITE_API_BASE_URL}/users/me/avatar-upload-url`);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.setRequestHeader('Authorization', apiClient.defaults.headers.common['Authorization'] || '');
-        xhr.withCredentials = true;
+        // xhr.withCredentials = true; // 暂时禁用以测试CORS问题
         
         xhr.onload = () => {
           console.log('[DEBUG] XHR Status:', xhr.status);

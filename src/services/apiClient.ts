@@ -15,7 +15,8 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // 允许发送跨域请求时携带凭证
+  // 注意：withCredentials 可能导致某些CORS问题
+  // withCredentials: true,
 });
 
 // 请求拦截器 - 自动添加认证token
@@ -97,6 +98,12 @@ apiClient.interceptors.response.use(
       console.error('[API Client] Network error - request failed to reach server');
       console.error('[API Client] Request URL:', error.config?.url);
       console.error('[API Client] Request headers:', error.config?.headers);
+      console.error('[API Client] Full error details:', {
+        config: error.config,
+        request: error.request,
+        response: error.response,
+        toJSON: error.toJSON()
+      });
     }
     
     if (error.response?.status === 401) {
