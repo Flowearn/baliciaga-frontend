@@ -97,6 +97,10 @@ export const uploadAvatarPhoto = async (file: File): Promise<string> => {
     // Step 2: Upload file to S3 using presigned URL
     console.log('uploadAvatarPhoto - Starting S3 upload');
     
+    // --- 诊断日志：检查 uploadUrl 的真实值 ---
+    console.log('[FINAL_DIAGNOSIS] About to call fetch() to upload to S3. The value of uploadUrl is:', uploadUrl);
+    // -----------------------------
+    
     const uploadResponse = await fetch(uploadUrl, {
       method: 'PUT',
       body: file,
