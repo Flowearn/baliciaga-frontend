@@ -64,6 +64,11 @@ export const uploadListingPhotos = async (files: File[]): Promise<string[]> => {
 export const uploadAvatarPhoto = async (file: File): Promise<string> => {
   try {
     console.log('uploadAvatarPhoto - Starting upload process');
+    console.log('uploadAvatarPhoto - Environment check:', {
+      API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+      USER_POOL_ID: import.meta.env.VITE_COGNITO_USER_POOL_ID,
+      CLIENT_ID: import.meta.env.VITE_COGNITO_CLIENT_ID
+    });
     console.log('uploadAvatarPhoto - File details:', {
       name: file.name,
       type: file.type,
