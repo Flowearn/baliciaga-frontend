@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Avatar Upload Network Test</title>
+</head>
+<body>
+    <h1>Avatar Upload Network Test</h1>
+    <button onclick="testWithFetch()">Test with Fetch</button>
+    <button onclick="testWithAxios()">Test with Axios</button>
+    <div id="results"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const API_URL = 'https://p49odugj92.execute-api.ap-southeast-1.amazonaws.com/prod/users/me/avatar-upload-url';
+        const TEST_TOKEN = 'Bearer test-token'; // 会返回401，但能测试网络连接
+        
+        function log(message) {
+            document.getElementById('results').innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+
+        async function testWithFetch() {
+            log('=== Testing with Fetch ===');
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': TEST_TOKEN,
+                        'Origin': 'https://baliciaga.vercel.app'
+                    },
+                    body: JSON.stringify({
+                        fileName: 'test.jpg',
+                        fileType: 'image/jpeg',
+                        fileSize: 1000
+                    })
+                });
+                
+                log('✅ Fetch success - Status: ' + response.status);
+                const text = await response.text();
+                log('Response: ' + text);
+                
+            } catch (error) {
+                log('❌ Fetch error: ' + error.name + ' - ' + error.message);
+                console.error('Fetch error details:', error);
+            }
+        }
+
+        async function testWithAxios() {
+            log('=== Testing with Axios ===');
+            try {
+                const response = await axios.post(API_URL, {
+                    fileName: 'test.jpg',
+                    fileType: 'image/jpeg',
+                    fileSize: 1000
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': TEST_TOKEN,
+                        'Origin': 'https://baliciaga.vercel.app'
+                    },
+                    timeout: 10000
+                });
+                
+                log('✅ Axios success - Status: ' + response.status);
+                log('Response: ' + JSON.stringify(response.data));
+                
+            } catch (error) {
+                log('❌ Axios error: ' + error.code + ' - ' + error.message);
+                console.error('Axios error details:', error);
+                
+                if (error.response) {
+                    log('Response status: ' + error.response.status);
+                    log('Response data: ' + JSON.stringify(error.response.data));
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -15,6 +15,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // 允许发送跨域请求时携带凭证
 });
 
 // 请求拦截器 - 自动添加认证token

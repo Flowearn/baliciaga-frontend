@@ -84,6 +84,38 @@ export const uploadAvatarPhoto = async (file: File): Promise<string> => {
     
     console.log('uploadAvatarPhoto - Requesting upload URL with payload:', requestPayload);
     
+    // 调试：使用原生 XMLHttpRequest 测试
+    console.log('[DEBUG] Testing with native XMLHttpRequest...');
+    try {
+      const testResponse = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${import.meta.env.VITE_API_BASE_URL}/users/me/avatar-upload-url`);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Authorization', apiClient.defaults.headers.common['Authorization'] || '');
+        xhr.withCredentials = true;
+        
+        xhr.onload = () => {
+          console.log('[DEBUG] XHR Status:', xhr.status);
+          console.log('[DEBUG] XHR Response:', xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            reject(new Error(`XHR failed with status ${xhr.status}`));
+          }
+        };
+        
+        xhr.onerror = () => {
+          console.error('[DEBUG] XHR Network Error');
+          reject(new Error('XHR Network Error'));
+        };
+        
+        xhr.send(JSON.stringify(requestPayload));
+      });
+      console.log('[DEBUG] XHR Test Response:', testResponse);
+    } catch (xhrError) {
+      console.error('[DEBUG] XHR Test Error:', xhrError);
+    }
+    
     const uploadUrlResponse = await apiClient.post('/users/me/avatar-upload-url', requestPayload);
     
     // --- 请在这里添加下面的日志 ---

@@ -243,6 +243,13 @@ const UserProfilePage: React.FC = () => {
 
       // 上传头像到后端
       try {
+        // 打印文件信息用于调试
+        console.log('Cropped file details:', {
+          name: croppedFile.name,
+          type: croppedFile.type,
+          size: croppedFile.size
+        });
+        
         // 使用上传服务上传头像
         const profilePictureUrl = await uploadAvatarPhoto(croppedFile);
 
