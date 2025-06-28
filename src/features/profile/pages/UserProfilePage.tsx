@@ -12,6 +12,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { updateUserProfile, UpdateUserProfileData } from '../../../services/userService';
 import { uploadAvatarPhoto } from '../../../services/uploadService';
+import { uploadAvatarPhotoFixed } from '../../../services/uploadServiceFixed';
 import { toast } from 'sonner';
 import { LANGUAGES } from '../../../constants/languages';
 import apiClient from '../../../services/apiClient';
@@ -43,6 +44,7 @@ import EditableField from '../components/EditableField';
 import PhoneEditableField from '../components/PhoneEditableField';
 import ColoredPageWrapper from '@/components/layout/ColoredPageWrapper';
 import { useQueryClient } from '@tanstack/react-query';
+import { NetworkTest } from '@/components/NetworkTest';
 
 // 用户资料表单状态接口
 interface ProfileFormData {
@@ -250,8 +252,8 @@ const UserProfilePage: React.FC = () => {
           size: croppedFile.size
         });
         
-        // 使用上传服务上传头像
-        const profilePictureUrl = await uploadAvatarPhoto(croppedFile);
+        // 使用修复后的上传服务上传头像
+        const profilePictureUrl = await uploadAvatarPhotoFixed(croppedFile);
 
         // 更新用户资料 - 包含完整的字段，防止数据丢失
         const updatedProfile = await updateUserProfile({
@@ -719,6 +721,9 @@ const UserProfilePage: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* 网络测试工具 - 仅在开发环境显示 */}
+      {import.meta.env.MODE === 'development' && <NetworkTest />}
     </ColoredPageWrapper>
   );
 };
