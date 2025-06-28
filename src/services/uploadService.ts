@@ -1,4 +1,5 @@
 import apiClient from './apiClient';
+import { debugNetworkIssue } from '@/utils/debugNetwork';
 
 export interface UploadResponse {
   success: boolean;
@@ -114,6 +115,8 @@ export const uploadAvatarPhoto = async (file: File): Promise<string> => {
       console.log('[DEBUG] XHR Test Response:', testResponse);
     } catch (xhrError) {
       console.error('[DEBUG] XHR Test Error:', xhrError);
+      // Run full network diagnostics
+      await debugNetworkIssue();
     }
     
     const uploadUrlResponse = await apiClient.post('/users/me/avatar-upload-url', requestPayload);
