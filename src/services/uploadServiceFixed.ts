@@ -17,6 +17,7 @@ export interface UploadResponse {
 export const uploadAvatarPhotoFixed = async (file: File): Promise<string> => {
   try {
     console.log('uploadAvatarPhotoFixed - Starting upload process');
+    console.log('File details:', { name: file.name, type: file.type, size: file.size });
     
     // 获取认证 token
     const session = await fetchAuthSession();

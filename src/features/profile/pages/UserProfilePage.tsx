@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { updateUserProfile, UpdateUserProfileData } from '../../../services/userService';
 import { uploadAvatarPhoto } from '../../../services/uploadService';
 import { uploadAvatarPhotoFixed } from '../../../services/uploadServiceFixed';
+import { uploadAvatarPhotoViaProxy } from '../../../services/uploadServiceProxy';
 import { toast } from 'sonner';
 import { LANGUAGES } from '../../../constants/languages';
 import apiClient from '../../../services/apiClient';
@@ -252,8 +253,8 @@ const UserProfilePage: React.FC = () => {
           size: croppedFile.size
         });
         
-        // 使用修复后的上传服务上传头像
-        const profilePictureUrl = await uploadAvatarPhotoFixed(croppedFile);
+        // 使用代理版本的上传服务上传头像
+        const profilePictureUrl = await uploadAvatarPhotoViaProxy(croppedFile);
 
         // 更新用户资料 - 包含完整的字段，防止数据丢失
         const updatedProfile = await updateUserProfile({
