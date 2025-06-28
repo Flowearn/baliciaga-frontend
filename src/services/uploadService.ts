@@ -81,6 +81,11 @@ export const uploadAvatarPhoto = async (file: File): Promise<string> => {
     
     const uploadUrlResponse = await apiClient.post('/users/me/avatar-upload-url', requestPayload);
     
+    // --- 请在这里添加下面的日志 ---
+    console.log('[FINAL_DIAGNOSIS_1] Full API Response from our backend:', uploadUrlResponse);
+    console.log('[FINAL_DIAGNOSIS_2] Content of response.data.data:', uploadUrlResponse.data?.data);
+    // -----------------------------
+    
     console.log('uploadAvatarPhoto - Upload URL response:', uploadUrlResponse.data);
 
     if (!uploadUrlResponse.data.success) {
