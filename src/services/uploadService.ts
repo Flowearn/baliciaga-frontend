@@ -31,12 +31,15 @@ export const uploadListingPhoto = async (file: File): Promise<string> => {
     const { uploadUrl, imageUrl } = uploadUrlResponse.data.data;
 
     // Step 2: Upload file to S3 using presigned URL
+    // IMPORTANT: Don't send any authorization headers to S3
     const uploadResponse = await fetch(uploadUrl, {
       method: 'PUT',
       body: file,
       headers: {
         'Content-Type': file.type,
       },
+      // Ensure no credentials are sent to S3
+      credentials: 'omit',
     });
 
     if (!uploadResponse.ok) {
@@ -152,6 +155,8 @@ export const uploadAvatarPhoto = async (file: File): Promise<string> => {
       headers: {
         'Content-Type': file.type,
       },
+      // Ensure no credentials are sent to S3
+      credentials: 'omit',
     });
 
     console.log('uploadAvatarPhoto - S3 upload response status:', uploadResponse.status);
