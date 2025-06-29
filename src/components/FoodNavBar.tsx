@@ -1,5 +1,6 @@
 import React from 'react';
 
+
 interface FoodNavBarProps {
   selectedSubCategory: 'all' | 'cafe' | 'dining';
   onSubCategoryChange: (subCategory: 'all' | 'cafe' | 'dining') => void;

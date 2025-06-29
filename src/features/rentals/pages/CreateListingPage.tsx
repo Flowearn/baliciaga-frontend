@@ -37,6 +37,7 @@ interface ExtractedListingWithAI {
   minimumStay: number;
   description: string;
   amenities: string[];
+  propertyContact?: string | null;
   aiExtractedData?: {
     monthlyRent?: number;
     yearlyRent?: number;
@@ -44,6 +45,7 @@ interface ExtractedListingWithAI {
     price_yearly_usd?: number;
     landSize?: number;
     buildingSize?: number;
+    propertyContact?: string | null;
   };
 }
 
@@ -62,6 +64,7 @@ interface ListingFormData {
   smokingAllowed: boolean;
   address: string;
   locationArea: string;
+  propertyContact: string;
   availableFrom: string;
   minimumStay: number | string;
   description: string;
@@ -157,6 +160,7 @@ const CreateListingPage: React.FC = () => {
     smokingAllowed: false,
     address: '',
     locationArea: '',
+    propertyContact: '',
     availableFrom: '',
     minimumStay: 1,
     description: '',
@@ -265,6 +269,8 @@ const CreateListingPage: React.FC = () => {
             currency: extracted.currency || prev.currency,
             minimumStay: extracted.minimumStay ? parseMinimumStay(extracted.minimumStay) : prev.minimumStay,
             amenities: (extracted.amenities && extracted.amenities.length > 0) ? extracted.amenities : prev.amenities,
+            propertyContact: extracted.propertyContact || aiData?.propertyContact || prev.propertyContact,
+            description: prev.description,
           }));
           
           toast.success('AI analysis completed!', {
@@ -304,6 +310,8 @@ const CreateListingPage: React.FC = () => {
             currency: extracted.currency || prev.currency,
             minimumStay: extracted.minimumStay ? parseMinimumStay(extracted.minimumStay) : prev.minimumStay,
             amenities: (extracted.amenities && extracted.amenities.length > 0) ? extracted.amenities : prev.amenities,
+            propertyContact: extracted.propertyContact || aiData?.propertyContact || prev.propertyContact,
+            description: prev.description,
           }));
           
           toast.success('AI analysis completed!', {
@@ -418,7 +426,7 @@ const CreateListingPage: React.FC = () => {
     const squareFootage = typeof formData.squareFootage === 'string' ? (formData.squareFootage === '' ? null : Number(formData.squareFootage)) : formData.squareFootage;
 
     // Enhanced validation: at least one price field must be filled
-    if (!formData.title || !formData.address) {
+    if (!formData.title || !formData.address || !formData.propertyContact) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -457,6 +465,7 @@ const CreateListingPage: React.FC = () => {
         smokingAllowed: formData.smokingAllowed,
         address: formData.address,
         locationArea: formData.locationArea,
+        propertyContact: formData.propertyContact,
         availableFrom: formData.availableFrom,
         minimumStay: minimumStay,
         description: formData.description,
@@ -641,6 +650,21 @@ const CreateListingPage: React.FC = () => {
               value={formData.locationArea}
               onChange={(e) => handleInputChange('locationArea', e.target.value)}
               placeholder="e.g., Canggu, Ubud, Seminyak"
+            />
+          </div>
+
+          {/* Property Contact */}
+          <div className="mb-4">
+            <label htmlFor="propertyContact" className="block text-base font-medium text-white/80 mb-2">
+              Property Contact <span className="text-red-500 ml-1">*</span>
+            </label>
+            <textarea
+              id="propertyContact"
+              className="w-full min-h-[80px] py-2 px-3 bg-white/10 focus:bg-white/20 placeholder-white/20 text-white text-base border border-white/20 focus:border-white/40 rounded-lg focus:outline-none resize-none"
+              value={formData.propertyContact}
+              onChange={(e) => handleInputChange('propertyContact', e.target.value)}
+              placeholder="Contact information (phone, WhatsApp, email, etc.)"
+              rows={3}
             />
           </div>
 

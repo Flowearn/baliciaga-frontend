@@ -59,7 +59,9 @@ export interface Listing {
     availableFrom: string;
     minimumStay: number;
     maximumStay?: number;
+    leaseDuration?: string;
   };
+  propertyContact?: string;
   status: 'active' | 'cancelled' | 'finalized' | 'open';
   initiatorId: string;
   acceptedApplicantsCount: number;
