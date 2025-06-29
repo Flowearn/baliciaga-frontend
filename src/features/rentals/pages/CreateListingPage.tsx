@@ -509,52 +509,24 @@ const CreateListingPage: React.FC = () => {
         <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-md text-white/90">
           <div className="space-y-4">
               <p className="text-white/80 text-base">
-                Paste the property description or upload a screenshot of it, then click 'Extract Info' to get started.
+                Paste the property description, then click 'Extract Info' to fill the form automatically.
               </p>
               <Textarea
                 ref={textareaRef}
                 className="w-full min-h-[80px] resize-none bg-white/10 focus:bg-white/20 placeholder:text-white/20 text-white border-white/20 focus:border-white/40"
-                placeholder="Paste the property description here, e.g. URL or details..."
+                placeholder="Paste all property details here..."
                 value={aiInput}
                 onChange={(e) => setAiInput(e.target.value)}
               />
               
-              {/* 显示选中的截图 */}
-              {selectedScreenshot && (
-                <div className="bg-white/10 rounded-lg p-3 flex items-center gap-3">
-                  <Upload className="h-4 w-4 text-green-400" />
-                  <span className="text-base text-white/90">已选择截图: {selectedScreenshot.name}</span>
-                  <button
-                    onClick={() => setSelectedScreenshot(null)}
-                    className="ml-auto text-white/60 hover:text-red-400"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-              
-              <div className="flex gap-2 mt-4">
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 bg-transparent text-white border border-white/20 hover:bg-white/10 hover:border-white/30 rounded-full px-4 h-9 text-sm"
-                >
-                  <Upload className="h-4 w-4 mr-1" />
-                  {selectedScreenshot ? 'Change Screenshot' : 'Upload Screenshot'}
-                </Button>
+              <div className="flex justify-end mt-4">
                 <Button
                   onClick={handleAnalyzeSource}
-                  className="flex-1 bg-white text-[#0a0a0a] hover:bg-white/90 rounded-full px-4 h-9 text-sm font-medium"
+                  className="bg-white text-[#0a0a0a] hover:bg-white/90 rounded-full px-6 h-9 text-sm font-medium"
                 >
                   <Sparkles className="h-4 w-4 mr-1" />
                   {isAnalyzing ? 'Analyzing...' : 'Extract Info'}
                 </Button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelected}
-                  style={{ display: 'none' }}
-                  accept="image/png, image/jpeg, application/pdf"
-                />
               </div>
             </div>
         </div>

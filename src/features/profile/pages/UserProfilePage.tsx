@@ -645,79 +645,79 @@ const UserProfilePage: React.FC = () => {
 
       {/* 图片裁剪弹窗 */}
       <Dialog open={!!imageToCrop} onOpenChange={(open) => !open && handleCropCancel()}>
-        <DialogContent className="h-screen w-full max-w-none p-0 sm:h-auto sm:max-w-lg sm:p-6">
+        <DialogContent className="flex flex-col h-screen w-full max-w-none p-0 bg-black/40 backdrop-blur-sm sm:h-auto sm:max-w-lg sm:p-6 md:h-auto">
           {/* 移动端全屏布局，桌面端保持弹窗样式 */}
-          <div className="flex flex-col h-full">
-            {/* Header区域 - 固定高度 */}
-            <div className="flex-shrink-0 p-4 border-b sm:border-0 sm:p-0">
-              <DialogHeader>
-                <DialogTitle>Crop Your Avatar</DialogTitle>
-              </DialogHeader>
-            </div>
-            
-            {/* 图片裁切区域 - 自动伸缩占据剩余空间 */}
-            <div className="flex-grow flex items-center justify-center overflow-auto p-4">
-              {imageToCrop && (
-                <div className="w-full max-w-sm">
-                  <ReactCrop
-                    crop={crop}
-                    onChange={(_, percentCrop) => setCrop(percentCrop)}
-                    onComplete={(c) => setCompletedCrop(c)}
-                    aspect={1}
-                    circularCrop={true}
-                    className="mx-auto"
-                  >
-                    <img
-                      ref={imgRef}
-                      src={imageToCrop}
-                      alt="Crop preview"
-                      className="max-w-full h-auto"
-                      onLoad={() => {
-                        // 设置默认裁剪区域
-                        const { width, height } = imgRef.current!;
-                        const size = Math.min(width, height) * 0.8;
-                        const x = (width - size) / 2;
-                        const y = (height - size) / 2;
-                        
-                        setCrop({
-                          unit: 'px',
-                          x,
-                          y,
-                          width: size,
-                          height: size,
-                        });
-                      }}
-                    />
-                  </ReactCrop>
-                </div>
-              )}
-            </div>
-            
-            {/* 按钮操作区域 - 固定在底部 */}
-            <div className="flex-shrink-0 p-4 border-t bg-background sm:border-0">
-              <div className="flex gap-3">
-                <Button 
-                  onClick={handleCropCancel}
-                  variant="outline"
-                  className="flex-1 min-h-[44px]"
+          {/* 重要：在根级别就使用 flex flex-col 确保正确的布局 */}
+          
+          {/* Header区域 - 固定高度 */}
+          <div className="flex-shrink-0 p-4 border-b border-white/20 sm:border-0 sm:p-0">
+            <DialogHeader>
+              <DialogTitle className="text-white">Crop Your Avatar</DialogTitle>
+            </DialogHeader>
+          </div>
+          
+          {/* 图片裁切区域 - 自动伸缩占据剩余空间 */}
+          <div className="flex-grow overflow-auto flex items-center justify-center p-4">
+            {imageToCrop && (
+              <div className="w-full max-w-sm">
+                <ReactCrop
+                  crop={crop}
+                  onChange={(_, percentCrop) => setCrop(percentCrop)}
+                  onComplete={(c) => setCompletedCrop(c)}
+                  aspect={1}
+                  circularCrop={true}
+                  className="mx-auto"
                 >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleCropConfirm}
-                  disabled={!completedCrop || isUploadingAvatar}
-                  className="flex-1 min-h-[44px]"
-                >
-                  {isUploadingAvatar ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    'Confirm Crop'
-                  )}
-                </Button>
+                  <img
+                    ref={imgRef}
+                    src={imageToCrop}
+                    alt="Crop preview"
+                    className="max-w-full h-auto"
+                    onLoad={() => {
+                      // 设置默认裁剪区域
+                      const { width, height } = imgRef.current!;
+                      const size = Math.min(width, height) * 0.8;
+                      const x = (width - size) / 2;
+                      const y = (height - size) / 2;
+                      
+                      setCrop({
+                        unit: 'px',
+                        x,
+                        y,
+                        width: size,
+                        height: size,
+                      });
+                    }}
+                  />
+                </ReactCrop>
               </div>
+            )}
+          </div>
+          
+          {/* 按钮操作区域 - 固定在底部，确保不会被截断 */}
+          <div className="flex-shrink-0 p-4 border-t border-white/20 bg-black/20 sm:border-0">
+            <div className="flex gap-3">
+              <Button 
+                onClick={handleCropCancel}
+                variant="outline"
+                className="flex-1 min-h-[44px] bg-white/10 hover:bg-white/20 text-white border-white/20"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleCropConfirm}
+                disabled={!completedCrop || isUploadingAvatar}
+                className="flex-1 min-h-[44px] bg-white/20 hover:bg-white/30 text-white border-white/20"
+              >
+                {isUploadingAvatar ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  'Confirm Crop'
+                )}
+              </Button>
             </div>
           </div>
         </DialogContent>
