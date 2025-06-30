@@ -17,6 +17,7 @@ import {
 import { MyApplication, cancelApplication } from '@/services/applicationService';
 import { formatPrice } from '@/lib/utils';
 import { formatNoYear, formatDate } from '@/utils/formatDate';
+import { getLocationDisplay } from '@/utils/locationUtils';
 import { toast } from 'sonner';
 
 interface MyApplicationCardProps {
@@ -152,7 +153,7 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
             <div className="flex items-center text-base text-white/80 mt-1">
               <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
               <span className="truncate">
-                {application.listing.location.address}
+                {getLocationDisplay(application.listing.location)}
               </span>
             </div>
           </div>

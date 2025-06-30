@@ -45,6 +45,7 @@ import { Listing } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { pricePerRoom } from '@/utils/pricePerRoom';
 import { formatNoYear } from '@/utils/formatDate';
+import { getLocationDisplay } from '@/utils/locationUtils';
 
 // Helper function to detect if a string is a phone number and format WhatsApp link
 const formatContactLink = (contact: string): { isPhone: boolean; whatsappLink?: string; displayText: string } => {
@@ -603,7 +604,7 @@ const ListingDetailPage: React.FC = () => {
                 </div>
                 <div className="flex items-center text-white/90 mb-3">
                   <MapPin className="w-3 h-3 mr-2" />
-                  <span className="text-sm">{listing.location.address}</span>
+                  <span className="text-sm">{getLocationDisplay(listing.location)}</span>
                 </div>
               </div>
               <div className="text-left">

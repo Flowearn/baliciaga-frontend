@@ -253,6 +253,11 @@ const CreateListingPage: React.FC = () => {
         // 调用API，将formData发送到后端
         const response = await analyzeListingSource(formData); 
         
+        // 🔍 DIAGNOSTIC LOG: Check data received from backend (image analysis)
+        console.log('[Frontend Extraction] Data received from backend (image):', response.data);
+        console.log('[Frontend Extraction] extractedListing object:', response.data?.extractedListing);
+        console.log('[Frontend Extraction] propertyContact field received:', response.data?.extractedListing?.propertyContact);
+        
         if (response.success && response.data) {
           const extracted = response.data.extractedListing as ExtractedListingWithAI;
           const aiData = extracted.aiExtractedData;
@@ -294,9 +299,19 @@ const CreateListingPage: React.FC = () => {
         
         const response = await analyzeListingSource(aiInput);
         
+        // 🔍 DIAGNOSTIC LOG: Check data received from backend (text analysis)
+        console.log('[Frontend Extraction] Data received from backend (text):', response.data);
+        console.log('[Frontend Extraction] extractedListing object:', response.data?.extractedListing);
+        console.log('[Frontend Extraction] propertyContact field received:', response.data?.extractedListing?.propertyContact);
+        
         if (response.success && response.data) {
           const extracted = response.data.extractedListing as ExtractedListingWithAI;
           const aiData = extracted.aiExtractedData;
+          
+          // 🔍 DIAGNOSTIC LOG: Check extracted vs aiData propertyContact
+          console.log('[Frontend Extraction] extracted.propertyContact:', extracted.propertyContact);
+          console.log('[Frontend Extraction] aiData?.propertyContact:', aiData?.propertyContact);
+          console.log('[Frontend Extraction] Will use propertyContact:', extracted.propertyContact || aiData?.propertyContact);
           setFormData(prev => ({
             ...prev,
             title: extracted.title || prev.title,
@@ -482,8 +497,27 @@ const CreateListingPage: React.FC = () => {
       }
     } catch (error: unknown) {
       console.error('Publish listing error:', error);
-      toast.error('Failed to publish listing', {
-        description: 'Please try again or contact support.'
+      
+      // Extract actual error message from backend response
+      let errorMessage = 'Failed to publish listing';
+      let errorDescription = 'Please try again or contact support.';
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response?.data?.error?.message) {
+          errorMessage = axiosError.response.data.error.message;
+          
+          // Show validation details if available
+          if (axiosError.response.data.error.details) {
+            errorDescription = Array.isArray(axiosError.response.data.error.details) 
+              ? axiosError.response.data.error.details.join(', ')
+              : String(axiosError.response.data.error.details);
+          }
+        }
+      }
+      
+      toast.error(errorMessage, {
+        description: errorDescription
       });
     } finally {
       setIsPublishing(false);

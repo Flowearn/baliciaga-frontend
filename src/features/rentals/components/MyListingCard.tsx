@@ -27,6 +27,7 @@ import {
 import { formatPrice, cn } from '@/lib/utils';
 import { formatNoYear } from '@/utils/formatDate';
 import { pricePerRoom } from '@/utils/pricePerRoom';
+import { getLocationDisplay } from '@/utils/locationUtils';
 import { 
   Bed, 
   Bath, 
@@ -143,42 +144,6 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
   // Get the first photo or use a placeholder
   const mainPhoto = photos && photos.length > 0 ? photos[0] : null;
 
-  // 获取位置信息：从address中提取区域或显示完整地址
-  const getLocationDisplay = () => {
-    // 首先检查是否有locationArea字段（扩展支持）
-    const extendedListing = listing as { locationArea?: string; city?: string };
-    if (extendedListing.locationArea && extendedListing.locationArea.trim()) {
-      return extendedListing.locationArea.trim();
-    }
-    
-    // 检查是否有city字段（扩展支持）
-    if (extendedListing.city && extendedListing.city.trim()) {
-      return extendedListing.city.trim();
-    }
-    
-    // 从address中智能提取区域信息
-    const parts = location.address.split(',').map(part => part.trim());
-    
-    // 尝试识别区域名称（通常是非数字的部分，排除邮编）
-    for (let i = parts.length - 1; i >= 0; i--) {
-      const part = parts[i];
-      // 跳过纯数字（邮编）和国家名
-      if (!/^\d+$/.test(part) && part.toLowerCase() !== 'indonesia' && part.toLowerCase() !== 'bali') {
-        // 如果包含常见区域名称，优先返回
-        if (/canggu|ubud|seminyak|kuta|sanur|denpasar|jimbaran|nusa dua/i.test(part)) {
-          return part;
-        }
-        // 否则返回第一个非数字非国家的部分
-        if (part.length > 2) {
-          return part;
-        }
-      }
-    }
-    
-    // 兜底：返回地址的最后一个非数字部分或完整地址
-    const lastNonNumericPart = parts.find(part => !/^\d+$/.test(part));
-    return lastNonNumericPart || location.address;
-  };
 
   // Calculate filled slots using the correct logic that includes tenant initiators
   // 1. 从已接受的申请人数量开始计算
@@ -367,7 +332,7 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
               <div className="flex items-center text-base text-white/80 mt-1">
                 <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
                 <span className="truncate">
-                  {getLocationDisplay()}
+                  {getLocationDisplay(location)}
                 </span>
               </div>
             </div>
