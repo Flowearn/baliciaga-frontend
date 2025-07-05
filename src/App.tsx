@@ -98,13 +98,13 @@ const MainLayout = () => {
     if (showTopNav) layerCount++; // TopNavBar
     // FoodNavBar 不再计算在固定导航中，因为它现在是页面内容的一部分
     
-    // 根据层级数返回对应的padding-top类，包含安全区域适配
+    // 根据层级数返回对应的padding-top类，包含安全区域适配和响应式设计
     switch (layerCount) {
-      case 3: return 'pt-[calc(11rem+env(safe-area-inset-top))]'; // 3层导航: GlobalHeader + RegionalFilterBar + TopNavBar (176px + 安全区域)
-      case 2: return 'pt-[calc(8.5rem+env(safe-area-inset-top))]'; // 2层导航: GlobalHeader + TopNavBar (136px + 安全区域，增加更多间距避免重叠)  
-      case 1: return 'pt-[calc(5.5rem+env(safe-area-inset-top))]'; // 1层导航: 仅GlobalHeader (88px + 安全区域，更精确的高度)
+      case 3: return 'pt-[calc(9rem+env(safe-area-inset-top))] sm:pt-[calc(10rem+env(safe-area-inset-top))] md:pt-[calc(11rem+env(safe-area-inset-top))]'; // 3层导航: 响应式调整
+      case 2: return 'pt-[calc(7rem+env(safe-area-inset-top))] sm:pt-[calc(7.5rem+env(safe-area-inset-top))] md:pt-[calc(8.5rem+env(safe-area-inset-top))]'; // 2层导航: 响应式调整
+      case 1: return 'pt-[calc(4.5rem+env(safe-area-inset-top))] sm:pt-[calc(5rem+env(safe-area-inset-top))] md:pt-[calc(5.5rem+env(safe-area-inset-top))]'; // 1层导航: 响应式调整
       case 0: return 'pt-[env(safe-area-inset-top)]';  // 无导航: 隐藏页头的页面 (仅安全区域)
-      default: return 'pt-[calc(5.5rem+env(safe-area-inset-top))]'; // 默认fallback
+      default: return 'pt-[calc(4.5rem+env(safe-area-inset-top))] sm:pt-[calc(5rem+env(safe-area-inset-top))] md:pt-[calc(5.5rem+env(safe-area-inset-top))]'; // 默认fallback
     }
   };
   
