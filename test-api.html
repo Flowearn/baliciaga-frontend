@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Baliciaga API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; }
+        .error { background-color: #f8d7da; }
+        pre { white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Baliciaga API Connection Test</h1>
+    
+    <div class="test" id="listings-test">
+        <h2>Testing: GET /listings</h2>
+        <div id="listings-result">Loading...</div>
+    </div>
+    
+    <div class="test" id="listing-detail-test">
+        <h2>Testing: GET /listings/7fc3844a-5f55-4695-90fc-38c98359c286</h2>
+        <div id="listing-detail-result">Loading...</div>
+    </div>
+    
+    <div class="test" id="places-test">
+        <h2>Testing: GET /places?category=cafe</h2>
+        <div id="places-result">Loading...</div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://7u294to2qh.execute-api.ap-southeast-1.amazonaws.com/dev';
+        
+        async function testEndpoint(endpoint, resultId) {
+            const resultDiv = document.getElementById(resultId);
+            try {
+                const response = await fetch(API_BASE_URL + endpoint);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `<strong>✅ SUCCESS</strong><br>Status: ${response.status}<br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    resultDiv.parentElement.classList.add('success');
+                } else {
+                    resultDiv.innerHTML = `<strong>❌ FAILED</strong><br>Status: ${response.status}<br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    resultDiv.parentElement.classList.add('error');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<strong>❌ ERROR</strong><br>${error.message}`;
+                resultDiv.parentElement.classList.add('error');
+            }
+        }
+        
+        // Run tests
+        testEndpoint('/listings', 'listings-result');
+        testEndpoint('/listings/7fc3844a-5f55-4695-90fc-38c98359c286', 'listing-detail-result');
+        testEndpoint('/places?category=cafe', 'places-result');
+    </script>
+</body>
+</html>
