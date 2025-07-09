@@ -87,3 +87,16 @@ export const getDisplayPriceInfo = (priceInfo: PriceInfo) => {
     rentType: 'none' as const
   };
 };
+
+/**
+ * Truncates text to a specified maximum length and adds ellipsis if needed.
+ * @param text The text to truncate.
+ * @param maxLength The maximum length of the text.
+ * @returns The truncated text with ellipsis if it exceeds maxLength.
+ */
+export function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return text.substring(0, maxLength) + '...';
+}

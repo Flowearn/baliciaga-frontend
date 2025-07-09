@@ -8,6 +8,7 @@ import './amplify-config'
 import { AuthProvider } from './context/AuthContext';
 import { ArchiveProvider } from './context/ArchiveContext';
 import { baliciagaAmplifyTheme } from './theme/amplify-theme';
+import { Analytics } from '@vercel/analytics/react';
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -16,6 +17,7 @@ createRoot(document.getElementById("root")!).render(
         <AuthProvider>
           <ArchiveProvider>
             <App />
+            <Analytics />
           </ArchiveProvider>
         </AuthProvider>
       </Authenticator.Provider>

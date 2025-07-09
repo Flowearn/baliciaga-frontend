@@ -15,7 +15,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { MyApplication, cancelApplication } from '@/services/applicationService';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, truncateText } from '@/lib/utils';
 import { formatNoYear, formatDate } from '@/utils/formatDate';
 import { getLocationDisplay } from '@/utils/locationUtils';
 import { toast } from 'sonner';
@@ -53,9 +53,7 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
         return 'bg-yellow-500/80 text-white';
       case 'accepted':
         return 'bg-green-500/80 text-white';
-      case 'rejected':
-        return 'bg-red-500/80 text-white';
-      case 'signed':
+      case 'finalized':
         return 'bg-blue-500/80 text-white';
       default:
         return 'bg-gray-500/80 text-white';
@@ -70,10 +68,8 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
         return 'Pending';
       case 'accepted':
         return 'Accepted';
-      case 'rejected':
-        return 'Rejected';
-      case 'signed':
-        return 'Signed';
+      case 'finalized':
+        return 'Finalized';
       default:
         return status;
     }
@@ -144,10 +140,10 @@ const MyApplicationCard: React.FC<MyApplicationCardProps> = ({
           {/* Header */}
           <div className="mb-3">
             <h3 
-              className="font-semibold text-white/100 text-base truncate cursor-pointer hover:text-blue-400 transition-colors"
+              className="font-semibold text-white/100 text-base cursor-pointer hover:text-blue-400 transition-colors"
               onClick={handleListingClick}
             >
-              {application.listing.title}
+              {truncateText(application.listing.title, 30)}
             </h3>
             {/* Location */}
             <div className="flex items-center text-base text-white/80 mt-1">

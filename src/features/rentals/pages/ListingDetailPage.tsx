@@ -252,7 +252,7 @@ const ListingDetailPage: React.FC = () => {
       
       if (response.success) {
         toast.success('Listing finalized successfully!', {
-          description: `${response.data?.updatedApplicationsCount || 0} application(s) have been updated to signed status.`
+          description: `${response.data?.updatedApplicationsCount || 0} application(s) have been updated to finalized status.`
         });
         
         // 更新本地状态
@@ -937,7 +937,7 @@ const ListingDetailPage: React.FC = () => {
             </p>
             <ul className="mt-2 space-y-1 text-white/70 list-disc list-inside">
               <li>Close the listing to new applications</li>
-              <li>Mark all accepted applications as signed</li>
+              <li>Mark all accepted applications as finalized</li>
               <li>Notify all accepted candidates</li>
             </ul>
           </div>

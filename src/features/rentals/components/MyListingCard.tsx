@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 // 移除Accordion imports - 使用新的独立按钮机制
-import { formatPrice, cn } from '@/lib/utils';
+import { formatPrice, cn, truncateText } from '@/lib/utils';
 import { formatNoYear } from '@/utils/formatDate';
 import { pricePerRoom } from '@/utils/pricePerRoom';
 import { getLocationDisplay } from '@/utils/locationUtils';
@@ -181,7 +181,7 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
       
       if (response.success) {
         toast.success('Listing Finalized Successfully!', {
-          description: `${response.data?.updatedApplicationsCount || 0} applications updated to signed status.`
+          description: `${response.data?.updatedApplicationsCount || 0} applications updated to finalized status.`
         });
         
         // Refresh the listings
@@ -323,10 +323,10 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
             {/* Header */}
             <div className="mb-3">
               <h3 
-                className="font-semibold text-white/100 text-base truncate cursor-pointer hover:text-blue-400 transition-colors"
+                className="font-semibold text-white/100 text-base cursor-pointer hover:text-blue-400 transition-colors"
                 onClick={() => onCardClick?.(listing.listingId)}
               >
-                {title}
+                {truncateText(title, 30)}
               </h3>
               {/* Location */}
               <div className="flex items-center text-base text-white/80 mt-1">

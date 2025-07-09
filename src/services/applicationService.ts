@@ -41,7 +41,7 @@ export interface MyApplication {
   applicationId: string;
   listingId: string;
   message: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'signed';
+  status: 'pending' | 'accepted' | 'ignored' | 'finalized';
   createdAt: string;
   acceptedRoommates?: Array<{
     userId: string;
@@ -100,7 +100,7 @@ export interface MyApplication {
 export interface FetchMyApplicationsParams {
   pageParam?: string;
   limit?: number;
-  status?: 'pending' | 'accepted' | 'rejected' | 'signed' | 'all';
+  status?: 'pending' | 'accepted' | 'ignored' | 'finalized' | 'all';
 }
 
 export interface MyApplicationsApiResponse {

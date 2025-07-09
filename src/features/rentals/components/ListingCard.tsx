@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Listing } from '@/types';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, truncateText, cn } from '@/lib/utils';
 import { formatNoYear } from '@/utils/formatDate';
-import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import useEmblaCarousel from 'embla-carousel-react';
 
@@ -179,7 +178,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing, onCardClick, isArchi
         {/* 2️⃣ 标题容器渐变层 - 使用自定义类覆盖Amplify样式 */}
         <div className="absolute bottom-0 left-0 right-0 pt-4 px-4 pb-3 gradient-overlay-strong z-[2] pointer-events-none">
           <h1 className="text-2xl font-bold text-white drop-shadow-md">
-            {listing.title}
+            {truncateText(listing.title, 30)}
           </h1>
         </div>
 
