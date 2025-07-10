@@ -103,10 +103,19 @@ const Index = () => {
   // State for tracking geolocation failure count for smart error handling
   const [geolocationFailureCount, setGeolocationFailureCount] = useState<number>(0);
   
+  // Determine the actual API category to call
+  // When in food mode with a specific subcategory, call that subcategory's API directly
+  const apiCategory = React.useMemo(() => {
+    if (selectedCategory === 'food' && selectedFoodSubCategory && selectedFoodSubCategory !== 'all') {
+      return selectedFoodSubCategory as 'cafe' | 'dining';
+    }
+    return selectedCategory;
+  }, [selectedCategory, selectedFoodSubCategory]);
+
   const { data: cafes, isLoading, error, refetch, isRefetching } = useQuery<Cafe[], Error>({
-    queryKey: ['cafes', selectedCategory],
-    queryFn: () => fetchCafes(selectedCategory),
-    enabled: !!selectedCategory,
+    queryKey: ['cafes', apiCategory],
+    queryFn: () => fetchCafes(apiCategory),
+    enabled: !!apiCategory,
   });
   
 
@@ -321,23 +330,10 @@ const Index = () => {
       return [];
     }
 
-    // Filter cafes based on food sub-category if in food mode
-    let filteredCafes = cafes;
-    if (selectedCategory === 'food' && selectedFoodSubCategory !== 'all') {
-      console.log('Filtering food items:', { 
-        selectedFoodSubCategory, 
-        totalItems: cafes.length,
-        categories: cafes.map(c => c.category)
-      });
-      filteredCafes = cafes.filter(cafe => 
-        cafe.category === selectedFoodSubCategory
-      );
-      console.log('Filtered result:', filteredCafes.length);
-    }
-
+    // No filtering needed - API returns the correct data for each category
     // If we have user location, calculate distances and sort by distance
     if (userLocation) {
-      const cafesWithDistance = filteredCafes.map(cafe => {
+      const cafesWithDistance = cafes.map(cafe => {
         const distanceInKm = getDistanceFromLatLonInKm(
           userLocation.latitude,
           userLocation.longitude,
@@ -364,14 +360,14 @@ const Index = () => {
     }
     
     // Default sorting by open status if no location
-    const sortedResult = [...filteredCafes].sort((a, b) => {
+    const sortedResult = [...cafes].sort((a, b) => {
       if (a.isOpenNow && !b.isOpenNow) return -1;
       if (!a.isOpenNow && b.isOpenNow) return 1;
       return 0;
     });
 
     return sortedResult;
-  }, [cafes, userLocation, selectedCategory, selectedFoodSubCategory]);
+  }, [cafes, userLocation]);
 
   // Filter cafes for search modal based on searchTerm
   const modalFilteredCafes = useMemo(() => {
