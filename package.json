@@ -15,7 +15,8 @@
     "e2e": "playwright test",
     "e2e:open": "playwright test --ui",
     "playwright": "playwright test",
-    "playwright:debug": "playwright test --debug"
+    "playwright:debug": "playwright test --debug",
+    "sitemap": "node ./scripts/generate-sitemap.js"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.11.2",
