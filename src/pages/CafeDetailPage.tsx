@@ -137,14 +137,38 @@ const CafeDetailPage: React.FC = () => {
   }
 
   // Display place detail (back button removed)
+  // Construct canonical URL and get first image for social sharing
+  const canonicalUrl = `https://baliciaga.com${location.pathname}${location.search}`;
+  const ogImageUrl = cafe.photos && cafe.photos.length > 0 
+    ? cafe.photos[0].url 
+    : 'https://baliciaga-database.s3.ap-southeast-1.amazonaws.com/image/rental-open-1.png';
+  const metaDescription = `Explore ${cafe.name}. See reviews, photos, and opening hours for this ${categoryType} at ${cafe.formatted_address || cafe.vicinity || 'Bali'}. ${cafe.rating ? `Rated ${cafe.rating} stars.` : ''}`;
+  const metaTitle = `${cafe.name} - ${categoryType.charAt(0).toUpperCase() + categoryType.slice(1)} in Bali | Baliciaga`;
+
   return (
     <>
       <Helmet>
-        <title>{`${cafe.name} - ${categoryType.charAt(0).toUpperCase() + categoryType.slice(1)} in Bali | Baliciaga`}</title>
-        <meta 
-          name="description" 
-          content={`Explore ${cafe.name}. See reviews, photos, and opening hours for this ${categoryType} at ${cafe.formatted_address || cafe.vicinity || 'Bali'}. ${cafe.rating ? `Rated ${cafe.rating} stars.` : ''}`} 
-        />
+        {/* Basic SEO tags */}
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+        
+        {/* Open Graph tags (Facebook, WhatsApp, LinkedIn) */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={ogImageUrl} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:site_name" content="Baliciaga" />
+        <meta property="og:locale" content="en_US" />
+        
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={metaTitle} />
+        <meta name="twitter:description" content={metaDescription} />
+        <meta name="twitter:image" content={ogImageUrl} />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href={canonicalUrl} />
       </Helmet>
       
       {/* Background layer that starts from the very top */}
