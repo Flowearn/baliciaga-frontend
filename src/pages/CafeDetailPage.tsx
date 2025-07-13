@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Helmet } from 'react-helmet-async';
 import { fetchPlaceDetails } from '../services/cafeService';
 import { type Cafe } from '../types';
 import CafeDetail from '@/components/CafeDetail';
@@ -138,6 +139,14 @@ const CafeDetailPage: React.FC = () => {
   // Display place detail (back button removed)
   return (
     <>
+      <Helmet>
+        <title>{`${cafe.name} - ${categoryType.charAt(0).toUpperCase() + categoryType.slice(1)} in Bali | Baliciaga`}</title>
+        <meta 
+          name="description" 
+          content={`Explore ${cafe.name}. See reviews, photos, and opening hours for this ${categoryType} at ${cafe.formatted_address || cafe.vicinity || 'Bali'}. ${cafe.rating ? `Rated ${cafe.rating} stars.` : ''}`} 
+        />
+      </Helmet>
+      
       {/* Background layer that starts from the very top */}
       <div 
         className="fixed inset-0 z-0"
