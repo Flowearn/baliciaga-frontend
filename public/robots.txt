@@ -1,14 +1,17 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
+# Allow all crawlers
 User-agent: *
 Allow: /
+
+# Disallow crawling of user-specific, auth, and other non-public pages
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /profile/
+Disallow: /my-listings/
+Disallow: /my-applications/
+Disallow: /manage-applications/
+Disallow: /create-listing/
+Disallow: /edit-listing/
+
+# Sitemap location (we will create this in the next step)
+Sitemap: https://baliciaga.com/sitemap.xml
