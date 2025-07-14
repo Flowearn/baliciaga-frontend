@@ -36,6 +36,7 @@ import { type Cafe } from '../types';
 import useEmblaCarousel from 'embla-carousel-react';
 import type { EmblaOptionsType, EmblaPluginType } from 'embla-carousel';
 import Autoplay from 'embla-carousel-autoplay';
+import { VenueAttributes } from '@/features/rentals/components/VenueAttributes';
 
 interface CafeDetailProps {
   cafe: Cafe;
@@ -337,6 +338,12 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
             )}
           </div>
         </div>
+
+        <VenueAttributes 
+          cuisineStyle={cafe.cuisineStyle}
+          atmosphere={cafe.atmosphere}
+          signatureDishes={cafe.signatureDishes}
+        />
         
         {/* Floating Button Row - Responsive Flex Wrap Layout */}
         <div className="floating-button-row my-5 flex flex-wrap gap-3 z-30 relative">
