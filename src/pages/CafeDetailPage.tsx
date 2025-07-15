@@ -140,7 +140,7 @@ const CafeDetailPage: React.FC = () => {
   // Construct canonical URL and get first image for social sharing
   const canonicalUrl = `https://baliciaga.com${location.pathname}${location.search}`;
   const ogImageUrl = cafe.photos && cafe.photos.length > 0 
-    ? cafe.photos[0].url 
+    ? cafe.photos[0] 
     : 'https://baliciaga-database.s3.ap-southeast-1.amazonaws.com/image/rental-open-1.png';
   const metaDescription = `Explore ${cafe.name}. See reviews, photos, and opening hours for this ${categoryType} at ${cafe.formatted_address || cafe.vicinity || 'Bali'}. ${cafe.rating ? `Rated ${cafe.rating} stars.` : ''}`;
   const metaTitle = `${cafe.name} - ${categoryType.charAt(0).toUpperCase() + categoryType.slice(1)} in Bali | Baliciaga`;
