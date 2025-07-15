@@ -3,15 +3,23 @@ import React from 'react';
 
 // 定义传入的props类型
 interface VenueAttributesProps {
-  cuisineStyle?: string[];
-  atmosphere?: string[];
-  signatureDishes?: string[];
+  cuisineStyle?: string[] | string;
+  atmosphere?: string[] | string;
+  signatureDishes?: string[] | string;
 }
 
 // 这是一个内部辅助组件，用于渲染每个单独的部分
-const AttributeSection: React.FC<{ title: string; items?: string[] }> = ({ title, items }) => {
-  // 如果没有数据或数据数组为空，则不渲染这个部分
-  if (!items || items.length === 0 || (items.length === 1 && items[0] === '')) {
+const AttributeSection: React.FC<{ title: string; items?: string[] | string }> = ({ title, items }) => {
+  // 如果没有数据，则不渲染这个部分
+  if (!items) {
+    return null;
+  }
+
+  // 将字符串转换为数组，以统一处理
+  const itemsArray = Array.isArray(items) ? items : [items];
+  
+  // 如果数组为空或只包含空字符串，则不渲染
+  if (itemsArray.length === 0 || (itemsArray.length === 1 && itemsArray[0] === '')) {
     return null;
   }
 
@@ -19,7 +27,7 @@ const AttributeSection: React.FC<{ title: string; items?: string[] }> = ({ title
     <div className="mb-4 last:mb-0">
       <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider mb-3">{title}</h3>
       <div className="flex flex-wrap gap-2">
-        {items.map((item, index) => (
+        {itemsArray.map((item, index) => (
           // 这是"非交互式标签"的样式
           <div key={index} className="bg-white/10 text-white/90 text-sm font-medium px-3 py-1.5 rounded-lg border border-white/10">
             {item}
