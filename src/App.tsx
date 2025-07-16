@@ -8,6 +8,7 @@ import StagewiseWrapper from '@/components/StagewiseWrapper';
 import { useAuth } from "./context/AuthContext";
 import { cn } from "@/lib/utils";
 import { useThemeStore } from '@/stores/useThemeStore';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import Index from "./pages/Index";
 import CafeDetailPage from "./pages/CafeDetailPage";
@@ -144,6 +145,7 @@ const routeObjects = [
       {
         path: "places/:placeId", // Note: no leading slash for child routes
         element: <CafeDetailPage />,
+        errorElement: <ErrorBoundary><div className="min-h-screen flex items-center justify-center">Error loading place details</div></ErrorBoundary>,
       },
       {
         path: "listings", // Rental listings page
@@ -168,6 +170,7 @@ const routeObjects = [
       {
         path: "my-listings", // Property owner's listings management page - Protected
         element: <ProtectedRoute><MyListingsPage /></ProtectedRoute>,
+        errorElement: <ErrorBoundary><div className="min-h-screen flex items-center justify-center">Error loading listings</div></ErrorBoundary>,
       },
       {
         path: "my-listings/:listingId", // My listing detail page - Protected
@@ -248,14 +251,16 @@ function App() {
   
   // 3. 只有当加载完成后，才渲染真正的应用布局和路由
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <UIToaster />
-        <Sonner />
-        <RouterProvider router={router} />
-        <StagewiseWrapper />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <UIToaster />
+          <Sonner />
+          <RouterProvider router={router} />
+          <StagewiseWrapper />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

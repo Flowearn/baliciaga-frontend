@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate, useSearchParams, NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@/stores/useThemeStore';
 import { Button } from "@/components/ui/button";
 import {
@@ -7,6 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { 
   Menu as MenuIcon, 
@@ -17,17 +19,27 @@ import {
   User, 
   Mail,
   Share2,
-  Building2
+  Building2,
+  Globe
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const GlobalHeader = () => {
+  const { t, i18n } = useTranslation('common');
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   
   // Subscribe to immersive theme state
   const activeTheme = useThemeStore((state) => state.activeTheme);
+  
+  // Language options
+  const languageOptions: { [key: string]: string } = {
+    en: 'English',
+    zh: '简体中文',
+    ru: 'Русский',
+    ko: '한국어',
+  };
 
   // This function will navigate to home and add a search parameter
   const handleSearchClick = () => {
@@ -40,7 +52,7 @@ const GlobalHeader = () => {
       try {
         await navigator.share({
           title: 'Baliciaga',
-          text: 'Check out Baliciaga',
+          text: 'Baliciaga',
           url: window.location.href,
         });
       } catch (error) {
@@ -50,7 +62,7 @@ const GlobalHeader = () => {
       // Fallback for browsers that do not support the Web Share API
       navigator.clipboard.writeText(window.location.href);
       // You might want to show a toast notification here
-      alert('Link copied to clipboard!');
+      alert(t('toast.link_copied_title'));
     }
   };
 
@@ -58,7 +70,7 @@ const GlobalHeader = () => {
   const navLinks = [
     { 
       to: "/?type=food", 
-      text: "Food", 
+      text: t('nav.food'), 
       icon: Coffee,
       // Custom match function for food link
       isActiveMatch: () => {
@@ -70,7 +82,7 @@ const GlobalHeader = () => {
     },
     { 
       to: "/?type=bar", 
-      text: "Bar", 
+      text: t('nav.bar'), 
       icon: Wine,
       // Custom match function for bar link  
       isActiveMatch: () => {
@@ -81,7 +93,7 @@ const GlobalHeader = () => {
     },
     { 
       to: "/?type=cowork", 
-      text: "Cowork", 
+      text: t('nav.cowork'), 
       icon: Building2,
       // Custom match function for cowork link  
       isActiveMatch: () => {
@@ -92,7 +104,7 @@ const GlobalHeader = () => {
     },
     { 
       to: "/listings", 
-      text: "Rental", 
+      text: t('nav.rental'), 
       icon: Home,
       // Custom match function for rental link - highlight for all rental-related pages (Rule 4)
       isActiveMatch: () => {
@@ -173,21 +185,38 @@ const GlobalHeader = () => {
                   onSelect={() => navigate('/profile', { state: { from: location.pathname + location.search } })}
                 >
                   <User className="w-4 h-4 text-gray-500" />
-                  <span className="text-base font-medium">Profile</span>
+                  <span className="text-base font-medium">{t('dropdown.profile')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer mb-1" 
                   onSelect={() => { window.location.href = 'mailto:yo@baliciaga.com'; }}
                 >
                   <Mail className="w-4 h-4 text-gray-500" />
-                  <span className="text-base font-medium">Contact</span>
+                  <span className="text-base font-medium">{t('dropdown.contact')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer" 
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer mb-1" 
                   onSelect={handleShareClick}
                 >
                   <Share2 className="w-4 h-4 text-gray-500" />
-                  <span className="text-base font-medium">Share</span>
+                  <span className="text-base font-medium">{t('dropdown.share')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="my-1" />
+                <DropdownMenuItem 
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer" 
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <Globe className="w-4 h-4 text-gray-500" />
+                  <select 
+                    className="text-base font-medium bg-transparent outline-none cursor-pointer"
+                    value={i18n.language}
+                    onChange={(e) => i18n.changeLanguage(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {Object.entries(languageOptions).map(([code, name]) => (
+                      <option key={code} value={code}>{name}</option>
+                    ))}
+                  </select>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

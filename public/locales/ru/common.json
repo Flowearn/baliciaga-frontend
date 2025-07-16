@@ -1,0 +1,37 @@
+{
+  "app_title": "Baliciaga",
+  "nav": { "food": "Еда", "bar": "Бар", "cowork": "Коворкинг", "rental": "Жильё" },
+  "dropdown": { "profile": "Профиль", "contact": "Контакт", "share": "Поделиться" },
+  "details": {
+    "order_button": "Заказать доставку",
+    "reserve_button": "Забронировать стол",
+    "menu_button": "Меню",
+    "share_button": "Поделиться",
+    "call_button": "Тел",
+    "website_button": "Сайт",
+    "instagram_button": "Instagram",
+    "status_open": "Открыто",
+    "status_closed": "Закрыто",
+    "no_image": "(Нет изображения)",
+    "not_available": "Н/Д",
+    "map_unavailable": "Карта недоступна",
+    "operating_hours_unavailable": "Часы работы недоступны",
+    "amenities": {
+      "serves_vegetarian": "Вегетарианские блюда",
+      "allows_dogs": "Можно с собаками",
+      "outdoor_seating": "Столики на улице"
+    },
+    "attributes": {
+      "cuisine_style": "Стиль кухни",
+      "atmosphere": "Атмосфера",
+      "signature_dishes": "Фирменные блюда"
+    },
+    "days_full": ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"],
+    "days_short": ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
+  },
+  "toast": {
+    "link_copied_title": "Ссылка скопирована!",
+    "link_copied_desc": "URL страницы скопирован в буфер обмена.",
+    "share_fail": "Не удалось скопировать ссылку автоматически. Пожалуйста, скопируйте вручную из адресной строки."
+  }
+}

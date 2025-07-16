@@ -2,20 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import { fetchPlaceDetails } from '../services/cafeService';
 import { type Cafe } from '../types';
 import CafeDetail from '@/components/CafeDetail';
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { slugify } from '@/utils/slugify';
 
 const CafeDetailPage: React.FC = () => {
   const { placeId } = useParams<{ placeId: string }>();
   const [searchParams] = useSearchParams();
-  const categoryType = searchParams.get('type') as 'cafe' | 'bar' | 'cowork' || 'cafe';
+  const categoryType = searchParams.get('type') as 'cafe' | 'bar' | 'cowork' | 'dining' || 'cafe';
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { i18n } = useTranslation();
   
   // State for random background color
   const [bgColor, setBgColor] = useState<string>('');
@@ -85,6 +88,39 @@ const CafeDetailPage: React.FC = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
     // If we have initialData, disable the loading indicator
     ...(initialCafeData && { placeholderData: initialCafeData })
+  });
+
+  // Fetch venue description
+  const { data: descriptionData } = useQuery({
+    queryKey: ['description', placeId, i18n.language],
+    queryFn: async () => {
+      if (!placeId) return null;
+      
+      try {
+        const url = `/locales/${i18n.language}/descriptions/${placeId}.json`;
+        console.log('Fetching description from URL:', url, 'Language:', i18n.language);
+        const response = await fetch(url);
+        console.log('Response status:', response.status, 'Response ok:', response.ok);
+        
+        // Check if response is HTML (404 page)
+        const contentType = response.headers.get('content-type');
+        if (!response.ok || !contentType?.includes('application/json')) {
+          console.log('Description not found for language:', i18n.language, 'Content-Type:', contentType);
+          return null;
+        }
+        
+        const data = await response.json();
+        console.log('Description data loaded:', data);
+        console.log('Sections in data:', data?.sections);
+        return data;
+      } catch (error) {
+        console.error('Failed to fetch description:', error);
+        return null;
+      }
+    },
+    enabled: !!placeId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    suspense: false, // Disable suspense to avoid the error
   });
 
   // Prefetch related places when initial data is loaded
@@ -186,6 +222,7 @@ const CafeDetailPage: React.FC = () => {
           onClose={handleGoBack}
           pageBgColor={bgColor}
           userLocation={userLocation}
+          sections={descriptionData?.sections}
         />
       </div>
     </>

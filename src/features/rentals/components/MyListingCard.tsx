@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MyListing } from '@/services/listingService';
@@ -59,6 +59,7 @@ interface MyListingCardProps {
 const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isPending, startTransition] = useTransition();
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isApplicantsVisible, setIsApplicantsVisible] = useState(false);
@@ -651,9 +652,11 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onCardClick }) =
 
                           console.log(`✅ Application ${applicationId} status updated to ${status}`);
                           
-                          // 使用queryClient刷新applications数据以更新UI
-                          await queryClient.invalidateQueries({ 
-                            queryKey: ['listing-applications', listingId] 
+                          // 使用startTransition包装查询失效操作，避免同步输入时的suspension错误
+                          startTransition(() => {
+                            queryClient.invalidateQueries({ 
+                              queryKey: ['listing-applications', listingId] 
+                            });
                           });
                           
                           // 显示成功提示

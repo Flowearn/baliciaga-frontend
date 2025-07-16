@@ -1,0 +1,37 @@
+{
+  "app_title": "Baliciaga",
+  "nav": { "food": "美食", "bar": "酒吧", "cowork": "共享办公", "rental": "租房" },
+  "dropdown": { "profile": "个人资料", "contact": "联系我们", "share": "分享页面" },
+  "details": {
+    "order_button": "外卖点餐",
+    "reserve_button": "预订座位",
+    "menu_button": "菜单",
+    "share_button": "分享",
+    "call_button": "电话",
+    "website_button": "网站",
+    "instagram_button": "Instagram",
+    "status_open": "营业中",
+    "status_closed": "已关门",
+    "no_image": "（暂无图片）",
+    "not_available": "无",
+    "map_unavailable": "地图不可用",
+    "operating_hours_unavailable": "营业时间不可用",
+    "amenities": {
+      "serves_vegetarian": "提供素食",
+      "allows_dogs": "宠物友好",
+      "outdoor_seating": "室外座位"
+    },
+    "attributes": {
+      "cuisine_style": "菜系风格",
+      "atmosphere": "氛围",
+      "signature_dishes": "特色菜"
+    },
+    "days_full": ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
+    "days_short": ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
+  },
+  "toast": {
+    "link_copied_title": "链接已复制！",
+    "link_copied_desc": "页面链接已复制到您的剪贴板。",
+    "share_fail": "自动复制链接失败，请从地址栏手动复制。"
+  }
+}

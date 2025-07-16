@@ -7,8 +7,8 @@ if (!API_BASE_URL) {
   throw new Error('VITE_API_BASE_URL environment variable is not set');
 }
 
-// Use this function to fetch cafe/bar/cowork/food list from backend API based on category
-export const fetchCafes = async (category: 'cafe' | 'bar' | 'cowork' | 'food' = 'cafe'): Promise<Cafe[]> => {
+// Use this function to fetch cafe/bar/cowork/food/dining list from backend API based on category
+export const fetchCafes = async (category: 'cafe' | 'bar' | 'cowork' | 'food' | 'dining' = 'cafe'): Promise<Cafe[]> => {
   // Build the API endpoint based on category
   const endpoint = `${API_BASE_URL}/places?type=${category}`;
   
@@ -25,7 +25,7 @@ export const fetchCafes = async (category: 'cafe' | 'bar' | 'cowork' | 'food' = 
 };
 
 // Get details for a single place
-export const fetchPlaceDetails = async (placeId: string, categoryType: 'cafe' | 'bar' | 'cowork' | 'food' = 'cafe'): Promise<Cafe> => {
+export const fetchPlaceDetails = async (placeId: string, categoryType: 'cafe' | 'bar' | 'cowork' | 'food' | 'dining' = 'cafe'): Promise<Cafe> => {
   // Build the API endpoint with categoryType
   const endpoint = `${API_BASE_URL}/places/${placeId}?type=${categoryType}`;
   

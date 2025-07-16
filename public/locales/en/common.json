@@ -1,0 +1,37 @@
+{
+  "app_title": "Baliciaga",
+  "nav": { "food": "Food", "bar": "Bar", "cowork": "Coworking", "rental": "Housing" },
+  "dropdown": { "profile": "Profile", "contact": "Contact", "share": "Share Page" },
+  "details": {
+    "order_button": "Order a delivery",
+    "reserve_button": "Book a table",
+    "menu_button": "Menu",
+    "share_button": "Share",
+    "call_button": "Tel",
+    "website_button": "Web",
+    "instagram_button": "Instagram",
+    "status_open": "Open",
+    "status_closed": "Closed",
+    "no_image": "(No Image)",
+    "not_available": "N/A",
+    "map_unavailable": "No map image available",
+    "operating_hours_unavailable": "Hours unavailable",
+    "amenities": {
+      "serves_vegetarian": "Serves Vegetarian",
+      "allows_dogs": "Allows Dogs",
+      "outdoor_seating": "Outdoor Seating"
+    },
+    "attributes": {
+      "cuisine_style": "Cuisine Style",
+      "atmosphere": "Atmosphere",
+      "signature_dishes": "Signature Dishes"
+    },
+    "days_full": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    "days_short": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+  },
+  "toast": {
+    "link_copied_title": "Link Copied!",
+    "link_copied_desc": "The page URL has been copied to your clipboard.",
+    "share_fail": "Failed to copy link automatically. Please copy manually from address bar."
+  }
+}
