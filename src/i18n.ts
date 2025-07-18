@@ -18,6 +18,9 @@ i18n
     // 后备语言，当当前语言没有对应的翻译时使用
     fallbackLng: 'en',
     
+    // 允许非精确匹配（如 zh-CN 匹配 zh）
+    nonExplicitSupportedLngs: true,
+    
     // 默认的命名空间
     defaultNS: 'common',
 
