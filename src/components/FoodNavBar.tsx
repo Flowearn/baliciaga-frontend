@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 
 interface FoodNavBarProps {
@@ -7,6 +8,7 @@ interface FoodNavBarProps {
 }
 
 export const FoodNavBar: React.FC<FoodNavBarProps> = ({ selectedSubCategory, onSubCategoryChange }) => {
+  const { t } = useTranslation();
   return (
     <div className="pt-4 pb-2 px-4">
       <div className="flex gap-10 justify-center">
@@ -19,7 +21,7 @@ export const FoodNavBar: React.FC<FoodNavBarProps> = ({ selectedSubCategory, onS
           }`}
         >
           <span className="relative">
-            All
+            {t('nav.all')}
             <span className={`absolute -bottom-2 -left-2 -right-2 h-0.5 transition-colors duration-200 ${
               selectedSubCategory === 'all' ? 'bg-brand' : 'bg-transparent'
             }`}></span>
@@ -35,7 +37,7 @@ export const FoodNavBar: React.FC<FoodNavBarProps> = ({ selectedSubCategory, onS
           }`}
         >
           <span className="relative">
-            Cafe
+            {t('nav.cafe')}
             <span className={`absolute -bottom-2 -left-2 -right-2 h-0.5 transition-colors duration-200 ${
               selectedSubCategory === 'cafe' ? 'bg-brand' : 'bg-transparent'
             }`}></span>
@@ -51,7 +53,7 @@ export const FoodNavBar: React.FC<FoodNavBarProps> = ({ selectedSubCategory, onS
           }`}
         >
           <span className="relative">
-            Dining
+            {t('nav.dining')}
             <span className={`absolute -bottom-2 -left-2 -right-2 h-0.5 transition-colors duration-200 ${
               selectedSubCategory === 'dining' ? 'bg-brand' : 'bg-transparent'
             }`}></span>

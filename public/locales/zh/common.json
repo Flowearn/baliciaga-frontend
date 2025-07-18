@@ -1,6 +1,14 @@
 {
   "app_title": "Baliciaga",
-  "nav": { "food": "美食", "bar": "酒吧", "cowork": "共享办公", "rental": "租房" },
+  "nav": { 
+    "food": "美食", 
+    "bar": "酒吧", 
+    "cowork": "共享办公", 
+    "rental": "租房",
+    "all": "全部",
+    "cafe": "简餐",
+    "dining": "正餐"
+  },
   "dropdown": { "profile": "个人资料", "contact": "联系我们", "share": "分享页面" },
   "details": {
     "order_button": "外卖点餐",

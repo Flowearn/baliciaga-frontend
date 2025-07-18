@@ -1,6 +1,14 @@
 {
   "app_title": "Baliciaga",
-  "nav": { "food": "음식", "bar": "바", "cowork": "코워킹", "rental": "집" },
+  "nav": { 
+    "food": "음식", 
+    "bar": "바", 
+    "cowork": "코워킹", 
+    "rental": "집",
+    "all": "전체",
+    "cafe": "카페",
+    "dining": "다이닝"
+  },
   "dropdown": { "profile": "프로필", "contact": "문의하기", "share": "페이지 공유" },
   "details": {
     "order_button": "배달 주문",

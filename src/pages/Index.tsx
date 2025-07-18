@@ -529,13 +529,13 @@ const Index = () => {
       {/* Conditional Rendering for Loading and Content */}
       {isLoading ? (
         <div className={selectedCategory === 'bar' || selectedCategory === 'cowork' ? "pt-4" : "pt-1"}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(384px,1fr))] gap-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {Array.from({ length: 6 }).map((_, i) => <CafeCardSkeleton key={i} />)}
           </div>
         </div>
       ) : (
         <div className={selectedCategory === 'bar' || selectedCategory === 'cowork' ? "pt-4" : "pt-1"}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(384px,1fr))] gap-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {sortedCafes?.map((cafe) => (
               <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
                 <CafeCard cafe={cafe} />

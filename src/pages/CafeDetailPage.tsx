@@ -217,13 +217,15 @@ const CafeDetailPage: React.FC = () => {
       
       {/* Content layer */}
       <div className="relative z-10 min-h-screen pb-24">
-        <CafeDetail 
-          cafe={cafe} 
-          onClose={handleGoBack}
-          pageBgColor={bgColor}
-          userLocation={userLocation}
-          sections={descriptionData?.sections}
-        />
+        <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
+          <CafeDetail 
+            cafe={cafe} 
+            onClose={handleGoBack}
+            pageBgColor={bgColor}
+            userLocation={userLocation}
+            sections={descriptionData?.sections}
+          />
+        </div>
       </div>
     </>
   );

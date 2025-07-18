@@ -1,6 +1,14 @@
 {
   "app_title": "Baliciaga",
-  "nav": { "food": "Еда", "bar": "Бар", "cowork": "Коворкинг", "rental": "Жильё" },
+  "nav": { 
+    "food": "Еда", 
+    "bar": "Бар", 
+    "cowork": "Коворкинг", 
+    "rental": "Жильё",
+    "all": "Все",
+    "cafe": "Кафе",
+    "dining": "Рестораны"
+  },
   "dropdown": { "profile": "Профиль", "contact": "Контакт", "share": "Поделиться" },
   "details": {
     "order_button": "Заказать доставку",

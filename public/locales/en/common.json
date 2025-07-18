@@ -1,6 +1,14 @@
 {
   "app_title": "Baliciaga",
-  "nav": { "food": "Food", "bar": "Bar", "cowork": "Coworking", "rental": "Housing" },
+  "nav": { 
+    "food": "Food", 
+    "bar": "Bar", 
+    "cowork": "Coworking", 
+    "rental": "Housing",
+    "all": "All",
+    "cafe": "Cafe",
+    "dining": "Dining"
+  },
   "dropdown": { "profile": "Profile", "contact": "Contact", "share": "Share Page" },
   "details": {
     "order_button": "Order a delivery",
