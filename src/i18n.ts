@@ -23,10 +23,11 @@ i18n
 
     // 配置语言检测器
     detection: {
-      // 检测顺序，优先使用浏览器语言
-      order: ['navigator'],
-      // 缓存用户选择的语言到哪些地方
-      caches: ['cookie', 'localStorage'],
+      // a. 检测顺序：先查localStorage，再查浏览器
+      order: ['localStorage', 'navigator'],
+      
+      // b. 在localStorage中缓存用户选择的语言
+      caches: ['localStorage']
     },
 
     // 配置http-backend
