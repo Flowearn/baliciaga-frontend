@@ -23,8 +23,8 @@ i18n
 
     // 配置语言检测器
     detection: {
-      // 检测顺序，从左到右依次尝试
-      order: ['cookie', 'localStorage', 'navigator', 'htmlTag'],
+      // 检测顺序，优先使用浏览器语言
+      order: ['navigator'],
       // 缓存用户选择的语言到哪些地方
       caches: ['cookie', 'localStorage'],
     },
