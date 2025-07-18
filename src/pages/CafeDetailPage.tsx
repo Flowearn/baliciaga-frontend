@@ -97,8 +97,10 @@ const CafeDetailPage: React.FC = () => {
       if (!placeId) return null;
       
       try {
-        const url = `/locales/${i18n.language}/descriptions/${placeId}.json`;
-        console.log('Fetching description from URL:', url, 'Language:', i18n.language);
+        // Normalize language code to base language (e.g., zh-CN -> zh)
+        const baseLanguage = i18n.language.split('-')[0];
+        const url = `/locales/${baseLanguage}/descriptions/${placeId}.json`;
+        console.log('Fetching description from URL:', url, 'Language:', i18n.language, 'Base:', baseLanguage);
         const response = await fetch(url);
         console.log('Response status:', response.status, 'Response ok:', response.ok);
         
