@@ -38,6 +38,7 @@ import { RegionalFilterBar } from "./components/RegionalFilterBar";
 import { FoodNavBar } from "./components/FoodNavBar";
 import ScrollToTop from "./components/ScrollToTop";
 import { useLocation, useSearchParams } from "react-router-dom";
+import I18nDebugger from "./components/I18nDebugger";
 
 const queryClient = new QueryClient();
 
@@ -258,6 +259,7 @@ function App() {
           <Sonner />
           <RouterProvider router={router} />
           <StagewiseWrapper />
+          <I18nDebugger />
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>

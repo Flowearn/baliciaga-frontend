@@ -3,6 +3,11 @@ import { initReactI18next } from 'react-i18next';
 import HttpApi from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
+// Debug logging function
+const debugLog = (message: string, data?: any) => {
+  console.log(`[i18n Debug] ${message}`, data || '');
+};
+
 i18n
   // 注入http-backend插件，用于从服务器加载翻译文件
   .use(HttpApi)
@@ -41,21 +46,64 @@ i18n
       loadPath: (lngs, namespaces) => {
         const lng = lngs[0];
         const ns = namespaces[0];
+        let path: string;
+        
         // common.json 没有语言后缀，其他文件有
         if (ns === 'common') {
-          return `/locales/${lng}/${ns}.json`;
+          path = `/locales/${lng}/${ns}.json`;
+        } else {
+          path = `/locales/${lng}/${ns}.${lng}.json`;
         }
-        return `/locales/${lng}/${ns}.${lng}.json`;
+        
+        debugLog(`Loading translation file: ${path}`, { lng, ns });
+        return path;
+      },
+      
+      // Add request interceptor for debugging
+      requestOptions: {
+        mode: 'cors',
+        credentials: 'same-origin',
+        cache: 'no-cache',
+      },
+      
+      // Add custom request function for debugging
+      request: (options, url, payload, callback) => {
+        debugLog(`Fetching translation from: ${url}`);
+        
+        fetch(url, options)
+          .then(response => {
+            debugLog(`Response status for ${url}: ${response.status}`);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+          })
+          .then(data => {
+            debugLog(`Successfully loaded ${url}, size: ${data.length} bytes`);
+            callback(null, { status: 200, data });
+          })
+          .catch(error => {
+            debugLog(`Failed to load ${url}:`, error);
+            callback(error, { status: 500, data: null });
+          });
       },
     },
 
-    // 在开发模式下开启debug输出
-    debug: process.env.NODE_ENV === 'development',
+    // 总是开启debug输出以便调试
+    debug: true,
 
     // react-i18next的特定配置
     react: {
       useSuspense: true, // 建议与React.Suspense一起使用
     },
+  })
+  .then(() => {
+    debugLog('i18n initialized successfully');
+    debugLog('Current language:', i18n.language);
+    debugLog('Available languages:', i18n.languages);
+  })
+  .catch((error) => {
+    debugLog('i18n initialization failed:', error);
   });
 
 export default i18n;
