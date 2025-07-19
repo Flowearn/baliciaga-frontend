@@ -38,7 +38,15 @@ i18n
       // 翻译文件的加载路径
       // {{lng}} 会被替换为语言代码 (en, zh, ...)
       // {{ns}} 会被替换为命名空间 (common, ...)
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
+      loadPath: (lngs, namespaces) => {
+        const lng = lngs[0];
+        const ns = namespaces[0];
+        // common.json 没有语言后缀，其他文件有
+        if (ns === 'common') {
+          return `/locales/${lng}/${ns}.json`;
+        }
+        return `/locales/${lng}/${ns}.${lng}.json`;
+      },
     },
 
     // 在开发模式下开启debug输出
