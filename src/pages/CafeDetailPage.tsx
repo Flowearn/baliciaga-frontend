@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { slugify } from '@/utils/slugify';
+import { useDescriptions } from '@/contexts/DescriptionsContext';
 
 const CafeDetailPage: React.FC = () => {
   const { placeId } = useParams<{ placeId: string }>();
@@ -18,7 +19,6 @@ const CafeDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { i18n } = useTranslation();
   
   // State for random background color
   const [bgColor, setBgColor] = useState<string>('');
@@ -90,36 +90,10 @@ const CafeDetailPage: React.FC = () => {
     ...(initialCafeData && { placeholderData: initialCafeData })
   });
 
-  // Fetch master description data (this will be cached by React Query)
-  const { data: descriptionData } = useQuery({
-    queryKey: ['descriptions', i18n.language],
-    queryFn: async () => {
-      try {
-        // Normalize language code to base language (e.g., zh-CN -> zh)
-        const baseLanguage = i18n.language.split('-')[0];
-        const url = `/locales/${baseLanguage}/descriptions.${baseLanguage}.json`;
-        
-        const response = await fetch(url);
-        
-        // Check if response is HTML (404 page)
-        const contentType = response.headers.get('content-type');
-        if (!response.ok || !contentType?.includes('application/json')) {
-          console.log('Description data not found for language:', baseLanguage);
-          return null;
-        }
-        
-        const data = await response.json();
-        return data;
-      } catch (error) {
-        console.error('Failed to fetch description data:', error);
-        return null;
-      }
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes - cache descriptions
-    suspense: false,
-  });
-
-  // Extract venue description from master data
+  // Get descriptions from context instead of fetching
+  const descriptionData = useDescriptions();
+  
+  // Extract venue description from context data
   const venueDescription = descriptionData?.[placeId] || null;
 
   // Prefetch related places when initial data is loaded

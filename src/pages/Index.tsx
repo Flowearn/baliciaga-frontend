@@ -17,6 +17,7 @@ import {
 import { Menu as MenuIcon, Search as SearchIcon, X as XIcon, Coffee, Wine, Home } from "lucide-react";
 import FoodNavBar from '../components/FoodNavBar';
 import { useTranslation } from 'react-i18next';
+import { DescriptionsProvider, type VenueDescriptionData } from '../contexts/DescriptionsContext';
 
 // Constant for stale location threshold - moved to module level to avoid ReferenceError
 const STALE_LOCATION_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
@@ -45,7 +46,7 @@ interface CafeWithDistance extends Cafe {
 }
 
 const Index = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const location = useLocation();
@@ -120,6 +121,33 @@ const Index = () => {
     enabled: !!apiCategory,
   });
   
+  // Fetch master description data for deep search
+  const { data: descriptionsData } = useQuery<{ [placeId: string]: VenueDescriptionData }>({
+    queryKey: ['descriptions', i18n.language],
+    queryFn: async () => {
+      try {
+        // Normalize language code to base language (e.g., zh-CN -> zh)
+        const baseLanguage = i18n.language.split('-')[0];
+        const url = `/locales/${baseLanguage}/descriptions.${baseLanguage}.json`;
+        
+        const response = await fetch(url);
+        
+        // Check if response is HTML (404 page)
+        const contentType = response.headers.get('content-type');
+        if (!response.ok || !contentType?.includes('application/json')) {
+          console.log('Description data not found for language:', baseLanguage);
+          return {};
+        }
+        
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Failed to fetch description data:', error);
+        return {};
+      }
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes - cache descriptions
+  });
 
   
   // Handle category change - update both state and URL
@@ -394,13 +422,24 @@ const Index = () => {
             cafe.region || ''
           ];
           
+          // Add description content to searchable fields
+          if (descriptionsData && cafe.placeId && descriptionsData[cafe.placeId]) {
+            const venueDesc = descriptionsData[cafe.placeId];
+            if (venueDesc.sections && Array.isArray(venueDesc.sections)) {
+              venueDesc.sections.forEach(section => {
+                if (section.title) searchableFields.push(section.title);
+                if (section.body) searchableFields.push(section.body);
+              });
+            }
+          }
+          
           // Join all fields into one searchable string
           const searchableText = searchableFields.join(' ').toLowerCase();
           
           return searchableText.includes(searchLower);
         })
       : [];
-  }, [cafes, searchTerm]);
+  }, [cafes, searchTerm, descriptionsData]);
 
   const handleCafeCardClick = (cafe: Cafe) => {
     addCafeToCache(queryClient, cafe);
@@ -479,92 +518,94 @@ const Index = () => {
   }, [searchParams, setSearchParams]);
 
   return (
-    <div className="pb-4">
-      {/* The sticky header and category buttons have been removed from here. */}
-      {/* They are now handled globally by GlobalHeader.tsx in App.tsx. */}
-      
-      {/* Food Sub-category Navigation - 现在作为页面内容的一部分，会随页面滚动 */}
-      {selectedCategory === 'food' && (
-        <FoodNavBar 
-          selectedSubCategory={selectedFoodSubCategory}
-          onSubCategoryChange={(subCategory) => {
-            // Update URL to preserve sub-category selection
-            setSearchParams({ type: 'food', subCategory }, { replace: true });
-          }}
-        />
-      )}
-      
-      {/* Search Modal */}
-      {isSearchModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-20"> 
-          <div className="bg-white p-6 rounded-lg shadow-xl w-[398px]">
-            <div className="flex items-center mb-4">
-              <h2 className="flex-1 text-xl font-semibold text-center">
-                {t('search.title')}
-              </h2>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setIsSearchModalOpen(false)}
-              >
-                <XIcon className="h-6 w-6" />
-              </Button>
-            </div>
-            <input
-              type="text"
-              placeholder={t('searchPlaceholder')}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            
-            {/* Search Results */}
-            <div className="mt-4 max-h-60 overflow-y-auto">
-              {searchTerm.trim() && modalFilteredCafes.length === 0 && (
-                <p className="text-gray-500">No results found matching "{searchTerm}".</p>
-              )}
-              {modalFilteredCafes.map(cafe => (
-                <div
-                  key={cafe.placeId}
-                  className="p-2 hover:bg-gray-100 cursor-pointer rounded"
-                  onClick={() => {
-                    setIsSearchModalOpen(false); // Close modal on selection
-                    // Preserve both type and subCategory parameters
-                    const params = new URLSearchParams();
-                    params.set('type', selectedCategory);
-                    if (selectedCategory === 'food' && selectedFoodSubCategory !== 'all') {
-                      params.set('subCategory', selectedFoodSubCategory);
-                    }
-                    navigate(`/places/${cafe.placeId}?${params.toString()}`); // Navigate to place detail page
-                  }}
+    <DescriptionsProvider value={descriptionsData || null}>
+      <div className="pb-4">
+        {/* The sticky header and category buttons have been removed from here. */}
+        {/* They are now handled globally by GlobalHeader.tsx in App.tsx. */}
+        
+        {/* Food Sub-category Navigation - 现在作为页面内容的一部分，会随页面滚动 */}
+        {selectedCategory === 'food' && (
+          <FoodNavBar 
+            selectedSubCategory={selectedFoodSubCategory}
+            onSubCategoryChange={(subCategory) => {
+              // Update URL to preserve sub-category selection
+              setSearchParams({ type: 'food', subCategory }, { replace: true });
+            }}
+          />
+        )}
+        
+        {/* Search Modal */}
+        {isSearchModalOpen && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-20"> 
+            <div className="bg-white p-6 rounded-lg shadow-xl w-[398px]">
+              <div className="flex items-center mb-4">
+                <h2 className="flex-1 text-xl font-semibold text-center">
+                  {t('search.title')}
+                </h2>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setIsSearchModalOpen(false)}
                 >
-                  {cafe.name}
+                  <XIcon className="h-6 w-6" />
+                </Button>
+              </div>
+              <input
+                type="text"
+                placeholder={t('searchPlaceholder')}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              
+              {/* Search Results */}
+              <div className="mt-4 max-h-60 overflow-y-auto">
+                {searchTerm.trim() && modalFilteredCafes.length === 0 && (
+                  <p className="text-gray-500">No results found matching "{searchTerm}".</p>
+                )}
+                {modalFilteredCafes.map(cafe => (
+                  <div
+                    key={cafe.placeId}
+                    className="p-2 hover:bg-gray-100 cursor-pointer rounded"
+                    onClick={() => {
+                      setIsSearchModalOpen(false); // Close modal on selection
+                      // Preserve both type and subCategory parameters
+                      const params = new URLSearchParams();
+                      params.set('type', selectedCategory);
+                      if (selectedCategory === 'food' && selectedFoodSubCategory !== 'all') {
+                        params.set('subCategory', selectedFoodSubCategory);
+                      }
+                      navigate(`/places/${cafe.placeId}?${params.toString()}`); // Navigate to place detail page
+                    }}
+                  >
+                    {cafe.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Conditional Rendering for Loading and Content */}
+        {isLoading ? (
+          <div className={selectedCategory === 'bar' || selectedCategory === 'cowork' ? "pt-4" : "pt-1"}>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(384px,1fr))] gap-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              {Array.from({ length: 6 }).map((_, i) => <CafeCardSkeleton key={i} />)}
+            </div>
+          </div>
+        ) : (
+          <div className={selectedCategory === 'bar' || selectedCategory === 'cowork' ? "pt-4" : "pt-1"}>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(384px,1fr))] gap-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              {sortedCafes?.map((cafe) => (
+                <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
+                  <CafeCard cafe={cafe} />
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      )}
-      
-      {/* Conditional Rendering for Loading and Content */}
-      {isLoading ? (
-        <div className={selectedCategory === 'bar' || selectedCategory === 'cowork' ? "pt-4" : "pt-1"}>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(384px,1fr))] gap-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {Array.from({ length: 6 }).map((_, i) => <CafeCardSkeleton key={i} />)}
-          </div>
-        </div>
-      ) : (
-        <div className={selectedCategory === 'bar' || selectedCategory === 'cowork' ? "pt-4" : "pt-1"}>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(384px,1fr))] gap-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {sortedCafes?.map((cafe) => (
-              <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
-                <CafeCard cafe={cafe} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </DescriptionsProvider>
   );
 };
 
