@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Menu as MenuIcon, Search as SearchIcon, X as XIcon, Coffee, Wine, Home } from "lucide-react";
 import FoodNavBar from '../components/FoodNavBar';
+import { useTranslation } from 'react-i18next';
 
 // Constant for stale location threshold - moved to module level to avoid ReferenceError
 const STALE_LOCATION_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
@@ -44,6 +45,7 @@ interface CafeWithDistance extends Cafe {
 }
 
 const Index = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const location = useLocation();
@@ -374,11 +376,29 @@ const Index = () => {
     if (!searchTerm.trim()) {
       return []; // Return empty array if search term is empty
     }
+    
+    const searchLower = searchTerm.toLowerCase();
+    
     return (Array.isArray(cafes) && cafes.length > 0)
-      ? cafes.filter(cafe =>
-          cafe && cafe.name && typeof cafe.name === 'string' &&
-          cafe.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+      ? cafes.filter(cafe => {
+          if (!cafe) return false;
+          
+          // Create searchable text combining all relevant fields
+          const searchableFields = [
+            cafe.name || '',
+            cafe.address || '',
+            ...(Array.isArray(cafe.cuisineStyle) ? cafe.cuisineStyle : [cafe.cuisineStyle || '']),
+            ...(Array.isArray(cafe.atmosphere) ? cafe.atmosphere : [cafe.atmosphere || '']),
+            ...(Array.isArray(cafe.signatureDishes) ? cafe.signatureDishes : [cafe.signatureDishes || '']),
+            ...(cafe.types || []),
+            cafe.region || ''
+          ];
+          
+          // Join all fields into one searchable string
+          const searchableText = searchableFields.join(' ').toLowerCase();
+          
+          return searchableText.includes(searchLower);
+        })
       : [];
   }, [cafes, searchTerm]);
 
@@ -480,7 +500,7 @@ const Index = () => {
           <div className="bg-white p-6 rounded-lg shadow-xl w-[398px]">
             <div className="flex items-center mb-4">
               <h2 className="flex-1 text-xl font-semibold text-center">
-                Search {selectedCategory === 'cafe' ? 'Cafes' : selectedCategory === 'bar' ? 'Bars' : 'Cowork Spaces'}
+                {t('search.title')}
               </h2>
               <Button 
                 variant="ghost" 
@@ -492,7 +512,7 @@ const Index = () => {
             </div>
             <input
               type="text"
-              placeholder={`Enter ${selectedCategory} name...`}
+              placeholder={t('searchPlaceholder')}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -501,7 +521,7 @@ const Index = () => {
             {/* Search Results */}
             <div className="mt-4 max-h-60 overflow-y-auto">
               {searchTerm.trim() && modalFilteredCafes.length === 0 && (
-                <p className="text-gray-500">No {selectedCategory === 'cafe' ? 'cafes' : selectedCategory === 'bar' ? 'bars' : 'cowork spaces'} found matching "{searchTerm}".</p>
+                <p className="text-gray-500">No results found matching "{searchTerm}".</p>
               )}
               {modalFilteredCafes.map(cafe => (
                 <div
