@@ -15,20 +15,18 @@ import { Analytics } from '@vercel/analytics/react';
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <Suspense fallback={<div>Loading translations...</div>}>
-      <HelmetProvider>
-        <ThemeProvider theme={baliciagaAmplifyTheme}>
-          <Authenticator.Provider>
-            <AuthProvider>
-              <ArchiveProvider>
-                <App />
-                <Analytics />
-              </ArchiveProvider>
-            </AuthProvider>
-          </Authenticator.Provider>
-        </ThemeProvider>
-      </HelmetProvider>
-    </Suspense>
+    <HelmetProvider>
+      <ThemeProvider theme={baliciagaAmplifyTheme}>
+        <Authenticator.Provider>
+          <AuthProvider>
+            <ArchiveProvider>
+              <App />
+              <Analytics />
+            </ArchiveProvider>
+          </AuthProvider>
+        </Authenticator.Provider>
+      </ThemeProvider>
+    </HelmetProvider>
   </React.StrictMode>
 );
 // Force redeploy 2025年 7月 7日 星期一 18时29分34秒 WITA

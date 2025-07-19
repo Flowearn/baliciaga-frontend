@@ -259,7 +259,6 @@ function App() {
           <Sonner />
           <RouterProvider router={router} />
           <StagewiseWrapper />
-          <I18nDebugger />
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>

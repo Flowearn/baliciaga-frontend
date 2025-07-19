@@ -89,12 +89,12 @@ i18n
       },
     },
 
-    // 总是开启debug输出以便调试
-    debug: true,
+    // 在开发模式下开启debug输出
+    debug: process.env.NODE_ENV === 'development',
 
     // react-i18next的特定配置
     react: {
-      useSuspense: true, // 建议与React.Suspense一起使用
+      useSuspense: false, // 关闭 suspense 以避免长时间的 loading
     },
   })
   .then(() => {
