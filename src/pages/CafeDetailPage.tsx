@@ -14,7 +14,7 @@ import { slugify } from '@/utils/slugify';
 const CafeDetailPage: React.FC = () => {
   const { placeId } = useParams<{ placeId: string }>();
   const [searchParams] = useSearchParams();
-  const categoryType = searchParams.get('type') as 'cafe' | 'bar' | 'cowork' | 'dining' || 'cafe';
+  const categoryType = searchParams.get('type') as 'cafe' | 'bar' | 'cowork' | 'food' || 'cafe';
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -90,40 +90,37 @@ const CafeDetailPage: React.FC = () => {
     ...(initialCafeData && { placeholderData: initialCafeData })
   });
 
-  // Fetch venue description
+  // Fetch master description data (this will be cached by React Query)
   const { data: descriptionData } = useQuery({
-    queryKey: ['description', placeId, i18n.language],
+    queryKey: ['descriptions', i18n.language],
     queryFn: async () => {
-      if (!placeId) return null;
-      
       try {
         // Normalize language code to base language (e.g., zh-CN -> zh)
         const baseLanguage = i18n.language.split('-')[0];
-        const url = `/locales/${baseLanguage}/descriptions/${placeId}.json`;
-        console.log('Fetching description from URL:', url, 'Language:', i18n.language, 'Base:', baseLanguage);
+        const url = `/locales/${baseLanguage}/descriptions.${baseLanguage}.json`;
+        
         const response = await fetch(url);
-        console.log('Response status:', response.status, 'Response ok:', response.ok);
         
         // Check if response is HTML (404 page)
         const contentType = response.headers.get('content-type');
         if (!response.ok || !contentType?.includes('application/json')) {
-          console.log('Description not found for language:', i18n.language, 'Content-Type:', contentType);
+          console.log('Description data not found for language:', baseLanguage);
           return null;
         }
         
         const data = await response.json();
-        console.log('Description data loaded:', data);
-        console.log('Sections in data:', data?.sections);
         return data;
       } catch (error) {
-        console.error('Failed to fetch description:', error);
+        console.error('Failed to fetch description data:', error);
         return null;
       }
     },
-    enabled: !!placeId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    suspense: false, // Disable suspense to avoid the error
+    staleTime: 10 * 60 * 1000, // 10 minutes - cache descriptions
+    suspense: false,
   });
+
+  // Extract venue description from master data
+  const venueDescription = descriptionData?.[placeId] || null;
 
   // Prefetch related places when initial data is loaded
   useEffect(() => {
@@ -219,13 +216,13 @@ const CafeDetailPage: React.FC = () => {
       
       {/* Content layer */}
       <div className="relative z-10 min-h-screen pb-24">
-        <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-xl mx-auto sm:px-6 lg:px-8">
           <CafeDetail 
             cafe={cafe} 
             onClose={handleGoBack}
             pageBgColor={bgColor}
             userLocation={userLocation}
-            sections={descriptionData?.sections}
+            sections={venueDescription?.sections}
           />
         </div>
       </div>
