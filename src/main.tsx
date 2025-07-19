@@ -7,6 +7,7 @@ import './index.css'
 // 导入amplify配置，配置在amplify-config.ts中已经完成
 import './amplify-config'
 import './i18n'
+import './utils/i18nChecker'
 import { AuthProvider } from './context/AuthContext';
 import { ArchiveProvider } from './context/ArchiveContext';
 import { baliciagaAmplifyTheme } from './theme/amplify-theme';

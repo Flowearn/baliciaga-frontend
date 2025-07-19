@@ -41,5 +41,7 @@
     "link_copied_title": "Link Copied!",
     "link_copied_desc": "The page URL has been copied to your clipboard.",
     "share_fail": "Failed to copy link automatically. Please copy manually from address bar."
-  }
+  },
+  "searchPlaceholder": "Search Spaces...",
+  "search": { "title": "Search" }
 }

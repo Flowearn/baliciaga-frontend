@@ -46,7 +46,7 @@ interface CafeWithDistance extends Cafe {
 }
 
 const Index = () => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation('common');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const location = useLocation();

@@ -41,5 +41,7 @@
     "link_copied_title": "链接已复制！",
     "link_copied_desc": "页面链接已复制到您的剪贴板。",
     "share_fail": "自动复制链接失败，请从地址栏手动复制。"
-  }
+  },
+  "searchPlaceholder": "搜索空间...",
+  "search": { "title": "搜索" }
 }

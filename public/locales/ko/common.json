@@ -41,5 +41,6 @@
     "link_copied_title": "링크가 복사되었습니다!",
     "link_copied_desc": "페이지 URL이 클립보드에 복사되었습니다.",
     "share_fail": "링크를 자동으로 복사하지 못했습니다. 주소창에서 수동으로 복사해 주세요."
-  }
+  },
+  "searchPlaceholder": "공간 검색..."
 }

@@ -25,6 +25,10 @@ export interface Cafe {
   "tableUrl"?: string; // Optional, table booking URL
   "menuUrl"?: string; // Optional, menu URL
   category?: 'cafe' | 'dining'; // Optional, used for food category filtering
+  cuisineStyle?: string | string[]; // Optional, cuisine type(s)
+  atmosphere?: string | string[]; // Optional, atmosphere descriptions
+  signatureDishes?: string[]; // Optional, signature dishes
+  address?: string; // Optional, full address
 }
 
 // Rental Listing Types

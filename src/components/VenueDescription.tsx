@@ -13,24 +13,30 @@ interface VenueDescriptionProps {
 export default function VenueDescription({ sections }: VenueDescriptionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  if (!sections || sections.length === 0) {
+  // Filter out sections with no body content
+  const validSections = sections?.filter(section => section && section.body && section.body.trim() !== '') || [];
+  
+  if (validSections.length === 0) {
     return null;
   }
 
   // Calculate if content is long enough to need collapsing
-  const totalLength = sections.reduce((sum, section) => sum + section.body.length, 0);
-  const needsCollapse = totalLength > 200 || sections.length > 1; // Lower threshold and check section count
+  const totalLength = validSections.reduce((sum, section) => {
+    if (!section || !section.body) return sum;
+    return sum + section.body.length;
+  }, 0);
+  const needsCollapse = totalLength > 200 || validSections.length > 1; // Lower threshold and check section count
   
-  console.log('VenueDescription - totalLength:', totalLength, 'sections:', sections.length, 'needsCollapse:', needsCollapse);
+  console.log('VenueDescription - totalLength:', totalLength, 'sections:', validSections.length, 'needsCollapse:', needsCollapse);
 
   const displaySections = needsCollapse && !isExpanded 
-    ? sections.slice(0, 1).map(section => ({
+    ? validSections.slice(0, 1).map(section => ({
         ...section,
-        body: section.body.length > 150 
+        body: section.body && section.body.length > 150 
           ? section.body.substring(0, 150) + '...' 
-          : section.body
+          : section.body || ''
       }))
-    : sections;
+    : validSections;
 
   return (
     <div className="relative">

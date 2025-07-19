@@ -8,7 +8,7 @@ interface FoodNavBarProps {
 }
 
 export const FoodNavBar: React.FC<FoodNavBarProps> = ({ selectedSubCategory, onSubCategoryChange }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('common');
   return (
     <div className="pt-4 pb-2 px-4">
       <div className="flex gap-10 justify-center">

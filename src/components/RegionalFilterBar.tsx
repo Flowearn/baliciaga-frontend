@@ -18,13 +18,13 @@ export const RegionalFilterBar: React.FC = () => {
           </span>
         </button>
         
-        {/* Ubud - Coming Soon */}
+        {/* Seminyak - Coming Soon */}
         <button
           className="relative py-2 px-3 text-sm text-gray-400 transition-colors duration-200 ease-in-out opacity-50 cursor-not-allowed"
           disabled={true}
         >
           <span className="relative">
-            Ubud (Coming Soon)
+            Seminyak (Coming Soon)
             <span className="absolute -bottom-2 -left-2 -right-2 h-0.5 bg-transparent"></span>
           </span>
         </button>
