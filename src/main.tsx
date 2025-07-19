@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { createRoot } from 'react-dom/client'
 import { Authenticator, ThemeProvider } from '@aws-amplify/ui-react';
 import { HelmetProvider } from 'react-helmet-async';
@@ -14,18 +14,20 @@ import { Analytics } from '@vercel/analytics/react';
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <HelmetProvider>
-      <ThemeProvider theme={baliciagaAmplifyTheme}>
-        <Authenticator.Provider>
-          <AuthProvider>
-            <ArchiveProvider>
-              <App />
-              <Analytics />
-            </ArchiveProvider>
-          </AuthProvider>
-        </Authenticator.Provider>
-      </ThemeProvider>
-    </HelmetProvider>
+    <Suspense fallback={<div>Loading translations...</div>}>
+      <HelmetProvider>
+        <ThemeProvider theme={baliciagaAmplifyTheme}>
+          <Authenticator.Provider>
+            <AuthProvider>
+              <ArchiveProvider>
+                <App />
+                <Analytics />
+              </ArchiveProvider>
+            </AuthProvider>
+          </Authenticator.Provider>
+        </ThemeProvider>
+      </HelmetProvider>
+    </Suspense>
   </React.StrictMode>
 );
 // Force redeploy 2025年 7月 7日 星期一 18时29分34秒 WITA
