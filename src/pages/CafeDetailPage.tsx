@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { slugify } from '@/utils/slugify';
 import { useDescriptions } from '@/contexts/DescriptionsContext';
-import { useTranslation } from 'react-i18next';
 
 const CafeDetailPage: React.FC = () => {
   const { placeId } = useParams<{ placeId: string }>();
