@@ -44,18 +44,22 @@ i18n
       // {{lng}} 会被替换为语言代码 (en, zh, ...)
       // {{ns}} 会被替换为命名空间 (common, ...)
       loadPath: (lngs, namespaces) => {
-        const lng = lngs[0];
+        // 从 i18next 提供的语言码数组中，获取最优先的一个 (例如 'zh-TW')
+        const lang = lngs[0];
+        // 提取基础语言码 (例如 'zh')
+        const baseLang = lang.split('-')[0];
         const ns = namespaces[0];
         let path: string;
         
-        // common.json 没有语言后缀，其他文件有
+        // 处理 common.json 没有语言后缀的特殊情况
         if (ns === 'common') {
-          path = `/locales/${lng}/${ns}.json`;
+          path = `/locales/${baseLang}/common.json`;
         } else {
-          path = `/locales/${lng}/${ns}.${lng}.json`;
+          // 为所有其他合并文件构建正确的路径
+          path = `/locales/${baseLang}/${ns}.${baseLang}.json`;
         }
         
-        debugLog(`Loading translation file: ${path}`, { lng, ns });
+        debugLog(`Loading translation file: ${path}`, { lang, baseLang, ns });
         return path;
       },
       
