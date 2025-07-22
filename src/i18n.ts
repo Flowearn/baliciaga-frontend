@@ -4,7 +4,7 @@ import HttpApi from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 // Debug logging function
-const debugLog = (message: string, data?: any) => {
+const debugLog = (message: string, data?: unknown) => {
   console.log(`[i18n Debug] ${message}`, data || '');
 };
 
@@ -28,6 +28,8 @@ i18n
     
     // 默认的命名空间
     defaultNS: 'common',
+    // 后备命名空间，当请求的命名空间不存在时使用
+    fallbackNS: 'common',
 
     // 配置语言检测器
     detection: {
@@ -97,8 +99,8 @@ i18n
       },
     },
 
-    // 在开发模式下开启debug输出
-    debug: process.env.NODE_ENV === 'development',
+    // 强制开启debug输出以进行问题诊断
+    debug: true,
 
     // react-i18next的特定配置
     react: {

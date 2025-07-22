@@ -19,7 +19,7 @@ const CafeDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { i18n } = useTranslation();
+  const { i18n } = useTranslation('common');
   
   // State for random background color
   const [bgColor, setBgColor] = useState<string>('');

@@ -28,7 +28,7 @@ const I18nSuspenseWrapper: React.FC<{ children: React.ReactNode }> = ({ children
 // Component that forces i18n initialization and throws promise for Suspense
 const I18nInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // This will throw a promise if i18n is not ready, causing Suspense to show fallback
-  const { ready } = useTranslation();
+  const { ready } = useTranslation('common');
   
   // If translations are not ready, this component will suspend
   if (!ready) {

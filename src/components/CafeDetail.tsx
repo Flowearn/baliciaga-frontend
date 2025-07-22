@@ -288,7 +288,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
           <div className="flex flex-col items-end flex-shrink-0 pt-1">
             <div className="flex items-center">
               <StarOutline size={18} className="text-yellow-500 mr-1" fill="currentColor" />
-              <span className="text-white/80 text-base drop-shadow-sm">{cafe.rating?.toFixed(1) || t('details.not_available')}/5</span>
+              <span className="text-white/80 text-base drop-shadow-sm">{typeof cafe.rating === 'number' ? cafe.rating.toFixed(1) : cafe.rating || t('details.not_available')}/5</span>
               <span className="text-white/60 text-base ml-1 drop-shadow-sm">({cafe.userRatingsTotal || 0})</span>
             </div>
             {distanceInKm !== null && typeof distanceInKm === 'number' && (

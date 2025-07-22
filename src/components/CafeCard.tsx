@@ -132,7 +132,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
           {cafe.rating !== undefined && (
             <div className="text-base flex items-center text-gray-500 flex-shrink-0">
               <span className="text-yellow-500 mr-1">⭐</span>
-              <span className="font-medium">{cafe.rating.toFixed(1)}/5</span>
+              <span className="font-medium">{typeof cafe.rating === 'number' ? cafe.rating.toFixed(1) : cafe.rating}/5</span>
               <span className="ml-1">({cafe.userRatingsTotal || 0})</span>
             </div>
           )}
@@ -147,7 +147,7 @@ const CafeCard: React.FC<CafeCardProps> = ({ cafe }) => {
             {cafe.distanceInKm !== undefined && (
               <span className="inline-flex items-center text-gray-500 text-base mt-1">
                 <MapPin size={14} className="mr-1 text-gray-400" />
-                <span>{cafe.distanceInKm.toFixed(1)} km</span>
+                <span>{typeof cafe.distanceInKm === 'number' ? cafe.distanceInKm.toFixed(1) : cafe.distanceInKm} km</span>
               </span>
             )}
           </div>
