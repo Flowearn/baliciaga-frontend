@@ -12,6 +12,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ArchiveProvider } from './context/ArchiveContext';
 import { baliciagaAmplifyTheme } from './theme/amplify-theme';
 import { Analytics } from '@vercel/analytics/react';
+import I18nSuspenseWrapper from './components/I18nSuspenseWrapper';
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -20,7 +21,9 @@ createRoot(document.getElementById("root")!).render(
         <Authenticator.Provider>
           <AuthProvider>
             <ArchiveProvider>
-              <App />
+              <I18nSuspenseWrapper>
+                <App />
+              </I18nSuspenseWrapper>
               <Analytics />
             </ArchiveProvider>
           </AuthProvider>

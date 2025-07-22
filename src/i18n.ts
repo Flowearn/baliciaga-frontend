@@ -98,7 +98,7 @@ i18n
 
     // react-i18next的特定配置
     react: {
-      useSuspense: false, // 关闭 suspense 以避免长时间的 loading
+      useSuspense: true, // 启用 suspense 模式以消除翻译闪烁
     },
   })
   .then(() => {

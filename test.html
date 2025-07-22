@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Page</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      const root = document.getElementById('root');
+      root.innerHTML = '<h1>React is loading...</h1>';
+      
+      // Try to load main.tsx
+      import('/src/main.tsx')
+        .then(() => {
+          console.log('Main.tsx loaded successfully');
+        })
+        .catch(error => {
+          console.error('Error loading main.tsx:', error);
+          root.innerHTML = '<h1 style="color: red;">Error: ' + error.message + '</h1><pre>' + error.stack + '</pre>';
+        });
+    </script>
+  </body>
+</html>
