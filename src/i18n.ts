@@ -30,6 +30,8 @@ i18n
     defaultNS: 'common',
     // 后备命名空间，当请求的命名空间不存在时使用
     fallbackNS: 'common',
+    // 明确指定只使用 common 命名空间
+    ns: ['common'],
 
     // 配置语言检测器
     detection: {
