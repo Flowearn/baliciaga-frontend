@@ -51,11 +51,15 @@ i18n
         const ns = namespaces[0];
         let path: string;
         
-        // 处理 common.json 没有语言后缀的特殊情况
+        // 根据真实文件结构构建正确的路径
         if (ns === 'common') {
+          // common.json 在所有语言目录中都没有语言后缀
           path = `/locales/${baseLang}/common.json`;
+        } else if (baseLang === 'en') {
+          // 英语文件使用 ${ns}.en.json 格式 (除了 common.json)
+          path = `/locales/en/${ns}.en.json`;
         } else {
-          // 为所有其他合并文件构建正确的路径
+          // 其他语言文件使用 ${ns}.${lang}.json 格式 (除了 common.json)
           path = `/locales/${baseLang}/${ns}.${baseLang}.json`;
         }
         
