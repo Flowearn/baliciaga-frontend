@@ -308,9 +308,15 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
 
         <VenueAttributes 
           venue={{
+            // Cafe/Dining fields
             cuisineStyle: cafe.cuisineStyle,
             atmosphere: cafe.atmosphere,
-            signatureDishes: cafe.signatureDishes
+            signatureDishes: cafe.signatureDishes,
+            // Bar specific fields
+            drinkFocus: cafe.drinkFocus,
+            barType: cafe.barType,
+            signatureDrinks: cafe.signatureDrinks,
+            priceRange: cafe.priceRange
           }}
         />
         

@@ -90,6 +90,11 @@ function normalizeCafeData(cafe: any): Cafe {
     allowsDogs: normalized.allowsDogs,
     outdoorSeating: normalized.outdoorSeating,
     servesVegetarianFood: normalized.servesVegetarianFood,
+    // Bar specific fields
+    barType: normalized.barType,
+    drinkFocus: normalized.drinkFocus,
+    signatureDrinks: Array.isArray(normalized.signatureDrinks) ? normalized.signatureDrinks : [],
+    priceRange: normalized.priceRange,
   };
 }
 

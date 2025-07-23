@@ -29,6 +29,11 @@ export interface Cafe {
   atmosphere?: string | string[]; // Optional, atmosphere descriptions
   signatureDishes?: string[]; // Optional, signature dishes
   address?: string; // Optional, full address
+  // Bar specific fields
+  barType?: string | string[]; // Optional, bar type(s)
+  drinkFocus?: string | string[]; // Optional, drink focus areas
+  signatureDrinks?: string[]; // Optional, signature drinks
+  priceRange?: string; // Optional, price range
 }
 
 // Rental Listing Types
