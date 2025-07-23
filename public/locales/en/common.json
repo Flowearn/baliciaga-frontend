@@ -32,7 +32,11 @@
     "attributes": {
       "cuisine_style": "Cuisine Style",
       "atmosphere": "Atmosphere",
-      "signature_dishes": "Signature Dishes"
+      "signature_dishes": "Signature Dishes",
+      "drink_focus": "Drink Focus",
+      "bar_type": "Bar Type",
+      "signature_drinks": "Signature Drinks",
+      "price_range": "Price Range"
     },
     "days_full": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     "days_short": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]

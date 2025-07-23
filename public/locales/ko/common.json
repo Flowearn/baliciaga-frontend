@@ -32,7 +32,11 @@
     "attributes": {
       "cuisine_style": "요리 스타일",
       "atmosphere": "분위기",
-      "signature_dishes": "시그니처 메뉴"
+      "signature_dishes": "시그니처 메뉴",
+      "drink_focus": "주류 특징",
+      "bar_type": "바 타입",
+      "signature_drinks": "시그니처 음료",
+      "price_range": "가격대"
     },
     "days_full": ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"],
     "days_short": ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"]

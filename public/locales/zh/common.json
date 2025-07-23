@@ -32,7 +32,11 @@
     "attributes": {
       "cuisine_style": "菜系风格",
       "atmosphere": "氛围",
-      "signature_dishes": "特色菜"
+      "signature_dishes": "特色菜",
+      "drink_focus": "酒水特色",
+      "bar_type": "酒吧类型",
+      "signature_drinks": "招牌酒水",
+      "price_range": "价格范围"
     },
     "days_full": ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
     "days_short": ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
