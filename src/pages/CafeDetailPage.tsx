@@ -143,9 +143,27 @@ const CafeDetailPage: React.FC = () => {
     }
   }, [error]);
 
+  /**
+   * 智能返回处理函数
+   */
   const handleGoBack = () => {
-    // Use browser's back navigation to preserve scroll position
-    navigate(-1);
+    // 通过检查 history.state.idx 判断是否存在站内浏览历史
+    // 第一次直接加载的页面 idx 为 0
+    if (window.history.state && window.history.state.idx > 0) {
+      // 场景一：正常流程，直接后退
+      navigate(-1);
+    } else {
+      // 场景二：深度链接流程
+      const type = searchParams.get('type'); // 从 URL (例如 ?type=bar) 中获取 'type' 的值
+
+      if (type) {
+        // 如果URL中存在type参数，则导航到带此参数的首页
+        navigate(`/?type=${type}`);
+      } else {
+        // 如果URL中没有type参数，作为最终备用方案，导航到绝对首页
+        navigate('/');
+      }
+    }
   };
 
   // Only show loading if we don't have any data yet
