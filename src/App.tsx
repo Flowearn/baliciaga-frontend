@@ -31,6 +31,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import CreateProfilePage from "./pages/CreateProfilePage";
 import StagewiseTest from "./pages/StagewiseTest";
 import AmplifyThemeTest from "./pages/AmplifyThemeTest";
+import DebugRestaurants from "./pages/DebugRestaurants";
 
 import GlobalHeader from "./components/GlobalHeader";
 import { TopNavBar } from "./components/TopNavBar";
@@ -39,8 +40,15 @@ import { FoodNavBar } from "./components/FoodNavBar";
 import ScrollToTop from "./components/ScrollToTop";
 import { useLocation, useSearchParams } from "react-router-dom";
 import I18nDebugger from "./components/I18nDebugger";
+import './utils/debugApi';
+import './utils/debugRestaurants';
 
 const queryClient = new QueryClient();
+
+// Add to window for debugging
+if (typeof window !== 'undefined') {
+  (window as any).__REACT_QUERY_CLIENT__ = queryClient;
+}
 
 // Main Layout component implementing simplified binary layout architecture
 const MainLayout = () => {
@@ -220,6 +228,10 @@ const routeObjects = [
       {
         path: "amplify-theme-test", // Test page for Amplify theme verification
         element: <AmplifyThemeTest />,
+      },
+      {
+        path: "debug-restaurants", // Debug page for restaurant visibility issue
+        element: <DebugRestaurants />,
       },
       {
         path: "*", // Catch-all for 404 pages
