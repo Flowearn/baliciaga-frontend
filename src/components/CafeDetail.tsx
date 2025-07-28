@@ -368,15 +368,15 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
         
         <div className="content-area-container mt-4 bg-black/40 rounded-xl p-4 shadow-md z-30 relative text-white/90">
           <div className="datetime-weather-container relative z-30 mb-4">
-            <div className="flex items-center mt-3">
+            <div className="flex items-center mt-3 justify-between">
               <div 
-                className="flex items-center cursor-pointer" 
+                className="flex items-center cursor-pointer flex-1 max-w-[50%]" 
                 onClick={() => setIsOpeningHoursExpanded(!isOpeningHoursExpanded)}
               >
-                <p className="text-gray-200/90 text-base">
+                <p className="text-gray-200/90 text-base break-words">
                   {todayOpeningHours}
                 </p>
-                <div className="ml-2">
+                <div className="ml-2 flex-shrink-0">
                   {isOpeningHoursExpanded ? (
                     <ChevronUp size={16} className="text-gray-300" />
                   ) : (
@@ -387,11 +387,11 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
 
               {typeof cafe.isOpenNow === 'boolean' ? (
                 cafe.isOpenNow ? (
-                  <div className="bg-green-500 text-white text-sm px-2 py-0.5 rounded-full ml-3">
+                  <div className="bg-green-500 text-white text-sm px-2 py-0.5 rounded-full ml-3 flex-shrink-0">
                     {t('details.status_open')}
                   </div>
                 ) : (
-                  <div className="bg-red-500 text-white text-sm px-2 py-0.5 rounded-full ml-3">
+                  <div className="bg-red-500 text-white text-sm px-2 py-0.5 rounded-full ml-3 flex-shrink-0">
                     {t('details.status_closed')}
                   </div>
                 )
