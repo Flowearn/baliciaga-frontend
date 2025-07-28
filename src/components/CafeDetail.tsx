@@ -368,7 +368,7 @@ const CafeDetail: React.FC<CafeDetailProps> = ({ cafe, onClose, pageBgColor, use
         
         <div className="content-area-container mt-4 bg-black/40 rounded-xl p-4 shadow-md z-30 relative text-white/90">
           <div className="datetime-weather-container relative z-30 mb-4">
-            <div className="flex items-center mt-3 justify-between">
+            <div className="flex items-center justify-between">
               <div 
                 className="flex items-center cursor-pointer flex-1 max-w-[50%]" 
                 onClick={() => setIsOpeningHoursExpanded(!isOpeningHoursExpanded)}
