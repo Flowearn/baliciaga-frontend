@@ -536,8 +536,8 @@ const Index = () => {
         
         {/* Search Modal */}
         {isSearchModalOpen && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-20"> 
-            <div className="bg-white p-6 rounded-lg shadow-xl w-[398px]">
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-20 px-4"> 
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-[398px]">
               <div className="flex items-center mb-4">
                 <h2 className="flex-1 text-xl font-semibold text-center">
                   {t('search.title')}
@@ -589,13 +589,13 @@ const Index = () => {
         {/* Conditional Rendering for Loading and Content */}
         {isLoading ? (
           <div className={selectedCategory === 'bar' || selectedCategory === 'cowork' ? "pt-4" : "pt-1"}>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(384px,1fr))] gap-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(384px,1fr))] gap-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {Array.from({ length: 6 }).map((_, i) => <CafeCardSkeleton key={i} />)}
             </div>
           </div>
         ) : (
           <div className={selectedCategory === 'bar' || selectedCategory === 'cowork' ? "pt-4" : "pt-1"}>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(384px,1fr))] gap-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(384px,1fr))] gap-6 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {sortedCafes?.map((cafe) => (
                 <div key={cafe.placeId} onClick={() => handleCafeCardClick(cafe)}>
                   <CafeCard cafe={cafe} />

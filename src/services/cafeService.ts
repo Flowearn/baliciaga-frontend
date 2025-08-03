@@ -53,9 +53,23 @@ function normalizeCafeData(cafe: any): Cafe {
     normalized[key] = convertDynamoDBValue(value);
   }
   
+  // Extract venueAttributes if present
+  let extractedAttributes = {};
+  if (normalized.venueAttributes) {
+    extractedAttributes = {
+      cuisineStyle: normalized.venueAttributes.cuisineStyle || normalized.cuisineStyle,
+      atmosphere: normalized.venueAttributes.ambienceVibe || normalized.venueAttributes.atmosphere || normalized.atmosphere,
+      signatureDishes: normalized.venueAttributes.signatureDishes || normalized.signatureDishes,
+      drinkFocus: normalized.venueAttributes.drinkFocus || normalized.drinkFocus,
+      barType: normalized.venueAttributes.barType || normalized.barType,
+      signatureDrinks: normalized.venueAttributes.signatureDrinks || normalized.signatureDrinks,
+    };
+  }
+  
   // Ensure specific fields are the correct type
   return {
     ...normalized,
+    ...extractedAttributes, // Spread extracted attributes to override
     // Ensure numeric fields
     rating: typeof normalized.rating === 'number' ? normalized.rating : 0,
     userRatingsTotal: typeof normalized.userRatingsTotal === 'number' ? normalized.userRatingsTotal : 0,
@@ -72,7 +86,7 @@ function normalizeCafeData(cafe: any): Cafe {
     photos: Array.isArray(normalized.photos) ? normalized.photos : [],
     openingHours: Array.isArray(normalized.openingHours) ? normalized.openingHours : [],
     types: Array.isArray(normalized.types) ? normalized.types : [],
-    signatureDishes: Array.isArray(normalized.signatureDishes) ? normalized.signatureDishes : [],
+    signatureDishes: extractedAttributes.signatureDishes || (Array.isArray(normalized.signatureDishes) ? normalized.signatureDishes : []),
     // Ensure boolean fields
     isOpenNow: typeof normalized.isOpenNow === 'boolean' ? normalized.isOpenNow : false,
     // Keep optional fields as-is
@@ -85,15 +99,15 @@ function normalizeCafeData(cafe: any): Cafe {
     tableUrl: normalized.tableUrl,
     menuUrl: normalized.menuUrl,
     category: normalized.category,
-    cuisineStyle: normalized.cuisineStyle,
-    atmosphere: normalized.atmosphere,
+    cuisineStyle: extractedAttributes.cuisineStyle || normalized.cuisineStyle,
+    atmosphere: extractedAttributes.atmosphere || normalized.atmosphere,
     allowsDogs: normalized.allowsDogs,
     outdoorSeating: normalized.outdoorSeating,
     servesVegetarianFood: normalized.servesVegetarianFood,
     // Bar specific fields
-    barType: normalized.barType,
-    drinkFocus: normalized.drinkFocus,
-    signatureDrinks: Array.isArray(normalized.signatureDrinks) ? normalized.signatureDrinks : [],
+    barType: extractedAttributes.barType || normalized.barType,
+    drinkFocus: extractedAttributes.drinkFocus || normalized.drinkFocus,
+    signatureDrinks: extractedAttributes.signatureDrinks || (Array.isArray(normalized.signatureDrinks) ? normalized.signatureDrinks : []),
     priceRange: normalized.priceRange,
   };
 }

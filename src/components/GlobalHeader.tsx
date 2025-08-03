@@ -134,7 +134,7 @@ const GlobalHeader = () => {
         "relative z-10",
         activeTheme ? "text-white" : "text-gray-800"
       )}>
-        <div className="pt-2 pb-2 px-4">
+        <div className="pt-2 pb-2 px-2 sm:px-4">
           {/* Main header content */}
           <div className="flex items-center justify-between w-full">
             {/* Search Button */}
@@ -155,7 +155,7 @@ const GlobalHeader = () => {
             {/* Logo/Title */}
             <h1 
               className={cn(
-                "text-[28px] font-bold cursor-pointer transition-colors duration-300",
+                "text-xl sm:text-2xl md:text-[28px] font-bold cursor-pointer transition-colors duration-300",
                 activeTheme ? "text-white" : "text-black"
               )}
               onClick={() => navigate('/')}
@@ -224,7 +224,7 @@ const GlobalHeader = () => {
           
           {/* Primary Navigation Buttons */}
           <div className="mt-2">
-            <div className="flex gap-2">
+            <div className="flex gap-1 sm:gap-2">
               {navLinks.map(link => {
                 const isActive = link.isActiveMatch();
                 return (

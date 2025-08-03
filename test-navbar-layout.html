@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Bar Layout Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        .test-width {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: #333;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            z-index: 1000;
+        }
+        
+        /* Old Layout */
+        .navbar-old {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .navbar-old .container {
+            padding: 8px 16px; /* px-4 */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        /* New Layout */
+        .navbar-new {
+            background: #e8f5e9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .navbar-new .container {
+            padding: 8px 12px; /* px-3 on mobile */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        @media (min-width: 640px) {
+            .navbar-new .container {
+                padding: 8px 16px; /* px-4 on larger screens */
+            }
+        }
+        
+        .logo {
+            font-size: 24px; /* text-2xl */
+            font-weight: bold;
+        }
+        @media (min-width: 640px) {
+            .logo-responsive {
+                font-size: 28px; /* text-[28px] */
+            }
+        }
+        
+        .button {
+            width: 40px;
+            height: 40px;
+            background: #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .overflow-indicator {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+            background: red;
+            color: white;
+            display: none;
+            z-index: 1000;
+        }
+        body.has-overflow .overflow-indicator {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-width">
+        Width: <span id="width"></span>px
+    </div>
+    
+    <div class="overflow-indicator">
+        ⚠️ Horizontal Overflow Detected!
+    </div>
+
+    <h2 style="padding: 20px;">Old Navigation Bar (Fixed px-4)</h2>
+    <div class="navbar-old">
+        <div class="container">
+            <div class="button">🔍</div>
+            <div class="logo">Baliciaga</div>
+            <div class="button">☰</div>
+        </div>
+    </div>
+
+    <h2 style="padding: 20px;">New Navigation Bar (Responsive px-3 sm:px-4)</h2>
+    <div class="navbar-new">
+        <div class="container">
+            <div class="button">🔍</div>
+            <div class="logo logo-responsive">Baliciaga</div>
+            <div class="button">☰</div>
+        </div>
+    </div>
+
+    <div style="padding: 20px;">
+        <h3>Testing at different viewport widths:</h3>
+        <ul>
+            <li>390px - iPhone 12/13 Mini</li>
+            <li>430px - iPhone 14 Pro Max</li>
+            <li>640px - Small tablet / sm breakpoint</li>
+        </ul>
+    </div>
+
+    <script>
+        function updateWidth() {
+            document.getElementById('width').textContent = window.innerWidth;
+            
+            // Check for horizontal overflow
+            if (document.documentElement.scrollWidth > document.documentElement.clientWidth) {
+                document.body.classList.add('has-overflow');
+            } else {
+                document.body.classList.remove('has-overflow');
+            }
+        }
+        updateWidth();
+        window.addEventListener('resize', updateWidth);
+        
+        // Check on load
+        window.addEventListener('load', updateWidth);
+    </script>
+</body>
+</html>
