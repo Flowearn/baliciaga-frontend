@@ -11,7 +11,7 @@ export const FoodNavBar: React.FC<FoodNavBarProps> = ({ selectedSubCategory, onS
   const { t } = useTranslation('common');
   return (
     <div className="pt-4 pb-2 px-4">
-      <div className="flex gap-10 justify-center">
+      <div className="flex gap-6 sm:gap-10 justify-center">
         <button
           onClick={() => onSubCategoryChange('all')}
           className={`relative py-2 px-3 text-sm transition-colors duration-200 ease-in-out ${
